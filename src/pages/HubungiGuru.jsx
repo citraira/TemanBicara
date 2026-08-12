@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ref, get } from "firebase/database";
+import { db } from "../firebase";
 
 function HubungiGuru() {
   const navigate = useNavigate();
 
-  // State data guru dinamis dari localStorage
   const [guru, setGuru] = useState({
     nama: "Guru BK / Konselor",
     telepon: "",
@@ -13,23 +14,42 @@ function HubungiGuru() {
   const [pesanWa, setPesanWa] = useState("");
 
   useEffect(() => {
-    // Ambil data terbaru yang diatur oleh Admin di Dashboard
-    const savedNama = localStorage.getItem("namaGuru");
-    const savedWa = localStorage.getItem("noWaGuru") || "";
-    const savedPesan = localStorage.getItem("pesanWa") || "";
+    const fetchAdminContact = async () => {
+      try {
+        // Ambil data langsung dari Realtime Database Firebase
+        const snapshot = await get(ref(db, "pengaturan/admin"));
+        
+        let savedNama = "Guru BK / Konselor";
+        let savedWa = "";
 
-    let formattedWa = savedWa;
-    if (formattedWa.startsWith("0")) {
-      formattedWa = "62" + formattedWa.slice(1);
-    }
-    formattedWa = formattedWa.replace(/[^0-9]/g, "");
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          savedNama = data.nama || localStorage.getItem("namaGuru") || savedNama;
+          savedWa = data.noWa || localStorage.getItem("noWaGuru") || "";
+        } else {
+          savedNama = localStorage.getItem("namaGuru") || savedNama;
+          savedWa = localStorage.getItem("noWaGuru") || "";
+        }
 
-    setGuru({
-      nama: savedNama || "Guru BK / Konselor",
-      telepon: formattedWa,
-    });
+        let formattedWa = savedWa;
+        if (formattedWa.startsWith("0")) {
+          formattedWa = "62" + formattedWa.slice(1);
+        }
+        formattedWa = formattedWa.replace(/[^0-9]/g, "");
 
-    setPesanWa(savedPesan);
+        setGuru({
+          nama: savedNama,
+          telepon: formattedWa,
+        });
+
+        const savedPesan = localStorage.getItem("pesanWa") || "Saya membutuhkan bantuan / konseling.";
+        setPesanWa(savedPesan);
+      } catch (err) {
+        console.error("Gagal mengambil kontak guru dari database:", err);
+      }
+    };
+
+    fetchAdminContact();
   }, []);
 
   const handleChatWhatsApp = () => {

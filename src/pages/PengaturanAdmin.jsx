@@ -27,11 +27,9 @@ function PengaturanAdmin() {
     const loadAdminData = async () => {
       const currentUser = auth.currentUser;
       
-      // SELALU utamakan email dari Firebase Authentication aktif
       const activeEmail = currentUser?.email || localStorage.getItem("emailGuru") || "";
       setEmailGuru(activeEmail);
 
-      // Ambil data profil dari Realtime Database atau LocalStorage
       try {
         const snapshot = await get(ref(db, "pengaturan/admin"));
         if (snapshot.exists()) {
@@ -52,7 +50,6 @@ function PengaturanAdmin() {
     loadAdminData();
   }, []);
 
-  // HANDLER SIMPAN PENGATURAN
   const handleSimpanPengaturan = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -84,24 +81,21 @@ function PengaturanAdmin() {
 
       // 2. JIKA EMAIL DIUBAH
       if (isEmailChanged) {
-        // Mengirimkan Link Verifikasi Email dari Firebase
         await verifyBeforeUpdateEmail(currentUser, emailGuru.trim());
-        
         setPendingEmail(emailGuru.trim());
         setShowEmailModal(true);
       }
 
-      // 3. SIMPAN DATA NAMA & WA KE DATABASE & LOCALSTORAGE
-      // Tetap gunakan email yang aktif saat ini sampai email baru diverifikasi via link
+      // 3. SIMPAN NAMA & NO WA KE FIREBASE REALTIME DATABASE & LOCALSTORAGE
       await saveOtherData(currentEmail);
 
       let message = "Pengaturan berhasil diperbarui!";
       if (isPasswordChanged && isEmailChanged) {
         message = "Kata sandi berhasil diubah! Link verifikasi email telah dikirim ke email baru Anda.";
       } else if (isPasswordChanged) {
-        message = "Kata sandi berhasil diubah!";
+        message = "Kata sandi berhasil diubah! Silakan gunakan kata sandi baru saat login berikutnya.";
       } else if (isEmailChanged) {
-        message = "Link verifikasi telah dikirim ke email baru Anda! Silakan cek inbox/spam email tersebut.";
+        message = "Link verifikasi telah dikirim ke email baru Anda!";
       }
 
       alert(message);
@@ -113,7 +107,7 @@ function PengaturanAdmin() {
         error.code === "auth/requires-recent-login" || 
         error.code === "auth/user-token-expired"
       ) {
-        alert("Sesi login Anda telah berakhir demi keamanan. Silakan Keluar dan Login kembali!");
+        alert("Sesi login Anda telah kedaluwarsa demi keamanan. Silakan Keluar dan Login kembali!");
         navigate("/login-admin");
       } else if (error.code === "auth/invalid-email") {
         alert("Format email tidak valid!");
@@ -127,12 +121,12 @@ function PengaturanAdmin() {
     }
   };
 
-  // FUNGSI SIMPAN KE LOCALSTORAGE & FIREBASE REALTIME DATABASE
   const saveOtherData = async (emailToSave) => {
     localStorage.setItem("emailGuru", emailToSave);
     localStorage.setItem("namaGuru", namaGuru.trim());
     localStorage.setItem("noWaGuru", noWaGuru.trim());
 
+    // PENTING: Menyimpan ke node 'pengaturan/admin' agar dapat dibaca oleh 'HubungiGuru.jsx'
     await set(ref(db, "pengaturan/admin"), {
       email: emailToSave,
       nama: namaGuru.trim(),
