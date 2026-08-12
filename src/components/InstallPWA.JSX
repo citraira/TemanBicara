@@ -42,7 +42,6 @@ function InstallPWA() {
     setShowModal(false);
   };
 
-  // Handler saat pengguna menolak/menutup pop-up
   const handleCloseModal = () => {
     setShowModal(false);
     sessionStorage.setItem("pwa_install_dismissed", "true");
