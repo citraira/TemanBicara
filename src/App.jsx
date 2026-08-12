@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import LoginSiswa from "./pages/LoginSiswa";
@@ -21,34 +21,40 @@ import DaftarPengaduan from "./pages/DaftarPengaduan";
 import PengaturanAdmin from "./pages/PengaturanAdmin"; 
 import LupaPassword from "./pages/LupaPassword";
 
+import InstallPWA from "./components/InstallPWA";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
+    <Router>
+      {/* Komponen Pop-up PWA akan aktif secara global */}
+      <InstallPWA />
 
-      <Route path="/login-siswa" element={<LoginSiswa />} />
-      <Route path="/login-admin" element={<LoginAdmin />} />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
 
-      <Route path="/dashboard-siswa" element={<DashboardSiswa />} />
-      <Route path="/dashboard-admin" element={<DashboardAdmin />} />
-      <Route path="/scan-qr" element={<ScanQR />} />
+        <Route path="/login-siswa" element={<LoginSiswa />} />
+        <Route path="/login-admin" element={<LoginAdmin />} />
 
-      <Route path="/pengaduan" element={<FormPengaduan />} />
-      <Route path="/riwayat" element={<Riwayat />} />
-      <Route path="/edukasi" element={<Edukasi />} />
-      <Route path="/kelola-edukasi" element={<KelolaEdukasi />} /> 
-      <Route path="/hubungi-guru" element={<HubungiGuru />} />
-      <Route path="/pengaturan-admin" element={<PengaturanAdmin />} />
+        <Route path="/dashboard-siswa" element={<DashboardSiswa />} />
+        <Route path="/dashboard-admin" element={<DashboardAdmin />} />
+        <Route path="/scan-qr" element={<ScanQR />} />
 
-      <Route path="/daftar-pengaduan" element={<DaftarPengaduan />} />
-      <Route path="/lupa-password" element={<LupaPassword />} />
+        <Route path="/pengaduan" element={<FormPengaduan />} />
+        <Route path="/riwayat" element={<Riwayat />} />
+        <Route path="/edukasi" element={<Edukasi />} />
+        <Route path="/kelola-edukasi" element={<KelolaEdukasi />} /> 
+        <Route path="/hubungi-guru" element={<HubungiGuru />} />
+        <Route path="/pengaturan-admin" element={<PengaturanAdmin />} />
 
-      {/* DATA SISWA */}
-      <Route path="/data-siswa" element={<DataSiswa />} />
-      <Route path="/tambah-siswa" element={<TambahSiswa />} />
-      <Route path="/edit-siswa/:id" element={<EditSiswa />} />
-    </Routes>
+        <Route path="/daftar-pengaduan" element={<DaftarPengaduan />} />
+        <Route path="/lupa-password" element={<LupaPassword />} />
+
+        {/* DATA SISWA */}
+        <Route path="/data-siswa" element={<DataSiswa />} />
+        <Route path="/tambah-siswa" element={<TambahSiswa />} />
+        <Route path="/edit-siswa/:id" element={<EditSiswa />} />
+      </Routes>
+    </Router>
   );
 }
 
