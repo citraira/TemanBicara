@@ -382,7 +382,7 @@ function LoginAdmin() {
           {/* EMAIL */}
 
           <label style={styles.label}>
-            📧 Email Admin
+            Email Admin
           </label>
 
           <input
@@ -400,7 +400,7 @@ function LoginAdmin() {
           {/* PASSWORD */}
 
           <label style={styles.label}>
-            🔒 Kata Sandi
+            Kata Sandi
           </label>
 
           <input
