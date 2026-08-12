@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase";
 
@@ -11,51 +11,125 @@ function ScanQR() {
   const [manualNis, setManualNis] = useState("");
   const [loadingManual, setLoadingManual] = useState(false);
 
-  const scannerRef = useRef(null);
+  // State Kamera & Scanner Instance
+  const [cameras, setCameras] = useState([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
-    // Inisialisasi QR Scanner dengan konfigurasi lebih fleksibel & responsif
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 15, // Lebih cepat merespons (dari 10 fps)
-        qrbox: (viewfinderWidth, viewfinderHeight) => {
-          // Kotak scan otomatis menyesuaikan 70% dari ukuran layar HP/Komputer
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const qrboxSize = Math.floor(minEdge * 0.7);
-          return {
-            width: Math.max(qrboxSize, 200),
-            height: Math.max(qrboxSize, 200),
-          };
-        },
-        aspectRatio: 1.0,
-      },
-      /* verbose= */ false
-    );
+    // Inisialisasi scanner
+    const html5QrCode = new Html5Qrcode("reader-canvas");
+    html5QrCodeRef.current = html5QrCode;
 
-    scannerRef.current = scanner;
+    // Ambil daftar kamera yang tersedia di perangkat
+    Html5Qrcode.getCameras()
+      .then((devices) => {
+        if (devices && devices.length > 0) {
+          setCameras(devices);
+          
+          // Cari kamera belakang secara otomatis
+          let backCamIndex = devices.findIndex((device) =>
+            device.label.toLowerCase().includes("back") ||
+            device.label.toLowerCase().includes("belakang") ||
+            device.label.toLowerCase().includes("environment")
+          );
 
-    scanner.render(
-      (decodedText) => {
-        scanner.clear();
-        setScanResult(decodedText);
-        verifyStudentData(decodedText);
-      },
-      (error) => {
-        // Meredam error per-frame kamera
-      }
-    );
+          if (backCamIndex === -1) backCamIndex = devices.length - 1; // Default ke kamera terakhir (biasanya belakang)
+          
+          setCurrentCameraIndex(backCamIndex);
+          startCamera(devices[backCamIndex].id);
+        } else {
+          setErrorMsg("Kamera tidak ditemukan pada perangkat ini.");
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal mendapatkan kamera:", err);
+        setErrorMsg("Izin kamera ditolak atau kamera tidak tersedia.");
+      });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current
-          .clear()
-          .catch((err) => console.error("Gagal membersihkan scanner:", err));
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current.stop().catch((e) => console.error(e));
       }
     };
   }, []);
 
-  // VERIFIKASI DATA SISWA DARI FIREBASE
+  // FUNGSI MEMULAI KAMERA
+  const startCamera = async (cameraId) => {
+    if (!html5QrCodeRef.current) return;
+
+    try {
+      if (html5QrCodeRef.current.isScanning) {
+        await html5QrCodeRef.current.stop();
+      }
+
+      await html5QrCodeRef.current.start(
+        cameraId,
+        {
+          fps: 15,
+          qrbox: { width: 230, height: 230 },
+        },
+        (decodedText) => {
+          handleSuccessScan(decodedText);
+        },
+        (errorMessage) => {
+          // Frame scanner meredam error
+        }
+      );
+      setIsScanning(true);
+      setErrorMsg("");
+    } catch (err) {
+      console.error("Gagal memulai kamera:", err);
+      setErrorMsg("Gagal membuka kamera. Pastikan izin kamera telah diberikan.");
+    }
+  };
+
+  // FUNGSI SWITCH / FLIP KAMERA
+  const handleFlipCamera = () => {
+    if (cameras.length < 2) {
+      alert("Hanya 1 kamera yang terdeteksi di perangkat Anda.");
+      return;
+    }
+    const nextIndex = (currentCameraIndex + 1) % cameras.length;
+    setCurrentCameraIndex(nextIndex);
+    startCamera(cameras[nextIndex].id);
+  };
+
+  // HANDLER JIKA QR CODE TERDETEKSI
+  const handleSuccessScan = (qrData) => {
+    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+      html5QrCodeRef.current.stop();
+    }
+    setScanResult(qrData);
+    verifyStudentData(qrData);
+  };
+
+  // HANDLER UPLOAD GAMBAR QR CODE DARI GALERI
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+      await html5QrCodeRef.current.stop();
+      setIsScanning(false);
+    }
+
+    try {
+      const decodedText = await html5QrCodeRef.current.scanFile(file, true);
+      handleSuccessScan(decodedText);
+    } catch (err) {
+      console.error("Gagal membaca gambar QR:", err);
+      setErrorMsg("Tidak dapat membaca QR Code dari gambar yang diunggah. Pastikan gambar jelas!");
+      // Jalankan kembali kamera jika gagal
+      if (cameras.length > 0) {
+        startCamera(cameras[currentCameraIndex].id);
+      }
+    }
+  };
+
+  // VERIFIKASI KE FIREBASE DATABASE
   const verifyStudentData = async (qrData) => {
     setErrorMsg("");
     try {
@@ -65,7 +139,7 @@ function ScanQR() {
 
       if (snapshot.exists()) {
         const dataSiswa = snapshot.val();
-        
+
         localStorage.setItem("namaSiswa", dataSiswa.nama);
         localStorage.setItem("kelasSiswa", dataSiswa.kelas || "-");
         localStorage.setItem("nisnSiswa", cleanQrData);
@@ -83,7 +157,6 @@ function ScanQR() {
     }
   };
 
-  // HANDLER INPUT NIS MANUAL JIKA KAMERA EROR/SUSAH FOKUS
   const handleManualSubmit = (e) => {
     e.preventDefault();
     if (!manualNis.trim()) {
@@ -137,6 +210,47 @@ function ScanQR() {
       overflow: "hidden",
       border: "3px solid #2E7D32",
       background: "#000",
+      minHeight: "260px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    flipBtn: {
+      position: "absolute",
+      bottom: "12px",
+      right: "12px",
+      width: "46px",
+      height: "46px",
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "2px solid #2E7D32",
+      borderRadius: "12px",
+      fontSize: "22px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+      zIndex: 10,
+    },
+    uploadBtnLabel: {
+      display: "block",
+      width: "100%",
+      padding: "14px",
+      background: "#2E7D32",
+      color: "#fff",
+      borderRadius: "14px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      boxShadow: "0 4px 0 #1B5E20",
+      textTransform: "uppercase",
+      boxSizing: "border-box",
+      margin: "15px 0",
+      border: "2px solid #A5D6A7",
+    },
+    hiddenFileInput: {
+      display: "none",
     },
     successBox: {
       color: "#1B5E20",
@@ -202,69 +316,56 @@ function ScanQR() {
     backBtn: {
       width: "100%",
       padding: "12px",
-      background: "#2E7D32",
-      color: "#fff",
+      background: "#E0E0E0",
+      color: "#333",
       border: "none",
       borderRadius: "12px",
       fontWeight: "800",
       fontSize: "13px",
       cursor: "pointer",
-      boxShadow: "0 3px 0 #1B5E20",
+      boxShadow: "0 3px 0 #9E9E9E",
       textTransform: "uppercase",
     },
   };
 
   return (
     <div style={styles.page}>
-      {/* OVERRIDE STYLE CSS BAWAAN HTML5-QRCODE SUPAYA BAGUS & RAPI */}
-      <style>{`
-        #reader {
-          border: none !important;
-        }
-        #reader video {
-          border-radius: 14px;
-          object-fit: cover !important;
-        }
-        #reader__dashboard_section_csr button {
-          background-color: #2E7D32 !important;
-          color: white !important;
-          border: none !important;
-          padding: 10px 16px !important;
-          border-radius: 10px !important;
-          font-weight: bold !important;
-          font-size: 13px !important;
-          cursor: pointer !important;
-          margin: 8px 0 !important;
-          box-shadow: 0 3px 0 #1B5E20 !important;
-        }
-        #reader__dashboard_section_swaplink {
-          color: #2E7D32 !important;
-          font-weight: 700 !important;
-          text-decoration: underline !important;
-          font-size: 12px !important;
-        }
-        #reader__camera_selection {
-          padding: 8px !important;
-          border-radius: 8px !important;
-          border: 2px solid #C8E6C9 !important;
-          margin-bottom: 10px !important;
-          outline: none !important;
-          font-size: 13px !important;
-        }
-      `}</style>
-
       <div style={styles.card}>
         <h2 style={styles.title}>Scan QR Code Siswa</h2>
         <p style={styles.desc}>
-          Arahkan QR Code Kartu Siswa tepat di tengah kotak kamera.
+          Arahkan QR Code Kartu Siswa ke dalam kotak kamera.
         </p>
 
-        {/* CONTAINER KAMERA UTAMA */}
+        {/* AREA KAMERA UTAMA */}
         <div style={styles.scannerWrapper}>
-          <div id="reader"></div>
+          <div id="reader-canvas" style={{ width: "100%" }}></div>
+
+          {/* TOMBOL KOTAK IKON FLIP KAMERA DI KANAN BAWAH */}
+          {cameras.length > 1 && (
+            <button
+              type="button"
+              style={styles.flipBtn}
+              onClick={handleFlipCamera}
+              title="Putar Kamera"
+            >
+              🔄
+            </button>
+          )}
         </div>
 
-        {/* NOTIFIKASI HASIL */}
+        {/* TOMBOL MENONJOL UNTUK UNGGAH GAMBAR QR (BAHASA INDONESIA) */}
+        <label htmlFor="qr-file-input" style={styles.uploadBtnLabel}>
+          🖼️ UNGGAH GAMBAR QR CODE
+        </label>
+        <input
+          id="qr-file-input"
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          style={styles.hiddenFileInput}
+        />
+
+        {/* PESAN STATUS */}
         {scanResult && (
           <div style={styles.successBox}>
             QR Code Terdeteksi: <strong>{scanResult}</strong>
@@ -273,7 +374,7 @@ function ScanQR() {
 
         {errorMsg && <div style={styles.errorBox}>{errorMsg}</div>}
 
-        {/* OPSIONAL: INPUT NIS MANUAL */}
+        {/* INPUT NISN MANUAL */}
         <div style={styles.divider}>
           <div style={styles.dividerLine}></div>
           <span style={{ padding: "0 10px" }}>ATAU MASUKKAN NISN</span>
