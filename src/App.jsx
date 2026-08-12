@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import LoginSiswa from "./pages/LoginSiswa";
@@ -25,8 +25,8 @@ import InstallPWA from "./components/InstallPWA";
 
 function App() {
   return (
-    <Router>
-      {/* Komponen Pop-up PWA akan aktif secara global */}
+    <>
+      {/* Pop-up PWA */}
       <InstallPWA />
 
       <Routes>
@@ -54,7 +54,7 @@ function App() {
         <Route path="/tambah-siswa" element={<TambahSiswa />} />
         <Route path="/edit-siswa/:id" element={<EditSiswa />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 
