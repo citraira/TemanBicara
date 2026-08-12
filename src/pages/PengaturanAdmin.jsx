@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { 
   verifyBeforeUpdateEmail, 
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider 
+  updatePassword
 } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 
 function PengaturanAdmin() {
   const navigate = useNavigate();
@@ -18,7 +16,6 @@ function PengaturanAdmin() {
   
   // State untuk Ubah Kata Sandi
   const [sandiBaru, setSandiBaru] = useState("");
-  const [sandiLama, setSandiLama] = useState(""); // Diperlukan jika butuh re-autentikasi
   
   const [loading, setLoading] = useState(false);
 
@@ -27,13 +24,32 @@ function PengaturanAdmin() {
   const [pendingEmail, setPendingEmail] = useState("");
 
   useEffect(() => {
-    const savedEmail = localStorage.getItem("emailGuru") || auth.currentUser?.email || "";
-    const savedNama = localStorage.getItem("namaGuru") || "";
-    const savedWa = localStorage.getItem("noWaGuru") || "";
+    const loadAdminData = async () => {
+      const currentUser = auth.currentUser;
+      
+      // SELALU utamakan email dari Firebase Authentication aktif
+      const activeEmail = currentUser?.email || localStorage.getItem("emailGuru") || "";
+      setEmailGuru(activeEmail);
 
-    setEmailGuru(savedEmail);
-    setNamaGuru(savedNama);
-    setNoWaGuru(savedWa);
+      // Ambil data profil dari Realtime Database atau LocalStorage
+      try {
+        const snapshot = await get(ref(db, "pengaturan/admin"));
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setNamaGuru(data.nama || localStorage.getItem("namaGuru") || "");
+          setNoWaGuru(data.noWa || localStorage.getItem("noWaGuru") || "");
+        } else {
+          setNamaGuru(localStorage.getItem("namaGuru") || "");
+          setNoWaGuru(localStorage.getItem("noWaGuru") || "");
+        }
+      } catch (err) {
+        console.error("Gagal memuat data database:", err);
+        setNamaGuru(localStorage.getItem("namaGuru") || "");
+        setNoWaGuru(localStorage.getItem("noWaGuru") || "");
+      }
+    };
+
+    loadAdminData();
   }, []);
 
   // HANDLER SIMPAN PENGATURAN
@@ -50,12 +66,12 @@ function PengaturanAdmin() {
       return;
     }
 
-    const oldEmail = localStorage.getItem("emailGuru") || currentUser.email;
-    const isEmailChanged = emailGuru.trim() !== oldEmail;
+    const currentEmail = currentUser.email;
+    const isEmailChanged = emailGuru.trim().toLowerCase() !== currentEmail.toLowerCase();
     const isPasswordChanged = sandiBaru.trim().length > 0;
 
     try {
-      // 1. JIKA KATA SANDI JUGA DIUBAH
+      // 1. JIKA KATA SANDI DIUBAH
       if (isPasswordChanged) {
         if (sandiBaru.trim().length < 6) {
           alert("Kata sandi baru minimal harus 6 karakter!");
@@ -63,21 +79,21 @@ function PengaturanAdmin() {
           return;
         }
 
-        // Update Password via Firebase Auth
         await updatePassword(currentUser, sandiBaru.trim());
       }
 
       // 2. JIKA EMAIL DIUBAH
       if (isEmailChanged) {
-        // Mengirimkan Link Verifikasi Email Asli dari Firebase
+        // Mengirimkan Link Verifikasi Email dari Firebase
         await verifyBeforeUpdateEmail(currentUser, emailGuru.trim());
         
         setPendingEmail(emailGuru.trim());
-        setShowEmailModal(true); // Tampilkan modal petunjuk verifikasi
+        setShowEmailModal(true);
       }
 
-      // 3. SIMPAN DATA LAINNYA (NAMA & NO WA) KE FIREBASE DATABASE & LOCALSTORAGE
-      await saveOtherData(isEmailChanged ? oldEmail : emailGuru.trim());
+      // 3. SIMPAN DATA NAMA & WA KE DATABASE & LOCALSTORAGE
+      // Tetap gunakan email yang aktif saat ini sampai email baru diverifikasi via link
+      await saveOtherData(currentEmail);
 
       let message = "Pengaturan berhasil diperbarui!";
       if (isPasswordChanged && isEmailChanged) {
@@ -85,21 +101,24 @@ function PengaturanAdmin() {
       } else if (isPasswordChanged) {
         message = "Kata sandi berhasil diubah!";
       } else if (isEmailChanged) {
-        message = "Link verifikasi telah dikirim ke email baru Anda!";
+        message = "Link verifikasi telah dikirim ke email baru Anda! Silakan cek inbox/spam email tersebut.";
       }
 
       alert(message);
       setSandiBaru("");
-      setSandiLama("");
     } catch (error) {
       console.error("Gagal menyimpan pengaturan:", error);
 
-      if (error.code === "auth/requires-recent-login") {
-        alert("Demi keamanan, Anda harus Logout dan Login ulang sebelum mengubah email atau kata sandi!");
+      if (
+        error.code === "auth/requires-recent-login" || 
+        error.code === "auth/user-token-expired"
+      ) {
+        alert("Sesi login Anda telah berakhir demi keamanan. Silakan Keluar dan Login kembali!");
+        navigate("/login-admin");
       } else if (error.code === "auth/invalid-email") {
         alert("Format email tidak valid!");
       } else if (error.code === "auth/weak-password") {
-        alert("Kata sandi terlalu lemah! Gunakan kombinasi huruf dan angka.");
+        alert("Kata sandi terlalu lemah! Gunakan minimal 6 karakter.");
       } else {
         alert("Gagal menyimpan pengaturan: " + error.message);
       }
