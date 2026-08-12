@@ -18,6 +18,14 @@ function LoginAdmin() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
+  // Buka modal reset password & otomasi isi email jika sudah diketik di form login
+  const handleOpenResetModal = () => {
+    if (email.trim()) {
+      setResetEmail(email.trim());
+    }
+    setShowResetModal(true);
+  };
+
   // Fungsi Handler Login Admin
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,13 +38,19 @@ function LoginAdmin() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       alert("Login Admin Berhasil!");
       navigate("/dashboard-admin");
     } catch (error) {
-      console.error(error);
-      if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found") {
+      console.error("Login Error:", error);
+      if (
+        error.code === "auth/invalid-credential" || 
+        error.code === "auth/user-not-found" || 
+        error.code === "auth/wrong-password"
+      ) {
         alert("Email atau kata sandi salah!");
+      } else if (error.code === "auth/invalid-email") {
+        alert("Format email tidak valid!");
       } else {
         alert("Gagal login: " + error.message);
       }
@@ -57,16 +71,24 @@ function LoginAdmin() {
     setResetLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, resetEmail);
+      // Mengirim tautan reset kata sandi melalui Firebase Auth
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+      
       alert(
-        `Link untuk meriset kata sandi telah dikirimkan ke email:\n${resetEmail}\n\nSilakan periksa kotak masuk atau folder Spam email Anda.`
+        `BERHASIL!\n\nTautan untuk meriset kata sandi telah dikirimkan ke email:\n${resetEmail.trim()}\n\nSilakan buka kotak masuk email atau cek folder Spam/Junk Anda.`
       );
+      
       setShowResetModal(false);
       setResetEmail("");
     } catch (error) {
-      console.error(error);
+      console.error("Reset Password Error:", error);
+      
       if (error.code === "auth/user-not-found") {
         alert("Email tidak terdaftar dalam sistem!");
+      } else if (error.code === "auth/invalid-email") {
+        alert("Format email tidak valid!");
+      } else if (error.code === "auth/too-many-requests") {
+        alert("Terlalu banyak permintaan reset password. Silakan tunggu beberapa saat lagi.");
       } else {
         alert("Gagal mengirim email reset: " + error.message);
       }
@@ -254,7 +276,7 @@ function LoginAdmin() {
             <button
               type="button"
               style={styles.forgotBtn}
-              onClick={() => setShowResetModal(true)}
+              onClick={handleOpenResetModal}
             >
               Lupa Kata Sandi?
             </button>
