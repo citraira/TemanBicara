@@ -18,7 +18,8 @@ import DataSiswa from "./pages/DataSiswa";
 import TambahSiswa from "./pages/TambahSiswa";
 import EditSiswa from "./pages/EditSiswa";
 import DaftarPengaduan from "./pages/DaftarPengaduan";
-import PengaturanAdmin from "./pages/PengaturanAdmin"; // <-- DIPERBAIKI DI SINI
+import PengaturanAdmin from "./pages/PengaturanAdmin"; 
+import LupaPassword from "./pages/LupaPassword";
 
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
       <Route path="/pengaturan-admin" element={<PengaturanAdmin />} />
 
       <Route path="/daftar-pengaduan" element={<DaftarPengaduan />} />
+      <Route path="/lupa-password" element={<LupaPassword />} />
 
       {/* DATA SISWA */}
       <Route path="/data-siswa" element={<DataSiswa />} />

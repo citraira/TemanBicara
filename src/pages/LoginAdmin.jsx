@@ -1,101 +1,179 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  signInWithEmailAndPassword, 
-  sendPasswordResetEmail 
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
 function LoginAdmin() {
   const navigate = useNavigate();
 
+  // =========================
+  // STATE LOGIN
+  // =========================
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // State untuk Modal Lupa Password
+  // =========================
+  // STATE LUPA PASSWORD
+  // =========================
+
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
-  // Buka modal reset password & otomasi isi email jika sudah diketik di form login
+  // =========================
+  // BUKA MODAL LUPA PASSWORD
+  // =========================
+
   const handleOpenResetModal = () => {
+    // Kalau email login sudah diisi,
+    // otomatis masukkan ke email reset
     if (email.trim()) {
       setResetEmail(email.trim());
     }
+
     setShowResetModal(true);
   };
 
-  // Fungsi Handler Login Admin
+  // =========================
+  // LOGIN ADMIN
+  // =========================
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!email.trim() || !password.trim()) {
-      alert("Silakan isi Email dan Kata Sandi!");
+    if (!email.trim()) {
+      alert("Silakan masukkan email admin.");
+      return;
+    }
+
+    if (!password) {
+      alert("Silakan masukkan kata sandi.");
       return;
     }
 
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
       alert("Login Admin Berhasil!");
+
       navigate("/dashboard-admin");
     } catch (error) {
       console.error("Login Error:", error);
-      if (
-        error.code === "auth/invalid-credential" || 
-        error.code === "auth/user-not-found" || 
-        error.code === "auth/wrong-password"
-      ) {
-        alert("Email atau kata sandi salah!");
-      } else if (error.code === "auth/invalid-email") {
-        alert("Format email tidak valid!");
-      } else {
-        alert("Gagal login: " + error.message);
+
+      switch (error.code) {
+        case "auth/invalid-email":
+          alert("Format email tidak valid.");
+          break;
+
+        case "auth/invalid-credential":
+          alert("Email atau kata sandi salah.");
+          break;
+
+        case "auth/user-not-found":
+          alert("Akun admin tidak ditemukan.");
+          break;
+
+        case "auth/wrong-password":
+          alert("Kata sandi salah.");
+          break;
+
+        case "auth/user-disabled":
+          alert("Akun admin telah dinonaktifkan.");
+          break;
+
+        case "auth/too-many-requests":
+          alert(
+            "Terlalu banyak percobaan login. Silakan coba lagi nanti."
+          );
+          break;
+
+        default:
+          alert(
+            "Gagal login. Silakan coba lagi.\n\n" +
+            error.message
+          );
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fungsi Handler Kirim Email Reset Password
+  // =========================
+  // RESET PASSWORD
+  // =========================
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
 
     if (!resetEmail.trim()) {
-      alert("Silakan masukkan email akun Admin Anda!");
+      alert("Silakan masukkan email admin.");
       return;
     }
 
     setResetLoading(true);
 
     try {
-      // Mengirim tautan reset kata sandi melalui Firebase Auth
-      await sendPasswordResetEmail(auth, resetEmail.trim());
-      
-      alert(
-        `BERHASIL!\n\nTautan untuk meriset kata sandi telah dikirimkan ke email:\n${resetEmail.trim()}\n\nSilakan buka kotak masuk email atau cek folder Spam/Junk Anda.`
+      await sendPasswordResetEmail(
+        auth,
+        resetEmail.trim()
       );
-      
+
+      alert(
+        "Email reset kata sandi berhasil dikirim!\n\n" +
+        "Silakan buka email Anda dan klik link reset kata sandi.\n\n" +
+        "Jika tidak ada di Inbox, silakan cek folder Spam/Junk."
+      );
+
       setShowResetModal(false);
       setResetEmail("");
+
     } catch (error) {
       console.error("Reset Password Error:", error);
-      
-      if (error.code === "auth/user-not-found") {
-        alert("Email tidak terdaftar dalam sistem!");
-      } else if (error.code === "auth/invalid-email") {
-        alert("Format email tidak valid!");
-      } else if (error.code === "auth/too-many-requests") {
-        alert("Terlalu banyak permintaan reset password. Silakan tunggu beberapa saat lagi.");
-      } else {
-        alert("Gagal mengirim email reset: " + error.message);
+
+      switch (error.code) {
+        case "auth/invalid-email":
+          alert("Format email tidak valid.");
+          break;
+
+        case "auth/user-not-found":
+          alert(
+            "Email tersebut belum terdaftar sebagai akun admin."
+          );
+          break;
+
+        case "auth/too-many-requests":
+          alert(
+            "Terlalu banyak permintaan reset password. " +
+            "Silakan tunggu beberapa saat kemudian."
+          );
+          break;
+
+        default:
+          alert(
+            "Gagal mengirim email reset.\n\n" +
+            error.message
+          );
       }
+
     } finally {
       setResetLoading(false);
     }
   };
+
+  // =========================
+  // STYLE
+  // =========================
 
   const styles = {
     page: {
@@ -108,16 +186,18 @@ function LoginAdmin() {
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
     },
+
     card: {
       width: "100%",
       maxWidth: "420px",
       background: "#fff",
       borderRadius: "20px",
       padding: "30px 20px",
-      boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
+      boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
       border: "2px solid #C8E6C9",
       boxSizing: "border-box",
     },
+
     logo: {
       width: "70px",
       height: "70px",
@@ -132,6 +212,7 @@ function LoginAdmin() {
       margin: "0 auto 15px",
       border: "3px solid #2E7D32",
     },
+
     title: {
       fontSize: "24px",
       color: "#1B5E20",
@@ -139,6 +220,7 @@ function LoginAdmin() {
       textAlign: "center",
       marginBottom: "5px",
     },
+
     subtitle: {
       color: "#556B4D",
       textAlign: "center",
@@ -146,6 +228,7 @@ function LoginAdmin() {
       marginBottom: "25px",
       fontWeight: "500",
     },
+
     label: {
       display: "block",
       marginBottom: "6px",
@@ -153,6 +236,7 @@ function LoginAdmin() {
       color: "#1B5E20",
       fontSize: "14px",
     },
+
     input: {
       width: "100%",
       padding: "12px 14px",
@@ -164,11 +248,13 @@ function LoginAdmin() {
       outline: "none",
       background: "#FAFAFA",
     },
+
     forgotContainer: {
       display: "flex",
       justifyContent: "flex-end",
       marginBottom: "20px",
     },
+
     forgotBtn: {
       background: "none",
       border: "none",
@@ -179,6 +265,7 @@ function LoginAdmin() {
       padding: 0,
       textDecoration: "underline",
     },
+
     loginBtn: {
       width: "100%",
       padding: "14px",
@@ -189,9 +276,12 @@ function LoginAdmin() {
       fontSize: "15px",
       cursor: loading ? "not-allowed" : "pointer",
       fontWeight: "800",
-      boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+      boxShadow: loading
+        ? "none"
+        : "0 3px 0 #1B5E20",
       textTransform: "uppercase",
     },
+
     back: {
       marginTop: "20px",
       textAlign: "center",
@@ -201,6 +291,7 @@ function LoginAdmin() {
       fontSize: "13px",
       textTransform: "uppercase",
     },
+
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -215,6 +306,7 @@ function LoginAdmin() {
       padding: "15px",
       boxSizing: "border-box",
     },
+
     modalCard: {
       background: "#fff",
       padding: "25px 20px",
@@ -225,6 +317,23 @@ function LoginAdmin() {
       border: "2px solid #C8E6C9",
       boxSizing: "border-box",
     },
+
+    modalTitle: {
+      color: "#1B5E20",
+      marginBottom: "8px",
+      fontSize: "20px",
+      fontWeight: "800",
+      textAlign: "center",
+    },
+
+    modalText: {
+      color: "#556B4D",
+      fontSize: "13px",
+      marginBottom: "18px",
+      lineHeight: "1.5",
+      textAlign: "center",
+    },
+
     cancelBtn: {
       width: "100%",
       padding: "12px",
@@ -233,7 +342,9 @@ function LoginAdmin() {
       border: "none",
       borderRadius: "12px",
       fontWeight: "800",
-      cursor: "pointer",
+      cursor: resetLoading
+        ? "not-allowed"
+        : "pointer",
       marginTop: "10px",
       fontSize: "13px",
       boxShadow: "0 3px 0 #FBC02D",
@@ -241,98 +352,209 @@ function LoginAdmin() {
     },
   };
 
+  // =========================
+  // TAMPILAN
+  // =========================
+
   return (
     <div style={styles.page}>
+
+      {/* =========================
+          CARD LOGIN
+      ========================= */}
+
       <div style={styles.card}>
-        <div style={styles.logo}>A</div>
-        <h2 style={styles.title}>Login Admin</h2>
-        <p style={styles.subtitle}>Sistem Pengaduan Bullying Sekolah</p>
+
+        <div style={styles.logo}>
+          A
+        </div>
+
+        <h2 style={styles.title}>
+          Login Admin
+        </h2>
+
+        <p style={styles.subtitle}>
+          Sistem Pengaduan Bullying Sekolah
+        </p>
 
         <form onSubmit={handleLogin}>
+
           {/* EMAIL */}
-          <label style={styles.label}>Email Admin</label>
+
+          <label style={styles.label}>
+            📧 Email Admin
+          </label>
+
           <input
             type="email"
             placeholder="Masukkan email admin"
             style={styles.input}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
             disabled={loading}
+            autoComplete="email"
           />
 
           {/* PASSWORD */}
-          <label style={styles.label}>Kata Sandi</label>
+
+          <label style={styles.label}>
+            🔒 Kata Sandi
+          </label>
+
           <input
             type="password"
             placeholder="Masukkan kata sandi"
             style={styles.input}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             disabled={loading}
+            autoComplete="current-password"
           />
 
-          {/* TOMBOL LUPA KATA SANDI */}
+          {/* LUPA PASSWORD */}
+
           <div style={styles.forgotContainer}>
+
             <button
               type="button"
               style={styles.forgotBtn}
               onClick={handleOpenResetModal}
+              disabled={loading}
             >
               Lupa Kata Sandi?
             </button>
+
           </div>
 
-          <button type="submit" style={styles.loginBtn} disabled={loading}>
-            {loading ? "Memproses..." : "Login Admin"}
+          {/* LOGIN */}
+
+          <button
+            type="submit"
+            style={styles.loginBtn}
+            disabled={loading}
+          >
+            {loading
+              ? "Memproses..."
+              : "Login Admin"}
           </button>
+
         </form>
 
-        <div style={styles.back} onClick={() => navigate("/")}>
-          Kembali ke Halaman Utama
+        {/* KEMBALI */}
+
+        <div
+          style={styles.back}
+          onClick={() => navigate("/")}
+        >
+          ← Kembali ke Halaman Utama
         </div>
+
       </div>
 
-      {/* MODAL POP-UP RESET PASSWORD */}
+      {/* =========================
+          MODAL RESET PASSWORD
+      ========================= */}
+
       {showResetModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
-            <h3 style={{ color: "#1B5E20", marginBottom: "8px", fontSize: "18px", fontWeight: "800" }}>
+
+        <div
+          style={styles.modalOverlay}
+          onClick={() => {
+            if (!resetLoading) {
+              setShowResetModal(false);
+            }
+          }}
+        >
+
+          <div
+            style={styles.modalCard}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "45px",
+                marginBottom: "5px",
+              }}
+            >
+              🔐
+            </div>
+
+            <h3 style={styles.modalTitle}>
               Lupa Kata Sandi?
             </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
-              Masukkan email akun admin Anda. Tautan untuk meriset kata sandi akan dikirimkan ke email tersebut.
+
+            <p style={styles.modalText}>
+              Masukkan email akun admin Anda.
+              Firebase akan mengirimkan link
+              untuk membuat kata sandi baru.
             </p>
 
             <form onSubmit={handleResetPassword}>
+
+              <label style={styles.label}>
+                📧 Email Admin
+              </label>
+
               <input
                 type="email"
-                placeholder="Contoh: admin@sekolah.sch.id"
+                placeholder="admin@email.com"
                 style={styles.input}
                 value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
+                onChange={(e) =>
+                  setResetEmail(e.target.value)
+                }
                 disabled={resetLoading}
+                autoComplete="email"
+                autoFocus
               />
+
+              {/* KIRIM EMAIL */}
 
               <button
                 type="submit"
-                style={{ ...styles.loginBtn, marginTop: 0 }}
+                style={{
+                  ...styles.loginBtn,
+                  marginTop: 0,
+                  background: resetLoading
+                    ? "#A5D6A7"
+                    : "#2E7D32",
+                }}
                 disabled={resetLoading}
               >
-                {resetLoading ? "Mengirim..." : "Kirim Email Reset"}
+                {resetLoading
+                  ? "Mengirim Email..."
+                  : "📨 Kirim Email Reset"}
               </button>
+
+              {/* BATAL */}
 
               <button
                 type="button"
                 style={styles.cancelBtn}
-                onClick={() => setShowResetModal(false)}
+                onClick={() => {
+                  setShowResetModal(false);
+                }}
                 disabled={resetLoading}
               >
                 Batal
               </button>
+
             </form>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
