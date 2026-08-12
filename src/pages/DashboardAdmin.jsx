@@ -40,6 +40,7 @@ function DashboardAdmin() {
           );
           setJumlahAduanBaru(aduanDiproses.length);
 
+          // Hitung Unread berdasarkan timestamp terakhir kali notif dibuka
           const lastReadTime = localStorage.getItem("lastReadAdminNotif");
           if (lastReadTime) {
             const unread = list.filter(
@@ -47,21 +48,27 @@ function DashboardAdmin() {
             ).length;
             setUnreadCount(unread);
           } else {
-            setUnreadCount(list.length);
+            setUnreadCount(0); // Default 0 jika tidak ada aduan baru setelah login
           }
 
+          // Tampilkan Pop-Up Toast hanya jika ada aduan masuk secara REALTIME setelah halaman dibuka
+          const lastShownToastId = localStorage.getItem("lastShownToastId");
           if (!initialLoad && list.length > 0) {
             const aduanTerbaru = list[0];
-            setNotifBaru(aduanTerbaru);
 
-            if (soundEnabled) {
-              try {
-                const audio = new Audio(
-                  "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
-                );
-                audio.play();
-              } catch (err) {
-                console.log("Audio autoplay diblokir browser:", err);
+            if (aduanTerbaru.id !== lastShownToastId) {
+              setNotifBaru(aduanTerbaru);
+              localStorage.setItem("lastShownToastId", aduanTerbaru.id);
+
+              if (soundEnabled) {
+                try {
+                  const audio = new Audio(
+                    "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+                  );
+                  audio.play();
+                } catch (err) {
+                  console.log("Audio autoplay diblokir browser:", err);
+                }
               }
             }
           }
@@ -80,10 +87,20 @@ function DashboardAdmin() {
     return () => unsubscribe();
   }, [soundEnabled]);
 
+  // FUNGSI SAAT TOMBOL LONCENG NOTIFIKASI DIBUKA
   const handleOpenNotif = () => {
     setShowNotifModal(true);
     setUnreadCount(0);
+    // Tandai seluruh notifikasi sudah dibaca per detik ini
     localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
+  };
+
+  // FUNGSI BUKA LAPORAN & TANDAI DIBACA
+  const handleBukaLaporan = () => {
+    setShowNotifModal(false);
+    setUnreadCount(0);
+    localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
+    navigate("/daftar-pengaduan");
   };
 
   // Perhitungan Data Statistik
@@ -416,7 +433,7 @@ function DashboardAdmin() {
           </div>
           <button
             style={styles.button}
-            onClick={() => navigate("/daftar-pengaduan")}
+            onClick={handleBukaLaporan}
           >
             Buka ({jumlahAduanBaru} Baru)
           </button>
@@ -652,10 +669,7 @@ function DashboardAdmin() {
                     </div>
                     <button
                       style={styles.actionBtn}
-                      onClick={() => {
-                        setShowNotifModal(false);
-                        navigate("/daftar-pengaduan");
-                      }}
+                      onClick={handleBukaLaporan}
                     >
                       Buka
                     </button>

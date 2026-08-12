@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { updateEmail } from "firebase/auth";
+import { 
+  verifyBeforeUpdateEmail, 
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider 
+} from "firebase/auth";
 import { ref, set } from "firebase/database";
 
 function PengaturanAdmin() {
@@ -10,12 +15,15 @@ function PengaturanAdmin() {
   const [emailGuru, setEmailGuru] = useState("");
   const [namaGuru, setNamaGuru] = useState("");
   const [noWaGuru, setNoWaGuru] = useState("");
+  
+  // State untuk Ubah Kata Sandi
+  const [sandiBaru, setSandiBaru] = useState("");
+  const [sandiLama, setSandiLama] = useState(""); // Diperlukan jika butuh re-autentikasi
+  
   const [loading, setLoading] = useState(false);
 
-  // State untuk Modal & Verifikasi OTP
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [inputOtp, setInputOtp] = useState("");
+  // State untuk Modal Informasi Pengiriman Link Verifikasi Email
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
 
   useEffect(() => {
@@ -28,93 +36,89 @@ function PengaturanAdmin() {
     setNoWaGuru(savedWa);
   }, []);
 
-  // 1. FUNGSI KIRIM KODE OTP KE EMAIL BARU
-  const sendOtpToEmail = async (targetEmail, otpCode) => {
-    console.log(`[MOCK EMAIL SERVICE] Kode OTP dikirim ke ${targetEmail}: ${otpCode}`);
-
-    // Simulasi Alert untuk testing lokal
-    alert(`[SIMULASI EMAIL]\nKode OTP verifikasi Anda adalah: ${otpCode}\n(Kode ini dikirim ke ${targetEmail})`);
-  };
-
-  // 2. HANDLER KLIK SIMPAN PENGATURAN
+  // HANDLER SIMPAN PENGATURAN
   const handleSimpanPengaturan = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     const currentUser = auth.currentUser;
-    const oldEmail = localStorage.getItem("emailGuru") || currentUser?.email;
 
-    // CEK JIKA EMAIL DIUBAH
-    if (currentUser && emailGuru.trim() !== oldEmail) {
-      // Generate 6 digit angka acak OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(otp);
-      setPendingEmail(emailGuru.trim());
-
-      // Kirim OTP ke email baru
-      await sendOtpToEmail(emailGuru.trim(), otp);
-
-      // Tampilkan Modal Popup
-      setShowOtpModal(true);
+    if (!currentUser) {
+      alert("Sesi login Anda telah berakhir. Silakan login kembali!");
+      navigate("/login-admin");
       setLoading(false);
       return;
     }
 
-    // JIKA EMAIL TIDAK DIUBAH, LANGSUNG SIMPAN NAMA & WA
-    await saveOtherData();
-    setLoading(false);
-  };
-
-  // 3. FUNGSI VERIFIKASI KODE OTP
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-
-    if (inputOtp.trim() !== generatedOtp) {
-      alert("Kode OTP yang Anda masukkan salah! Silakan periksa kembali.");
-      return;
-    }
-
-    setLoading(true);
+    const oldEmail = localStorage.getItem("emailGuru") || currentUser.email;
+    const isEmailChanged = emailGuru.trim() !== oldEmail;
+    const isPasswordChanged = sandiBaru.trim().length > 0;
 
     try {
-      const currentUser = auth.currentUser;
+      // 1. JIKA KATA SANDI JUGA DIUBAH
+      if (isPasswordChanged) {
+        if (sandiBaru.trim().length < 6) {
+          alert("Kata sandi baru minimal harus 6 karakter!");
+          setLoading(false);
+          return;
+        }
 
-      // Update Email di Firebase Authentication (Login Email)
-      if (currentUser) {
-        await updateEmail(currentUser, pendingEmail);
+        // Update Password via Firebase Auth
+        await updatePassword(currentUser, sandiBaru.trim());
       }
 
-      // Simpan data terbaru
-      await saveOtherData(pendingEmail);
+      // 2. JIKA EMAIL DIUBAH
+      if (isEmailChanged) {
+        // Mengirimkan Link Verifikasi Email Asli dari Firebase
+        await verifyBeforeUpdateEmail(currentUser, emailGuru.trim());
+        
+        setPendingEmail(emailGuru.trim());
+        setShowEmailModal(true); // Tampilkan modal petunjuk verifikasi
+      }
 
-      alert("Email login berhasil diperbarui!");
-      setShowOtpModal(false);
-      setInputOtp("");
+      // 3. SIMPAN DATA LAINNYA (NAMA & NO WA) KE FIREBASE DATABASE & LOCALSTORAGE
+      await saveOtherData(isEmailChanged ? oldEmail : emailGuru.trim());
+
+      let message = "Pengaturan berhasil diperbarui!";
+      if (isPasswordChanged && isEmailChanged) {
+        message = "Kata sandi berhasil diubah! Link verifikasi email telah dikirim ke email baru Anda.";
+      } else if (isPasswordChanged) {
+        message = "Kata sandi berhasil diubah!";
+      } else if (isEmailChanged) {
+        message = "Link verifikasi telah dikirim ke email baru Anda!";
+      }
+
+      alert(message);
+      setSandiBaru("");
+      setSandiLama("");
     } catch (error) {
-      console.error(error);
+      console.error("Gagal menyimpan pengaturan:", error);
+
       if (error.code === "auth/requires-recent-login") {
-        alert("Demi keamanan, silakan Logout dan Login ulang sebelum mengubah email login!");
+        alert("Demi keamanan, Anda harus Logout dan Login ulang sebelum mengubah email atau kata sandi!");
+      } else if (error.code === "auth/invalid-email") {
+        alert("Format email tidak valid!");
+      } else if (error.code === "auth/weak-password") {
+        alert("Kata sandi terlalu lemah! Gunakan kombinasi huruf dan angka.");
       } else {
-        alert("Gagal memperbarui email login: " + error.message);
+        alert("Gagal menyimpan pengaturan: " + error.message);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // FUNGSI SIMPAN KE LOCALSTORAGE & FIREBASE DATABASE
-  const saveOtherData = async (newEmail = emailGuru) => {
-    localStorage.setItem("emailGuru", newEmail);
+  // FUNGSI SIMPAN KE LOCALSTORAGE & FIREBASE REALTIME DATABASE
+  const saveOtherData = async (emailToSave) => {
+    localStorage.setItem("emailGuru", emailToSave);
     localStorage.setItem("namaGuru", namaGuru.trim());
     localStorage.setItem("noWaGuru", noWaGuru.trim());
 
     await set(ref(db, "pengaturan/admin"), {
-      email: newEmail,
+      email: emailToSave,
       nama: namaGuru.trim(),
       noWa: noWaGuru.trim(),
     });
-
-    alert("Pengaturan berhasil disimpan!");
   };
 
   const styles = {
@@ -153,6 +157,15 @@ function PengaturanAdmin() {
       fontSize: "20px",
       fontWeight: "800",
     },
+    sectionTitle: {
+      color: "#2E7D32",
+      fontSize: "14px",
+      fontWeight: "800",
+      marginTop: "15px",
+      marginBottom: "10px",
+      borderBottom: "1px solid #E8F5E9",
+      paddingBottom: "5px",
+    },
     label: {
       display: "block",
       fontWeight: "700",
@@ -165,7 +178,7 @@ function PengaturanAdmin() {
       padding: "10px 12px",
       borderRadius: "10px",
       border: "2px solid #C8E6C9",
-      marginBottom: "18px",
+      marginBottom: "16px",
       fontSize: "14px",
       boxSizing: "border-box",
       outline: "none",
@@ -183,8 +196,8 @@ function PengaturanAdmin() {
       cursor: loading ? "not-allowed" : "pointer",
       boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
       textTransform: "uppercase",
+      marginTop: "10px",
     },
-    // Styling Modal OTP
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -208,40 +221,25 @@ function PengaturanAdmin() {
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       border: "2px solid #C8E6C9",
     },
-    otpInput: {
+    okBtn: {
       width: "100%",
       padding: "12px",
-      fontSize: "22px",
-      letterSpacing: "6px",
-      textAlign: "center",
-      borderRadius: "12px",
-      border: "2px solid #2E7D32",
-      marginBottom: "18px",
-      boxSizing: "border-box",
-      outline: "none",
-      fontWeight: "800",
-      color: "#1B5E20",
-      background: "#FAFAFA",
-    },
-    cancelBtn: {
-      width: "100%",
-      padding: "12px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#2E7D32",
+      color: "#fff",
       border: "none",
       borderRadius: "12px",
       fontWeight: "800",
       cursor: "pointer",
-      marginTop: "10px",
       fontSize: "13px",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #1B5E20",
+      textTransform: "uppercase",
+      marginTop: "15px",
     },
   };
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        {/* TOMBOL KEMBALI KE DASHBOARD */}
         <button
           type="button"
           style={styles.backBtn}
@@ -250,11 +248,12 @@ function PengaturanAdmin() {
           Kembali ke Dashboard
         </button>
 
-        <h2 style={styles.title}>
-          Pengaturan Akun Admin
-        </h2>
+        <h2 style={styles.title}>Pengaturan Akun Admin</h2>
 
         <form onSubmit={handleSimpanPengaturan}>
+          {/* INFORMASI PROFIL */}
+          <div style={styles.sectionTitle}>INFORMASI PROFIL</div>
+
           <label style={styles.label}>Nama Guru / Admin</label>
           <input
             type="text"
@@ -273,6 +272,9 @@ function PengaturanAdmin() {
             style={styles.input}
           />
 
+          {/* AKUN LOGIN */}
+          <div style={styles.sectionTitle}>KREDENSIAL LOGIN</div>
+
           <label style={styles.label}>Email Login Admin & Kontak</label>
           <input
             type="email"
@@ -283,49 +285,43 @@ function PengaturanAdmin() {
             required
           />
 
+          <label style={styles.label}>Kata Sandi Baru (Opsional)</label>
+          <input
+            type="password"
+            value={sandiBaru}
+            onChange={(e) => setSandiBaru(e.target.value)}
+            placeholder="Biarkan kosong jika tidak diubah"
+            style={styles.input}
+          />
+
           <button type="submit" style={styles.btn} disabled={loading}>
             {loading ? "Memproses..." : "Simpan Pengaturan"}
           </button>
         </form>
       </div>
 
-      {/* MODAL POPUP VERIFIKASI KODE OTP */}
-      {showOtpModal && (
+      {/* MODAL POPUP INFORMASI VERIFIKASI EMAIL */}
+      {showEmailModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
             <h3 style={{ color: "#1B5E20", marginBottom: "10px", fontSize: "18px", fontWeight: "800" }}>
-              Masukkan Kode Verifikasi
+              Verifikasi Email Dikirim!
             </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px" }}>
-              Kami telah mengirimkan kode verifikasi 6-digit ke email baru Anda:
+            <p style={{ color: "#556B4D", fontSize: "13px", lineHeight: "1.6" }}>
+              Tautan konfirmasi telah dikirimkan ke email baru Anda:
               <br />
               <strong style={{ color: "#1B5E20" }}>{pendingEmail}</strong>
+              <br /><br />
+              Silakan buka email Anda (cek juga folder Spam) lalu klik link verifikasi tersebut agar email login resmi diperbarui.
             </p>
 
-            <form onSubmit={handleVerifyOtp}>
-              <input
-                type="text"
-                maxLength="6"
-                placeholder="123456"
-                value={inputOtp}
-                onChange={(e) => setInputOtp(e.target.value)}
-                style={styles.otpInput}
-                required
-              />
-
-              <button type="submit" style={styles.btn} disabled={loading}>
-                {loading ? "Memeriksa..." : "Verifikasi & Ganti Email"}
-              </button>
-
-              <button
-                type="button"
-                style={styles.cancelBtn}
-                onClick={() => setShowOtpModal(false)}
-                disabled={loading}
-              >
-                Batal
-              </button>
-            </form>
+            <button
+              type="button"
+              style={styles.okBtn}
+              onClick={() => setShowEmailModal(false)}
+            >
+              Saya Mengerti
+            </button>
           </div>
         </div>
       )}

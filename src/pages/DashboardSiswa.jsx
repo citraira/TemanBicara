@@ -36,13 +36,17 @@ function DashboardSiswa() {
         aduanSaya.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setNotifList(aduanSaya);
 
-        const lastReadTime = localStorage.getItem(`lastReadNotif_${savedNama || "guest"}`);
+        const storageKey = `lastReadNotif_${savedNama || "guest"}`;
+        const lastReadTime = localStorage.getItem(storageKey);
+
         if (lastReadTime) {
+          // Hitung hanya laporan yang tanggalnya LEBIH BARU dari waktu terakhir notifikasi dibuka
           const unread = aduanSaya.filter(
             (item) => new Date(item.createdAt) > new Date(lastReadTime)
           ).length;
           setUnreadCount(unread);
         } else {
+          // Jika belum pernah diklik/buka, set angka unread sekali dan jangan ulang
           setUnreadCount(aduanSaya.length);
         }
       } else {
@@ -54,11 +58,25 @@ function DashboardSiswa() {
     return () => unsubscribe();
   }, []);
 
+  // FUNGSI TANDAI NOTIFIKASI SUDAH DIBACA PERMANEN
+  const markNotifAsRead = () => {
+    const savedNama = localStorage.getItem("namaSiswa") || "guest";
+    const nowIso = new Date().toISOString();
+    
+    // Simpan timestamp membaca saat ini ke LocalStorage
+    localStorage.setItem(`lastReadNotif_${savedNama}`, nowIso);
+    setUnreadCount(0);
+  };
+
   const handleOpenNotif = () => {
     setShowNotifModal(true);
-    setUnreadCount(0);
-    const savedNama = localStorage.getItem("namaSiswa") || "guest";
-    localStorage.setItem(`lastReadNotif_${savedNama}`, new Date().toISOString());
+    markNotifAsRead();
+  };
+
+  const handleBukaDetailRiwayat = () => {
+    setShowNotifModal(false);
+    markNotifAsRead();
+    navigate("/riwayat");
   };
 
   const handleLogout = () => {
@@ -399,10 +417,7 @@ function DashboardSiswa() {
                     </div>
                     <button
                       style={styles.actionBtn}
-                      onClick={() => {
-                        setShowNotifModal(false);
-                        navigate("/riwayat");
-                      }}
+                      onClick={handleBukaDetailRiwayat}
                     >
                       Lihat
                     </button>
