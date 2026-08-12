@@ -11,7 +11,7 @@ function LoginAdmin() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State Ikon Mata
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [showResetModal, setShowResetModal] = useState(false);
@@ -170,6 +170,8 @@ function LoginAdmin() {
       position: "relative",
       width: "100%",
       marginBottom: "18px",
+      display: "flex",
+      alignItems: "center",
     },
     passwordInput: {
       width: "100%",
@@ -184,16 +186,14 @@ function LoginAdmin() {
     eyeBtn: {
       position: "absolute",
       right: "12px",
-      top: "50%",
-      transform: "clientY(-50%)",
       background: "none",
       border: "none",
       cursor: "pointer",
-      fontSize: "18px",
-      color: "#2E7D32",
-      padding: 0,
+      padding: "4px",
       display: "flex",
       alignItems: "center",
+      justifyContent: "center",
+      color: "#2E7D32",
     },
     forgotContainer: {
       display: "flex",
@@ -307,7 +307,8 @@ function LoginAdmin() {
           />
 
           <label style={styles.label}>Kata Sandi</label>
-          {/* INPUT PASSWORD DENGAN IKON MATA */}
+          
+          {/* INPUT PASSWORD DENGAN IKON VECTOR SVG */}
           <div style={styles.passwordWrapper}>
             <input
               type={showPassword ? "text" : "password"}
@@ -322,8 +323,21 @@ function LoginAdmin() {
               type="button"
               style={styles.eyeBtn}
               onClick={() => setShowPassword(!showPassword)}
+              aria-label="Tampilkan atau sembunyikan kata sandi"
             >
-              {showPassword ? "👁️" : "🙈"}
+              {showPassword ? (
+                /* IKON MATA TERBUKA */
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              ) : (
+                /* IKON MATA TERTUTUP / DICORET */
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              )}
             </button>
           </div>
 
