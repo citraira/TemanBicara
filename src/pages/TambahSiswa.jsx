@@ -209,12 +209,12 @@ function TambahSiswa() {
 
               <option value="">Pilih Kelas</option>
 
-              <option>1A</option>
-              <option>2A</option>
-              <option>3A</option>
-              <option>4A</option>
-              <option>5A</option>
-              <option>6A</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
        
 
             </select>
