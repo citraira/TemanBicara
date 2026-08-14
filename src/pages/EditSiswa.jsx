@@ -174,7 +174,7 @@ function EditSiswa() {
       <div style={styles.container}>
 
         <h1 style={styles.title}>
-          ✏️ Edit Data Siswa
+        Edit Data Siswa
         </h1>
 
         <p style={styles.subtitle}>
@@ -206,7 +206,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🆔 Nomor Induk Siswa (NIS)
+              Nomor Induk Siswa (NIS)
             </label>
 
             <input
@@ -224,7 +224,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🏫 Kelas
+              Kelas
             </label>
 
             <select
