@@ -233,24 +233,12 @@ function EditSiswa() {
               style={styles.input}
             >
               <option value="">Pilih Kelas</option>
-
-              <option value="1A">1A</option>
-              <option value="1B">1B</option>
-
-              <option value="2A">2A</option>
-              <option value="2B">2B</option>
-
-              <option value="3A">3A</option>
-              <option value="3B">3B</option>
-
-              <option value="4A">4A</option>
-              <option value="4B">4B</option>
-
-              <option value="5A">5A</option>
-              <option value="5B">5B</option>
-
-              <option value="6A">6A</option>
-              <option value="6B">6B</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
             </select>
 
           </div>
@@ -260,7 +248,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🚻 Jenis Kelamin
+              Jenis Kelamin
             </label>
 
             <select
@@ -287,7 +275,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              📞 Nomor HP Orang Tua
+              Nomor HP Orang Tua
             </label>
 
             <input
@@ -305,7 +293,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🏠 Alamat
+              Alamat
             </label>
 
             <textarea
@@ -325,7 +313,7 @@ function EditSiswa() {
               type="submit"
               style={styles.updateButton}
             >
-              💾 Simpan Perubahan
+              Simpan Perubahan
             </button>
 
             <button
