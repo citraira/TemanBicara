@@ -148,7 +148,7 @@ function TambahSiswa() {
       <div style={styles.container}>
 
         <h1 style={styles.title}>
-          ➕ Tambah Data Siswa
+          Tambah Data Siswa
         </h1>
 
         <p style={styles.subtitle}>
@@ -162,7 +162,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              👤 Nama Lengkap
+              Nama Lengkap
             </label>
 
             <input
@@ -180,7 +180,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🆔 Nomor Induk Siswa (NIS)
+              Nomor Induk Siswa (NIS)
             </label>
 
             <input
@@ -198,7 +198,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🏫 Kelas
+              Kelas
             </label>
 
             <select
@@ -210,22 +210,12 @@ function TambahSiswa() {
               <option value="">Pilih Kelas</option>
 
               <option>1A</option>
-              <option>1B</option>
-
               <option>2A</option>
-              <option>2B</option>
-
               <option>3A</option>
-              <option>3B</option>
-
               <option>4A</option>
-              <option>4B</option>
-
               <option>5A</option>
-              <option>5B</option>
-
               <option>6A</option>
-              <option>6B</option>
+       
 
             </select>
 
@@ -236,7 +226,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🚻 Jenis Kelamin
+              Jenis Kelamin
             </label>
 
             <select
@@ -260,7 +250,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              📞 Nomor HP Orang Tua
+              Nomor HP Orang Tua
             </label>
 
             <input
@@ -278,7 +268,7 @@ function TambahSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              🏠 Alamat
+            Alamat
             </label>
 
             <textarea
@@ -298,7 +288,7 @@ function TambahSiswa() {
               type="submit"
               style={styles.saveButton}
             >
-              💾 Simpan Data
+            Simpan Data
             </button>
 
             <button

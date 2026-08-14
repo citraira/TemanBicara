@@ -188,7 +188,7 @@ function EditSiswa() {
           <div style={styles.group}>
 
             <label style={styles.label}>
-              👤 Nama Lengkap
+              Nama Lengkap
             </label>
 
             <input
