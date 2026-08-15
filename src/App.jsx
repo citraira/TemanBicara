@@ -26,11 +26,10 @@ import InstallPWA from "./components/InstallPWA";
 function App() {
   return (
     <>
-      <InstallPWA />
-
       <Routes>
         <Route path="/" element={<LandingPage />} />
 
+        {/* Halaman Login Bebas Gangguan Re-render */}
         <Route path="/login-siswa" element={<LoginSiswa />} />
         <Route path="/login-admin" element={<LoginAdmin />} />
 
@@ -53,6 +52,9 @@ function App() {
         <Route path="/tambah-siswa" element={<TambahSiswa />} />
         <Route path="/edit-siswa/:id" element={<EditSiswa />} />
       </Routes>
+
+      {/* Letakkan InstallPWA di paling bawah */}
+      <InstallPWA />
     </>
   );
 }
