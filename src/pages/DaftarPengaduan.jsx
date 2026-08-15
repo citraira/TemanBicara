@@ -88,6 +88,7 @@ function DaftarPengaduan() {
     try {
       await update(ref(db, `pengaduan/${id}`), {
         status: statusBaru,
+        updatedAt: new Date().toISOString(), // Merekam waktu update agar memicu notifikasi di siswa
       });
       showAlert(
         "success",
@@ -112,6 +113,7 @@ function DaftarPengaduan() {
         penanganan: dataPenanganan.penanganan,
         responOrangTua: dataPenanganan.responOrangTua,
         tindakanSanksi: dataPenanganan.tindakanSanksi,
+        updatedAt: new Date().toISOString(), // Merekam waktu update agar tersinkronisasi
       });
       showAlert(
         "success",

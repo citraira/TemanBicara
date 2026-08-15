@@ -10,6 +10,9 @@ function DashboardSiswa() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // State untuk Pop-Up Toast Realtime saat Status Berubah
+  const [toastStatus, setToastStatus] = useState(null);
+
   useEffect(() => {
     const savedNama = localStorage.getItem("namaSiswa");
     if (savedNama) {
@@ -17,6 +20,8 @@ function DashboardSiswa() {
     }
 
     const pengaduanRef = ref(db, "pengaduan");
+    let initialLoad = true;
+
     const unsubscribe = onValue(pengaduanRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -25,6 +30,7 @@ function DashboardSiswa() {
           ...data[key],
         }));
 
+        // Filter pengaduan milik siswa yang sedang login
         const aduanSaya = savedNama
           ? formatted.filter(
               (item) =>
@@ -33,37 +39,75 @@ function DashboardSiswa() {
             )
           : formatted;
 
-        aduanSaya.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // Urutkan berdasarkan update terbaru atau tanggal dibuat
+        aduanSaya.sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt) -
+            new Date(a.updatedAt || a.createdAt)
+        );
         setNotifList(aduanSaya);
 
         const storageKey = `lastReadNotif_${savedNama || "guest"}`;
         const lastReadTime = localStorage.getItem(storageKey);
 
+        // Hitung unread jika tanggal update/dibuat lebih baru dari waktu buka notif terakhir
         if (lastReadTime) {
-          // Hitung hanya laporan yang tanggalnya LEBIH BARU dari waktu terakhir notifikasi dibuka
-          const unread = aduanSaya.filter(
-            (item) => new Date(item.createdAt) > new Date(lastReadTime)
-          ).length;
+          const unread = aduanSaya.filter((item) => {
+            const waktuAktivitas = new Date(item.updatedAt || item.createdAt);
+            return waktuAktivitas > new Date(lastReadTime);
+          }).length;
           setUnreadCount(unread);
         } else {
-          // Jika belum pernah diklik/buka, set angka unread sekali dan jangan ulang
           setUnreadCount(aduanSaya.length);
+        }
+
+        // --- REALTIME TOAST NOTIFIKASI KETIKA GURU MENGUBAH STATUS ---
+        if (!initialLoad && aduanSaya.length > 0) {
+          const aduanTerbaru = aduanSaya[0];
+          const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
+          const lastSavedStatus = localStorage.getItem(lastStatusKey);
+
+          // Munculkan toast jika status berubah dari status yang disimpan sebelumnya
+          if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
+            setToastStatus({
+              jenis: aduanTerbaru.jenis || "Pengaduan",
+              status: aduanTerbaru.status,
+            });
+
+            // Putar audio notifikasi
+            try {
+              const audio = new Audio(
+                "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+              );
+              audio.play();
+            } catch (err) {
+              console.log("Audio play blocked by browser:", err);
+            }
+          }
+
+          // Simpan status terbaru ke LocalStorage
+          localStorage.setItem(lastStatusKey, aduanTerbaru.status);
+        } else if (initialLoad && aduanSaya.length > 0) {
+          // Inisialisasi status saat halaman pertama kali dibuka
+          aduanSaya.forEach((item) => {
+            localStorage.setItem(`lastSeenStatus_${item.id}`, item.status);
+          });
         }
       } else {
         setNotifList([]);
         setUnreadCount(0);
       }
+
+      initialLoad = false;
     });
 
     return () => unsubscribe();
   }, []);
 
-  // FUNGSI TANDAI NOTIFIKASI SUDAH DIBACA PERMANEN
+  // TANDAI NOTIFIKASI SUDAH DIBACA
   const markNotifAsRead = () => {
     const savedNama = localStorage.getItem("namaSiswa") || "guest";
     const nowIso = new Date().toISOString();
-    
-    // Simpan timestamp membaca saat ini ke LocalStorage
     localStorage.setItem(`lastReadNotif_${savedNama}`, nowIso);
     setUnreadCount(0);
   };
@@ -82,7 +126,8 @@ function DashboardSiswa() {
   const handleLogout = () => {
     if (window.confirm("Apakah kamu yakin ingin keluar?")) {
       localStorage.removeItem("namaSiswa");
-      localStorage.removeItem("role");
+      localStorage.removeItem("nisSiswa");
+      localStorage.removeItem("kelasSiswa");
       navigate("/");
     }
   };
@@ -93,6 +138,7 @@ function DashboardSiswa() {
       background: "#F4FBEE",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       paddingBottom: "85px",
+      boxSizing: "border-box",
     },
     header: {
       background: "#2E7D32",
@@ -166,6 +212,27 @@ function DashboardSiswa() {
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
+    },
+
+    // TOAST NOTIFIKASI
+    toast: {
+      position: "fixed",
+      top: "20px",
+      right: "20px",
+      left: "20px",
+      maxWidth: "380px",
+      margin: "0 auto",
+      background: "#2E7D32",
+      color: "#fff",
+      padding: "14px 18px",
+      borderRadius: "16px",
+      boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+      zIndex: 2000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      border: "2px solid #FFF59D",
+      animation: "popIn 0.3s ease-out",
     },
 
     welcomeCard: {
@@ -322,6 +389,36 @@ function DashboardSiswa() {
 
   return (
     <div style={styles.page}>
+      {/* TOAST POP-UP REALTIME SAAT STATUS LAPORAN BERUBAH */}
+      {toastStatus && (
+        <div style={styles.toast}>
+          <div>
+            <strong style={{ fontSize: "14px", color: "#FFEB3B" }}>
+              🔔 Update Laporan!
+            </strong>
+            <br />
+            <span style={{ fontSize: "12px" }}>
+              Status laporan <strong>{toastStatus.jenis}</strong> kamu diubah menjadi:{" "}
+              <strong>"{toastStatus.status}"</strong>
+            </span>
+          </div>
+          <button
+            onClick={() => setToastStatus(null)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#fff",
+              fontWeight: "800",
+              cursor: "pointer",
+              marginLeft: "10px",
+              fontSize: "16px",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* HEADER DASHBOARD */}
       <div style={styles.header}>
         <div style={styles.topRow}>
@@ -336,7 +433,11 @@ function DashboardSiswa() {
           </div>
 
           <div style={styles.headerActions}>
-            <button style={styles.notifBtn} onClick={handleOpenNotif} title="Pemberitahuan">
+            <button
+              style={styles.notifBtn}
+              onClick={handleOpenNotif}
+              title="Pemberitahuan"
+            >
               🔔
               {unreadCount > 0 && (
                 <span style={styles.badgeCount}>{unreadCount}</span>
@@ -390,7 +491,7 @@ function DashboardSiswa() {
             <div style={styles.panelHeader}>
               <h2 style={styles.panelTitle}>Notifikasi</h2>
               <button style={styles.closeBtn} onClick={() => setShowNotifModal(false)}>
-                X
+                ✕
               </button>
             </div>
 
@@ -429,7 +530,7 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION DENGAN IKON & TEKS */}
+      {/* BOTTOM NAVIGATION */}
       <div style={styles.bottomNav}>
         <div style={styles.navItem} onClick={() => navigate("/dashboard-siswa")}>
           <span style={styles.navIcon}>🏠</span>
