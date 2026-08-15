@@ -26,7 +26,6 @@ import InstallPWA from "./components/InstallPWA";
 function App() {
   return (
     <>
-      {/* Pop-up PWA */}
       <InstallPWA />
 
       <Routes>

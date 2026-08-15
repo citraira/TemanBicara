@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
@@ -6,7 +6,6 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 
-// 1. Objek styles dipindahkan ke LUAR komponen
 const styles = {
   page: {
     minHeight: "100dvh",
@@ -69,7 +68,7 @@ const styles = {
     borderRadius: "12px",
     border: "2px solid #C8E6C9",
     marginBottom: "18px",
-    fontSize: "16px", // 16px mencegah zoom & keyboard collapse
+    fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
     background: "#FAFAFA",
@@ -86,7 +85,7 @@ const styles = {
     padding: "12px 45px 12px 14px",
     borderRadius: "12px",
     border: "2px solid #C8E6C9",
-    fontSize: "16px", // 16px stabil saat keyboard naik
+    fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
     background: "#FAFAFA",
@@ -249,13 +248,14 @@ const styles = {
 function LoginAdmin() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Menggunakan Ref
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const resetEmailRef = useRef(null);
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
@@ -279,27 +279,21 @@ function LoginAdmin() {
   const handleCloseAlert = () => {
     const callback = alertConfig.onCloseCallback;
     setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) {
-      callback();
-    }
-  };
-
-  const handleOpenResetModal = () => {
-    if (email.trim()) {
-      setResetEmail(email.trim());
-    }
-    setShowResetModal(true);
+    if (callback) callback();
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!email.trim()) {
+    const emailVal = emailRef.current?.value || "";
+    const passwordVal = passwordRef.current?.value || "";
+
+    if (!emailVal.trim()) {
       showAlert("warning", "Email Kosong", "Silakan masukkan email admin terlebih dahulu.");
       return;
     }
 
-    if (!password) {
+    if (!passwordVal) {
       showAlert("warning", "Kata Sandi Kosong", "Silakan masukkan kata sandi Anda.");
       return;
     }
@@ -307,7 +301,7 @@ function LoginAdmin() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      await signInWithEmailAndPassword(auth, emailVal.trim(), passwordVal);
       showAlert(
         "success",
         "Login Berhasil!",
@@ -347,7 +341,9 @@ function LoginAdmin() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
 
-    if (!resetEmail.trim()) {
+    const resetEmailVal = resetEmailRef.current?.value || "";
+
+    if (!resetEmailVal.trim()) {
       showAlert("warning", "Email Diperlukan", "Silakan masukkan email admin untuk mereset kata sandi.");
       return;
     }
@@ -355,9 +351,8 @@ function LoginAdmin() {
     setResetLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, resetEmail.trim());
+      await sendPasswordResetEmail(auth, resetEmailVal.trim());
       setShowResetModal(false);
-      setResetEmail("");
       showAlert(
         "success",
         "Email Terkirim!",
@@ -382,11 +377,10 @@ function LoginAdmin() {
         <form onSubmit={handleLogin}>
           <label style={styles.label}>Email Admin</label>
           <input
+            ref={emailRef}
             type="email"
             placeholder="Masukkan email admin"
             style={styles.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
             autoComplete="email"
           />
@@ -395,11 +389,10 @@ function LoginAdmin() {
 
           <div style={styles.passwordWrapper}>
             <input
+              ref={passwordRef}
               type={showPassword ? "text" : "password"}
               placeholder="Masukkan kata sandi"
               style={styles.passwordInput}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               autoComplete="current-password"
             />
@@ -410,30 +403,12 @@ function LoginAdmin() {
               aria-label="Tampilkan atau sembunyikan kata sandi"
             >
               {showPassword ? (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11 8-11 8z"></path>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               ) : (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                   <line x1="1" y1="1" x2="23" y2="23"></line>
                 </svg>
@@ -445,7 +420,7 @@ function LoginAdmin() {
             <button
               type="button"
               style={styles.forgotBtn}
-              onClick={handleOpenResetModal}
+              onClick={() => setShowResetModal(true)}
               disabled={loading}
             >
               Lupa Kata Sandi?
@@ -468,13 +443,7 @@ function LoginAdmin() {
           onClick={() => !resetLoading && setShowResetModal(false)}
         >
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: "45px",
-                marginBottom: "5px",
-              }}
-            >
+            <div style={{ textAlign: "center", fontSize: "45px", marginBottom: "5px" }}>
               🔐
             </div>
             <h3 style={styles.modalTitle}>Lupa Kata Sandi?</h3>
@@ -485,18 +454,21 @@ function LoginAdmin() {
             <form onSubmit={handleResetPassword}>
               <label style={styles.label}>📧 Email Admin</label>
               <input
+                ref={resetEmailRef}
                 type="email"
                 placeholder="admin@email.com"
                 style={styles.input}
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
                 disabled={resetLoading}
                 autoComplete="email"
               />
 
               <button
                 type="submit"
-                style={styles.loginBtn(resetLoading)}
+                style={{
+                  ...styles.loginBtn(resetLoading),
+                  marginTop: 0,
+                  background: resetLoading ? "#A5D6A7" : "#2E7D32",
+                }}
                 disabled={resetLoading}
               >
                 {resetLoading ? "Mengirim Email..." : "📨 Kirim Email Reset"}

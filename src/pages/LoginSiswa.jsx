@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase";
 
-// 1. Objek styles dipindahkan ke LUAR komponen agar referensi objek tetap statis dan tidak dibuat ulang saat mengetik
 const styles = {
   page: {
-    minHeight: "100dvh", // Menggunakan dynamic viewport height yang aman untuk keyboard HP
+    minHeight: "100dvh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -89,7 +88,7 @@ const styles = {
     borderRadius: "12px",
     border: "2px solid #C8E6C9",
     marginBottom: "18px",
-    fontSize: "16px", // Ukuran 16px mencegah auto-zoom & keyboard drop di HP
+    fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
     background: "#FAFAFA",
@@ -220,8 +219,9 @@ const styles = {
 function LoginSiswa() {
   const navigate = useNavigate();
 
-  const [nama, setNama] = useState("");
-  const [nis, setNis] = useState("");
+  // Menggunakan Ref agar ketikan tidak memicu re-render
+  const namaRef = useRef(null);
+  const nisRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
@@ -245,20 +245,21 @@ function LoginSiswa() {
   const handleCloseAlert = () => {
     const callback = alertConfig.onCloseCallback;
     setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) {
-      callback();
-    }
+    if (callback) callback();
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (nama.trim() === "") {
+    const namaVal = namaRef.current?.value || "";
+    const nisVal = nisRef.current?.value || "";
+
+    if (namaVal.trim() === "") {
       showAlert("warning", "Nama Belum Diisi", "Silakan masukkan nama lengkapmu terlebih dahulu.");
       return;
     }
 
-    if (nis.trim() === "") {
+    if (nisVal.trim() === "") {
       showAlert("warning", "NIS Belum Diisi", "Silakan masukkan Nomor Induk Siswa (NIS) milikmu.");
       return;
     }
@@ -273,8 +274,8 @@ function LoginSiswa() {
         const data = snapshot.val();
 
         const siswaDitemukan = Object.entries(data).find(([key, item]) => {
-          const matchNama = item.nama?.trim().toLowerCase() === nama.trim().toLowerCase();
-          const matchNis = (item.nis?.trim() === nis.trim()) || (key === nis.trim());
+          const matchNama = item.nama?.trim().toLowerCase() === namaVal.trim().toLowerCase();
+          const matchNis = (item.nis?.trim() === nisVal.trim()) || (key === nisVal.trim());
           return matchNama && matchNis;
         });
 
@@ -282,7 +283,7 @@ function LoginSiswa() {
           const [, item] = siswaDitemukan;
 
           localStorage.setItem("namaSiswa", item.nama);
-          localStorage.setItem("nisSiswa", item.nis || nis);
+          localStorage.setItem("nisSiswa", item.nis || nisVal);
           localStorage.setItem("kelasSiswa", item.kelas || "");
 
           showAlert(
@@ -337,22 +338,20 @@ function LoginSiswa() {
           <form onSubmit={handleLogin}>
             <label style={styles.label}>Nama Lengkap</label>
             <input
+              ref={namaRef}
               type="text"
               placeholder="Ketik nama lengkapmu"
               style={styles.input}
-              value={nama}
-              onChange={(e) => setNama(e.target.value)}
               disabled={loading}
               autoComplete="name"
             />
 
             <label style={styles.label}>Nomor Induk Siswa (NIS)</label>
             <input
+              ref={nisRef}
               type="text"
               placeholder="Ketik nomor NIS"
               style={styles.input}
-              value={nis}
-              onChange={(e) => setNis(e.target.value)}
               disabled={loading}
               inputMode="numeric"
             />
