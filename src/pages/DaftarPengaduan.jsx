@@ -9,20 +9,35 @@ function DaftarPengaduan() {
   const [loading, setLoading] = useState(true);
   const [selectedFoto, setSelectedFoto] = useState(null);
 
-  // State Sementara untuk Form Penanganan Kasus
+  // State Form Penanganan
   const [penangananForm, setPenangananForm] = useState({});
 
-  // State Modal Konfirmasi Hapus Laporan
+  // State Modal Konfirmasi Hapus
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  // State Modal Notifikasi Kustom
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
-    type: "success", // 'success' | 'error' | 'warning'
+    type: "success",
     title: "",
     message: "",
     onCloseCallback: null,
   });
+
+  // Pilihan Status Kasus
+  const statusOptions = [
+    { label: "Diproses (Guru/BK)", color: "#F57F17", bg: "#FFFDE7", border: "#FFF59D" },
+    { label: "Eskalasi: Kepala Sekolah", color: "#512DA8", bg: "#EDE7F6", border: "#B39DDB" },
+    { label: "Eskalasi: Dinas/Pengawas", color: "#8E24AA", bg: "#F3E5F5", border: "#CE93D8" },
+    { label: "Selesai", color: "#2E7D32", bg: "#E8F5E9", border: "#A5D6A7" },
+    { label: "Ditolak (Fitnah / Tidak Valid)", color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A" },
+  ];
+
+  // Pilihan Metode Penanganan
+  const metodePenanganan = [
+    { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
+    { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
+  ];
 
   const showAlert = (type, title, message, onCloseCallback = null) => {
     setAlertConfig({
@@ -37,9 +52,7 @@ function DaftarPengaduan() {
   const handleCloseAlert = () => {
     const callback = alertConfig.onCloseCallback;
     setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) {
-      callback();
-    }
+    if (callback) callback();
   };
 
   useEffect(() => {
@@ -88,7 +101,7 @@ function DaftarPengaduan() {
     try {
       await update(ref(db, `pengaduan/${id}`), {
         status: statusBaru,
-        updatedAt: new Date().toISOString(), // Merekam waktu update agar memicu notifikasi di siswa
+        updatedAt: new Date().toISOString(),
       });
       showAlert(
         "success",
@@ -113,7 +126,7 @@ function DaftarPengaduan() {
         penanganan: dataPenanganan.penanganan,
         responOrangTua: dataPenanganan.responOrangTua,
         tindakanSanksi: dataPenanganan.tindakanSanksi,
-        updatedAt: new Date().toISOString(), // Merekam waktu update agar tersinkronisasi
+        updatedAt: new Date().toISOString(),
       });
       showAlert(
         "success",
@@ -139,12 +152,6 @@ function DaftarPengaduan() {
     }));
   };
 
-  // Membuka modal konfirmasi hapus
-  const handleHapus = (id) => {
-    setDeleteTargetId(id);
-  };
-
-  // Eksekusi hapus data setelah dikonfirmasi
   const executeDelete = async () => {
     const id = deleteTargetId;
     setDeleteTargetId(null);
@@ -153,11 +160,7 @@ function DaftarPengaduan() {
       await remove(ref(db, `pengaduan/${id}`));
       showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus dari sistem.");
     } catch (error) {
-      showAlert(
-        "error",
-        "Gagal Menghapus",
-        error.message || "Terjadi kesalahan saat menghapus laporan."
-      );
+      showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
     }
   };
 
@@ -180,7 +183,7 @@ function DaftarPengaduan() {
     page: {
       minHeight: "100vh",
       background: "#F4FBEE",
-      padding: "20px 15px",
+      padding: "20px 15px 40px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
     },
@@ -197,10 +200,7 @@ function DaftarPengaduan() {
       flexWrap: "wrap",
       gap: "12px",
     },
-    title: {
-      fontSize: "22px",
-      fontWeight: "800",
-    },
+    title: { fontSize: "22px", fontWeight: "800", margin: 0 },
     backButton: {
       padding: "10px 16px",
       background: "#FFEB3B",
@@ -229,21 +229,12 @@ function DaftarPengaduan() {
       alignItems: "center",
       borderBottom: "1px solid #E8F5E9",
       paddingBottom: "10px",
-      marginBottom: "12px",
+      marginBottom: "14px",
       flexWrap: "wrap",
       gap: "8px",
     },
-    pelaporInfo: {
-      fontSize: "16px",
-      fontWeight: "800",
-      color: "#1B5E20",
-    },
-    badge: {
-      padding: "6px 12px",
-      borderRadius: "15px",
-      fontSize: "12px",
-      fontWeight: "800",
-    },
+    pelaporInfo: { fontSize: "16px", fontWeight: "800", color: "#1B5E20" },
+    badge: { padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: "800" },
     grid: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -260,45 +251,24 @@ function DaftarPengaduan() {
       fontSize: "13px",
       lineHeight: "1.5",
       color: "#2E3D29",
-      marginTop: "5px",
-      marginBottom: "12px",
+      marginTop: "6px",
+      marginBottom: "14px",
     },
     interventionBox: {
       background: "#FFFDE7",
       border: "2px solid #FFF59D",
       borderRadius: "14px",
-      padding: "15px",
-      marginTop: "15px",
-      marginBottom: "15px",
-    },
-    actionArea: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      flexWrap: "wrap",
-      gap: "10px",
-      marginTop: "15px",
-      paddingTop: "12px",
-      borderTop: "1px solid #E8F5E9",
-    },
-    selectStatus: {
-      padding: "8px 12px",
-      borderRadius: "10px",
-      border: "2px solid #C8E6C9",
-      fontWeight: "700",
-      fontSize: "13px",
-      cursor: "pointer",
-      background: "#fff",
-      color: "#1B5E20",
-      outline: "none",
+      padding: "16px",
+      marginTop: "16px",
+      marginBottom: "16px",
     },
     inputSmall: {
       width: "100%",
       padding: "10px 12px",
       borderRadius: "10px",
-      border: "2px solid #C8E6C9",
+      border: "1.5px solid #C8E6C9",
       fontSize: "13px",
-      marginTop: "5px",
+      marginTop: "6px",
       boxSizing: "border-box",
       outline: "none",
       background: "#fff",
@@ -312,9 +282,39 @@ function DaftarPengaduan() {
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      marginTop: "12px",
+      marginTop: "14px",
       boxShadow: "0 3px 0 #1B5E20",
       textTransform: "uppercase",
+    },
+
+    // Tombol Pilihan Desain Kustom (Chips)
+    chipButtonGroup: {
+      display: "flex",
+      gap: "6px",
+      flexWrap: "wrap",
+      marginTop: "6px",
+    },
+    chipItem: (selected, opt) => ({
+      padding: "7px 12px",
+      borderRadius: "8px",
+      border: `1.5px solid ${selected ? opt.border || "#2E7D32" : "#E0E0E0"}`,
+      background: selected ? opt.bg || "#E8F5E9" : "#fff",
+      color: selected ? opt.color || "#1B5E20" : "#444",
+      fontWeight: selected ? "800" : "600",
+      fontSize: "12px",
+      cursor: "pointer",
+      transition: "all 0.15s ease",
+    }),
+
+    actionArea: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      flexDirection: "column",
+      gap: "12px",
+      marginTop: "15px",
+      paddingTop: "14px",
+      borderTop: "1px solid #E8F5E9",
     },
     deleteBtn: {
       padding: "8px 14px",
@@ -324,7 +324,7 @@ function DaftarPengaduan() {
       borderRadius: "10px",
       cursor: "pointer",
       fontWeight: "800",
-      fontSize: "13px",
+      fontSize: "12px",
       boxShadow: "0 2px 0 #9A0007",
     },
     thumbFoto: {
@@ -350,7 +350,6 @@ function DaftarPengaduan() {
       padding: "20px",
       boxSizing: "border-box",
     },
-    // Gaya Modal Notifikasi & Dialog Konfirmasi
     modalCard: {
       background: "#fff",
       padding: "25px 20px",
@@ -362,11 +361,7 @@ function DaftarPengaduan() {
       border: "2px solid #C8E6C9",
       boxSizing: "border-box",
     },
-    modalBtnGroup: {
-      display: "flex",
-      gap: "10px",
-      marginTop: "20px",
-    },
+    modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
     confirmYesBtn: {
       flex: 1,
       background: "#D32F2F",
@@ -551,7 +546,7 @@ function DaftarPengaduan() {
 
               {/* LAMPIRAN FOTO */}
               {item.fotoUrl && item.fotoUrl !== "-" && (
-                <div style={{ marginBottom: "12px" }}>
+                <div style={{ marginBottom: "14px" }}>
                   <strong style={{ color: "#1B5E20", fontSize: "13px" }}>Bukti Foto:</strong>
                   <div>
                     <img
@@ -567,24 +562,32 @@ function DaftarPengaduan() {
 
               {/* MODUL INTERVENSI & PENANGANAN GURU */}
               <div style={styles.interventionBox}>
-                <div style={{ fontWeight: "800", fontSize: "14px", color: "#1B5E20", marginBottom: "10px" }}>
+                <div style={{ fontWeight: "800", fontSize: "14px", color: "#1B5E20", marginBottom: "12px" }}>
                   Modul Penanganan & Intervensi Kasus
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
-                  {/* METODE PENANGANAN */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+                  {/* METODE PENANGANAN (CHIPS PILIHAN KUSTOM) */}
                   <div>
                     <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
                       Penanganan Pelaku & Korban:
                     </label>
-                    <select
-                      value={currentForm.penanganan}
-                      onChange={(e) => handleFormChange(item.id, "penanganan", e.target.value)}
-                      style={{ ...styles.inputSmall, fontWeight: "600" }}
-                    >
-                      <option value="Dipisahkan">Dipisahkan (Perlindungan Korban)</option>
-                      <option value="Dipertemukan">Dipertemukan (Mediasi)</option>
-                    </select>
+                    <div style={styles.chipButtonGroup}>
+                      {metodePenanganan.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          style={styles.chipItem(currentForm.penanganan === m.id, {
+                            bg: "#2E7D32",
+                            color: "#fff",
+                            border: "#1B5E20",
+                          })}
+                          onClick={() => handleFormChange(item.id, "penanganan", m.id)}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* RESPONS ORANG TUA */}
@@ -621,34 +624,38 @@ function DaftarPengaduan() {
                 </button>
               </div>
 
-              {/* FOOTER & AKSI ADMIN */}
+              {/* FOOTER & UBAH STATUS KASUS DENGAN CHIPS KUSTOM */}
               <div style={styles.actionArea}>
-                <div style={{ fontSize: "12px", color: "#556B4D" }}>
-                  Dilaporkan pada:{" "}
-                  {item.createdAt
-                    ? new Date(item.createdAt).toLocaleString("id-ID")
-                    : "-"}
+                <div style={{ width: "100%" }}>
+                  <label style={{ fontSize: "13px", fontWeight: "800", color: "#1B5E20", display: "block", marginBottom: "6px" }}>
+                    Ubah Status Kasus:
+                  </label>
+                  <div style={styles.chipButtonGroup}>
+                    {statusOptions.map((opt) => {
+                      const isSelected = (item.status || "Diproses (Guru/BK)") === opt.label;
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          style={styles.chipItem(isSelected, opt)}
+                          onClick={() => handleStatusChange(item.id, opt.label)}
+                        >
+                          {isSelected ? "✓ " : ""}{opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-                  <label style={{ fontSize: "13px", fontWeight: "800", color: "#1B5E20" }}>
-                    Status Kasus:
-                  </label>
-                  <select
-                    value={item.status || "Diproses (Guru/BK)"}
-                    onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                    style={styles.selectStatus}
-                  >
-                    <option value="Diproses (Guru/BK)">Diproses (Guru/BK)</option>
-                    <option value="Eskalasi: Kepala Sekolah">Eskalasi: Kepala Sekolah</option>
-                    <option value="Eskalasi: Dinas/Pengawas">Eskalasi: Dinas/Pengawas</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Ditolak (Fitnah / Tidak Valid)">Ditolak (Fitnah / Tidak Valid)</option>
-                  </select>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginTop: "10px" }}>
+                  <div style={{ fontSize: "12px", color: "#556B4D" }}>
+                    Dilaporkan pada:{" "}
+                    {item.createdAt ? new Date(item.createdAt).toLocaleString("id-ID") : "-"}
+                  </div>
 
                   <button
                     style={styles.deleteBtn}
-                    onClick={() => handleHapus(item.id)}
+                    onClick={() => setDeleteTargetId(item.id)}
                   >
                     Hapus
                   </button>
@@ -673,14 +680,7 @@ function DaftarPengaduan() {
                 borderRadius: "12px",
               }}
             />
-            <div
-              style={{
-                color: "#fff",
-                textAlign: "center",
-                marginTop: "10px",
-                fontSize: "13px",
-              }}
-            >
+            <div style={{ color: "#fff", textAlign: "center", marginTop: "10px", fontSize: "13px" }}>
               Klik di mana saja untuk menutup gambar
             </div>
           </div>
@@ -710,16 +710,12 @@ function DaftarPengaduan() {
         </div>
       )}
 
-      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {/* POP-UP NOTIFIKASI KUSTOM */}
       {alertConfig.isOpen && (
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success"
-                ? "✓"
-                : alertConfig.type === "error"
-                ? "✕"
-                : "ℹ"}
+              {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "✕" : "ℹ"}
             </div>
 
             <h3
