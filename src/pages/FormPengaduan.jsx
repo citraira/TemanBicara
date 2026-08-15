@@ -28,7 +28,7 @@ function FormPengaduan() {
 
   const [cerita, setCerita] = useState("");
   const [pelaku, setPelaku] = useState("");
-  
+
   // Saksi Mata Detail
   const [saksi, setSaksi] = useState("Tidak");
   const [namaSaksi, setNamaSaksi] = useState("");
@@ -43,7 +43,7 @@ function FormPengaduan() {
   // State Pop-Up Notifikasi Kustom (Pengganti alert())
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
-    type: "success", // 'success' | 'error' | 'warning'
+    type: "success",
     title: "",
     message: "",
     onCloseCallback: null,
@@ -62,9 +62,7 @@ function FormPengaduan() {
   const handleCloseAlert = () => {
     const callback = alertConfig.onCloseCallback;
     setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) {
-      callback();
-    }
+    if (callback) callback();
   };
 
   useEffect(() => {
@@ -74,6 +72,34 @@ function FormPengaduan() {
     if (namaSaved) setNama(namaSaved);
     if (kelasSaved) setKelas(kelasSaved);
   }, []);
+
+  // DAFTAR PILIHAN KUSTOM
+  const listKelas = ["1", "2", "3", "4", "5", "6"];
+
+  const listPeran = [
+    { id: "Korban", label: "Saya sendiri yang mengalami (Korban)", icon: "🛡️" },
+    { id: "Saksi / Teman", label: "Saya melihat teman saya (Saksi Mata)", icon: "👁️" },
+  ];
+
+  const listLokasi = [
+    { label: "Ruang Kelas", icon: "🏫" },
+    { label: "Halaman Sekolah", icon: "🌳" },
+    { label: "Kantin", icon: "🍱" },
+    { label: "Lapangan", icon: "⚽" },
+    { label: "Perpustakaan", icon: "📚" },
+    { label: "Toilet", icon: "🚪" },
+    { label: "Depan Gerbang", icon: "🏢" },
+    { label: "Lainnya", icon: "✏️" },
+  ];
+
+  const listJenisBullying = [
+    { label: "Dipukul / Ditendang", desc: "Bullying Fisik", icon: "🥊" },
+    { label: "Diejek / Dihina", desc: "Bullying Verbal / Kata-kata", icon: "🗣️" },
+    { label: "Dikucilkan Teman", desc: "Bullying Sosial / Dijauhi", icon: "😔" },
+    { label: "Diancam / Diperas", desc: "Uang / Barang diambil paksa", icon: "⚠️" },
+    { label: "Bullying di Media Sosial", desc: "WhatsApp / Chat / Medsos", icon: "📱" },
+    { label: "Lainnya", desc: "Ketik tindakan lainnya", icon: "✏️" },
+  ];
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -103,17 +129,14 @@ function FormPengaduan() {
       );
 
       clearTimeout(timeoutId);
-
       const data = await res.json();
 
       if (!res.ok) {
-        console.error("Cloudinary Error Response:", data);
         throw new Error(data.error?.message || "Gagal unggah ke Cloudinary");
       }
-
       return data.secure_url;
     } catch (err) {
-      console.warn("Proses Cloudinary kendala/timeout, beralih ke Base64...", err);
+      console.warn("Proses Cloudinary kendala, beralih ke Base64...", err);
       return await convertToBase64(file);
     }
   };
@@ -180,17 +203,16 @@ function FormPengaduan() {
       showAlert(
         "success",
         "Laporan Terkirim!",
-        "Laporanmu berhasil dikirim dan tersimpan dengan aman.\n\nTerima kasih sudah berani bercerita! Bapak/Ibu Guru BK akan segera menindaklanjuti.",
+        "Laporanmu berhasil dikirim dan tersimpan dengan aman.\n\nTerima kasih sudah berani melapor! Bapak/Ibu Guru BK akan segera menindaklanjuti.",
         () => {
           navigate("/dashboard-siswa");
         }
       );
     } catch (error) {
-      console.error("Submit Error:", error);
       showAlert(
         "error",
         "Gagal Mengirim",
-        error.message || "Terjadi kesalahan saat mengirim laporan. Silakan periksa koneksi internet."
+        error.message || "Terjadi kesalahan saat mengirim laporan."
       );
     } finally {
       setLoading(false);
@@ -200,14 +222,13 @@ function FormPengaduan() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE", // Hijau muda segar
+      background: "#F4FBEE",
       padding: "20px 15px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
     },
-
     header: {
-      background: "#2E7D32", // Hijau utama
+      background: "#2E7D32",
       color: "#fff",
       padding: "25px 20px",
       borderRadius: "20px",
@@ -215,19 +236,8 @@ function FormPengaduan() {
       textAlign: "center",
       boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
     },
-
-    title: {
-      fontSize: "26px",
-      fontWeight: "800",
-      marginBottom: "8px",
-    },
-
-    subtitle: {
-      fontSize: "14px",
-      lineHeight: "1.5",
-      opacity: 0.95,
-    },
-
+    title: { fontSize: "26px", fontWeight: "800", marginBottom: "8px" },
+    subtitle: { fontSize: "14px", lineHeight: "1.5", opacity: 0.95 },
     hotlineBox: {
       background: "#FFFDE7",
       border: "2px solid #FFF59D",
@@ -242,13 +252,7 @@ function FormPengaduan() {
       flexWrap: "wrap",
       gap: "12px",
     },
-
-    hotlineText: {
-      color: "#1B5E20",
-      fontSize: "14px",
-      fontWeight: "600",
-    },
-
+    hotlineText: { color: "#1B5E20", fontSize: "14px", fontWeight: "600" },
     hotlineButton: {
       background: "#25D366",
       color: "#fff",
@@ -259,7 +263,6 @@ function FormPengaduan() {
       fontSize: "13px",
       display: "inline-block",
     },
-
     container: {
       background: "#fff",
       maxWidth: "800px",
@@ -270,42 +273,118 @@ function FormPengaduan() {
       border: "2px solid #C8E6C9",
       boxSizing: "border-box",
     },
-
-    group: {
-      marginBottom: "18px",
-    },
-
+    group: { marginBottom: "22px" },
     label: {
       display: "block",
-      marginBottom: "6px",
-      fontWeight: "700",
+      marginBottom: "8px",
+      fontWeight: "800",
       color: "#1B5E20",
       fontSize: "14px",
     },
-
     input: {
       width: "100%",
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "15px",
+      fontSize: "14px",
       boxSizing: "border-box",
       outline: "none",
       background: "#FAFAFA",
     },
-
     textarea: {
       width: "100%",
       minHeight: "120px",
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "15px",
+      fontSize: "14px",
       resize: "vertical",
       boxSizing: "border-box",
       outline: "none",
       background: "#FAFAFA",
     },
+
+    // PILIHAN KELAS (CHIPS/BULATAN)
+    kelasGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(6, 1fr)",
+      gap: "8px",
+    },
+    kelasBtn: (selected) => ({
+      padding: "12px 0",
+      textAlign: "center",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: "800",
+      fontSize: "15px",
+      border: `2px solid ${selected ? "#2E7D32" : "#C8E6C9"}`,
+      background: selected ? "#2E7D32" : "#FAFAFA",
+      color: selected ? "#fff" : "#1B5E20",
+      boxShadow: selected ? "0 3px 0 #1B5E20" : "none",
+      transition: "all 0.2s ease",
+    }),
+
+    // PILIHAN KARTU DENGAN IKON
+    cardOptionGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+      gap: "10px",
+    },
+    optionCard: (selected) => ({
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      padding: "12px 14px",
+      borderRadius: "14px",
+      cursor: "pointer",
+      border: `2px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+      background: selected ? "#E8F5E9" : "#FAFAFA",
+      boxShadow: selected ? "0 3px 0 #2E7D32" : "none",
+      transition: "all 0.2s ease",
+      boxSizing: "border-box",
+    }),
+
+    // PILIHAN LOKASI & JENIS BULLYING (GRID CHIPS)
+    chipsGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+      gap: "8px",
+    },
+    chipItem: (selected) => ({
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+      padding: "10px 12px",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: "700",
+      border: `2px solid ${selected ? "#2E7D32" : "#C8E6C9"}`,
+      background: selected ? "#2E7D32" : "#FAFAFA",
+      color: selected ? "#fff" : "#2E3D29",
+      boxShadow: selected ? "0 3px 0 #1B5E20" : "none",
+      transition: "all 0.2s ease",
+      textAlign: "center",
+    }),
+
+    // TOGGLE YES/NO SAKSI
+    toggleGroup: {
+      display: "flex",
+      gap: "10px",
+    },
+    toggleBtn: (selected) => ({
+      flex: 1,
+      padding: "12px",
+      borderRadius: "12px",
+      border: `2px solid ${selected ? "#2E7D32" : "#C8E6C9"}`,
+      background: selected ? "#2E7D32" : "#FAFAFA",
+      color: selected ? "#fff" : "#1B5E20",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      boxShadow: selected ? "0 3px 0 #1B5E20" : "none",
+    }),
 
     antiFitnahBox: {
       background: "#FFFDE7",
@@ -317,13 +396,11 @@ function FormPengaduan() {
       alignItems: "flex-start",
       gap: "10px",
     },
-
     buttonContainer: {
       display: "flex",
       gap: "12px",
       flexWrap: "wrap",
     },
-
     submitButton: {
       flex: "1 1 180px",
       padding: "14px",
@@ -337,7 +414,6 @@ function FormPengaduan() {
       boxShadow: loading || !setujuJujur ? "none" : "0 4px 0 #1B5E20",
       textTransform: "uppercase",
     },
-
     backButton: {
       flex: "1 1 180px",
       padding: "14px",
@@ -352,7 +428,6 @@ function FormPengaduan() {
       textTransform: "uppercase",
     },
 
-    // Gaya Modal Pop-up Notifikasi Kustom
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -377,18 +452,6 @@ function FormPengaduan() {
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       border: "2px solid #C8E6C9",
       boxSizing: "border-box",
-    },
-    modalTitle: {
-      marginBottom: "8px",
-      fontSize: "20px",
-      fontWeight: "800",
-    },
-    modalText: {
-      color: "#556B4D",
-      fontSize: "13px",
-      marginBottom: "20px",
-      lineHeight: "1.5",
-      whiteSpace: "pre-line",
     },
     alertIconWrapper: (type) => ({
       width: "60px",
@@ -450,16 +513,16 @@ function FormPengaduan() {
       <div style={styles.header}>
         <div style={styles.title}>Form Pengaduan Bullying</div>
         <div style={styles.subtitle}>
-          Jangan takut bercerita. Semua laporan akan dijaga kerahasiaannya oleh guru BK.
+          Jangan takut bercerita. Semua laporan akan dijaga kerahasiaannya oleh Guru BK.
         </div>
       </div>
 
-      {/* HOTLINE PENGADUAN LANGSUNG */}
+      {/* HOTLINE WA */}
       <div style={styles.hotlineBox}>
         <div style={styles.hotlineText}>
           <strong>Butuh Bantuan Cepat?</strong>
           <br />
-          Kamu bisa menghubungi Tim Pengaduan Guru langsung via WhatsApp.
+          Hubungi Tim Pengaduan Guru langsung via WhatsApp.
         </div>
         <a
           href={`https://wa.me/${NOMOR_WA_GURU}?text=Halo%20Bapak/Ibu%20Guru,%20saya%20ingin%20melaporkan%20kejadian%20bullying.`}
@@ -471,9 +534,9 @@ function FormPengaduan() {
         </a>
       </div>
 
-      {/* FORM PENGADUAN */}
+      {/* FORM PENGADUAN DENGAN DESAIN KUSTOM */}
       <div style={styles.container}>
-        {/* NAMA */}
+        {/* 1. NAMA SISWA */}
         <div style={styles.group}>
           <label style={styles.label}>Nama Siswa (Pelapor) *</label>
           <input
@@ -486,44 +549,54 @@ function FormPengaduan() {
           />
         </div>
 
-        {/* KELAS */}
+        {/* 2. PILIHAN KELAS (CHIPS/TOMBOL MODERN) */}
         <div style={styles.group}>
-          <label style={styles.label}>Kelas *</label>
-          <select
-            value={kelas}
-            onChange={(e) => setKelas(e.target.value)}
-            style={styles.input}
-            disabled={loading}
-          >
-            <option value="">Pilih Kelas</option>
-            <option>1</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-            <option>6</option>
-          </select>
+          <label style={styles.label}>Kelas Berapa? *</label>
+          <div style={styles.kelasGrid}>
+            {listKelas.map((k) => (
+              <button
+                key={k}
+                type="button"
+                style={styles.kelasBtn(kelas === k)}
+                onClick={() => setKelas(k)}
+              >
+                Kelas {k}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* PERAN / STATUS PELAPOR */}
+        {/* 3. PERAN PELAPOR (KARTU INTERAKTIF) */}
         <div style={styles.group}>
           <label style={styles.label}>Kamu Melaporkan Sebagai Apa? *</label>
-          <select
-            value={peran}
-            onChange={(e) => setPeran(e.target.value)}
-            style={styles.input}
-            disabled={loading}
-          >
-            <option value="Korban">
-              Saya sendiri yang mengalami (Korban)
-            </option>
-            <option value="Saksi / Teman">
-              Saya melihat / melaporkan teman saya (Saksi Mata)
-            </option>
-          </select>
+          <div style={styles.cardOptionGrid}>
+            {listPeran.map((item) => (
+              <div
+                key={item.id}
+                style={styles.optionCard(peran === item.id)}
+                onClick={() => setPeran(item.id)}
+              >
+                <span style={{ fontSize: "24px" }}>{item.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "800", fontSize: "13px", color: peran === item.id ? "#1B5E20" : "#333" }}>
+                    {item.label}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    border: `2px solid ${peran === item.id ? "#2E7D32" : "#999"}`,
+                    background: peran === item.id ? "#2E7D32" : "#fff",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* TANGGAL */}
+        {/* 4. TANGGAL */}
         <div style={styles.group}>
           <label style={styles.label}>Kapan Kejadiannya? *</label>
           <input
@@ -535,81 +608,92 @@ function FormPengaduan() {
           />
         </div>
 
-        {/* LOKASI */}
+        {/* 5. LOKASI KEJADIAN (CHIPS BERIKON) */}
         <div style={styles.group}>
           <label style={styles.label}>Di Mana Kejadiannya? *</label>
-          <select
-            value={lokasi}
-            onChange={(e) => setLokasi(e.target.value)}
-            style={styles.input}
-            disabled={loading}
-          >
-            <option value="">Pilih Lokasi</option>
-            <option value="Ruang Kelas">Ruang Kelas</option>
-            <option value="Halaman Sekolah">Halaman Sekolah</option>
-            <option value="Kantin">Kantin</option>
-            <option value="Lapangan">Lapangan</option>
-            <option value="Perpustakaan">Perpustakaan</option>
-            <option value="Toilet">Toilet</option>
-            <option value="Depan Sekolah">Depan Sekolah</option>
-            <option value="Lainnya">Tempat Lain / Ketik Sendiri</option>
-          </select>
+          <div style={styles.chipsGrid}>
+            {listLokasi.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                style={styles.chipItem(lokasi === item.label)}
+                onClick={() => setLokasi(item.label)}
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
 
           {lokasi === "Lainnya" && (
             <input
               type="text"
-              placeholder="Tuliskan lokasi kejadian..."
+              placeholder="Tuliskan tempat kejadian di sini..."
               value={lokasiLainnya}
               onChange={(e) => setLokasiLainnya(e.target.value)}
-              style={{ ...styles.input, marginTop: "10px" }}
+              style={{ ...styles.input, marginTop: "12px" }}
               disabled={loading}
             />
           )}
         </div>
 
-        {/* JENIS BULLYING */}
+        {/* 6. JENIS BULLYING (KARTU PILIHAN INTERAKTIF) */}
         <div style={styles.group}>
           <label style={styles.label}>Apa yang Terjadi? *</label>
-          <select
-            value={jenis}
-            onChange={(e) => setJenis(e.target.value)}
-            style={styles.input}
-            disabled={loading}
-          >
-            <option value="">Pilih Jenis Bullying</option>
-            <option value="Dipukul / Ditendang">Dipukul / Ditendang</option>
-            <option value="Diejek / Dihina">Diejek / Dihina</option>
-            <option value="Dikucilkan Teman">Dikucilkan Teman</option>
-            <option value="Diancam / Diperas">Diancam / Diperas (Uang/Barang)</option>
-            <option value="Bullying di Media Sosial">Bullying di Media Sosial</option>
-            <option value="Lainnya">Lainnya / Ketik Sendiri</option>
-          </select>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "10px" }}>
+            {listJenisBullying.map((item) => (
+              <div
+                key={item.label}
+                style={styles.optionCard(jenis === item.label)}
+                onClick={() => setJenis(item.label)}
+              >
+                <span style={{ fontSize: "26px" }}>{item.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "800", fontSize: "13px", color: jenis === item.label ? "#1B5E20" : "#2E3D29" }}>
+                    {item.label}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#667C5E", marginTop: "2px" }}>
+                    {item.desc}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    border: `2px solid ${jenis === item.label ? "#2E7D32" : "#999"}`,
+                    background: jenis === item.label ? "#2E7D32" : "#fff",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
           {jenis === "Lainnya" && (
             <input
               type="text"
-              placeholder="Tuliskan tindakan bullying yang dialami..."
+              placeholder="Tuliskan tindakan yang dialami..."
               value={jenisLainnya}
               onChange={(e) => setJenisLainnya(e.target.value)}
-              style={{ ...styles.input, marginTop: "10px" }}
+              style={{ ...styles.input, marginTop: "12px" }}
               disabled={loading}
             />
           )}
         </div>
 
-        {/* CERITA */}
+        {/* 7. CERITA */}
         <div style={styles.group}>
-          <label style={styles.label}>Ceritakan Apa yang Terjadi *</label>
+          <label style={styles.label}>Ceritakan Kejadian Secara Rinci *</label>
           <textarea
             value={cerita}
             onChange={(e) => setCerita(e.target.value)}
-            placeholder="Ceritakan kejadian secara rinci dan jujur..."
+            placeholder="Ceritakan apa yang terjadi secara jujur dan lengkap..."
             style={styles.textarea}
             disabled={loading}
           />
         </div>
 
-        {/* PELAKU */}
+        {/* 8. PELAKU */}
         <div style={styles.group}>
           <label style={styles.label}>Siapa yang Melakukan? (Jika Tahu)</label>
           <input
@@ -622,23 +706,30 @@ function FormPengaduan() {
           />
         </div>
 
-        {/* SAKSI MATA */}
+        {/* 9. SAKSI MATA (DUAL TOGGLE BUTTON) */}
         <div style={styles.group}>
-          <label style={styles.label}>Apakah Ada Saksi Mata Lain yang Melihat?</label>
-          <select
-            value={saksi}
-            onChange={(e) => setSaksi(e.target.value)}
-            style={styles.input}
-            disabled={loading}
-          >
-            <option value="Tidak">Tidak Ada</option>
-            <option value="Ya">Ya, Ada Saksi Mata</option>
-          </select>
+          <label style={styles.label}>Apakah Ada Saksi Mata yang Melihat?</label>
+          <div style={styles.toggleGroup}>
+            <button
+              type="button"
+              style={styles.toggleBtn(saksi === "Tidak")}
+              onClick={() => setSaksi("Tidak")}
+            >
+              🙅‍♂️ Tidak Ada Saksi
+            </button>
+            <button
+              type="button"
+              style={styles.toggleBtn(saksi === "Ya")}
+              onClick={() => setSaksi("Ya")}
+            >
+              👀 Ya, Ada Teman yang Melihat
+            </button>
+          </div>
         </div>
 
         {/* DETAIL SAKSI */}
         {saksi === "Ya" && (
-          <div style={{ background: "#F8F9FA", padding: "15px", borderRadius: "12px", marginBottom: "18px", border: "2px dashed #C8E6C9" }}>
+          <div style={{ background: "#F8F9FA", padding: "15px", borderRadius: "14px", marginBottom: "20px", border: "2px dashed #C8E6C9" }}>
             <div style={{ ...styles.group, marginBottom: "10px" }}>
               <label style={styles.label}>Nama Saksi Mata</label>
               <input
@@ -656,7 +747,7 @@ function FormPengaduan() {
                 type="text"
                 value={kelasSaksi}
                 onChange={(e) => setKelasSaksi(e.target.value)}
-                placeholder="Contoh: Kelas 5B"
+                placeholder="Contoh: Kelas 3"
                 style={styles.input}
                 disabled={loading}
               />
@@ -664,7 +755,7 @@ function FormPengaduan() {
           </div>
         )}
 
-        {/* FOTO */}
+        {/* 10. UNGGAH FOTO */}
         <div style={styles.group}>
           <label style={styles.label}>Unggah Foto Bukti (Opsional)</label>
           <input
@@ -683,31 +774,15 @@ function FormPengaduan() {
             id="jujurCheck"
             checked={setujuJujur}
             onChange={(e) => setSetujuJujur(e.target.checked)}
-            style={{ width: "18px", height: "18px", cursor: "pointer", marginTop: "2px" }}
+            style={{ width: "20px", height: "20px", cursor: "pointer", marginTop: "2px" }}
             disabled={loading}
           />
           <label htmlFor="jujurCheck" style={{ fontSize: "13px", color: "#1B5E20", cursor: "pointer", lineHeight: "1.4", fontWeight: "600" }}>
-            <strong>Pernyataan Kejujuran:</strong> Saya menyatakan bahwa laporan ini dibuat dengan sebenar-benarnya tanpa merekayasa cerita atau memfitnah pihak mana pun.
+            <strong>Pernyataan Kejujuran:</strong> Saya menyatakan bahwa laporan ini dibuat dengan jujur tanpa merekayasa cerita atau memfitnah pihak mana pun.
           </label>
         </div>
 
-        {/* PESAN TERIMA KASIH */}
-        <div
-          style={{
-            background: "#E8F5E9",
-            padding: "15px",
-            borderRadius: "12px",
-            color: "#1B5E20",
-            marginBottom: "20px",
-            lineHeight: "1.5",
-            fontSize: "13px",
-            fontWeight: "600",
-          }}
-        >
-          Terima kasih sudah berani melapor. Guru akan menjaga kerahasiaan laporanmu dan membantu menyelesaikan masalah ini.
-        </div>
-
-        {/* TOMBOL */}
+        {/* TOMBOL AKSI */}
         <div style={styles.buttonContainer}>
           <button
             style={styles.submitButton}
@@ -732,16 +807,14 @@ function FormPengaduan() {
         <div style={styles.modalOverlay} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success"
-                ? "✓"
-                : alertConfig.type === "error"
-                ? "✕"
-                : "ℹ"}
+              {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "✕" : "ℹ"}
             </div>
 
             <h3
               style={{
-                ...styles.modalTitle,
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
                 color:
                   alertConfig.type === "success"
                     ? "#1B5E20"
@@ -753,7 +826,9 @@ function FormPengaduan() {
               {alertConfig.title}
             </h3>
 
-            <p style={styles.modalText}>{alertConfig.message}</p>
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5", whiteSpace: "pre-line" }}>
+              {alertConfig.message}
+            </p>
 
             <button
               style={styles.alertBtn(alertConfig.type)}
