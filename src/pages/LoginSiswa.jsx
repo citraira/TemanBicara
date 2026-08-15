@@ -10,16 +10,43 @@ function LoginSiswa() {
   const [nis, setNis] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // State Pop-up Modal Kustom Notifikasi (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     if (nama.trim() === "") {
-      alert("Silakan masukkan Nama Lengkap!");
+      showAlert("warning", "Nama Belum Diisi", "Silakan masukkan nama lengkapmu terlebih dahulu.");
       return;
     }
 
     if (nis.trim() === "") {
-      alert("Silakan masukkan Nomor Induk Siswa (NIS)!");
+      showAlert("warning", "NIS Belum Diisi", "Silakan masukkan Nomor Induk Siswa (NIS) milikmu.");
       return;
     }
 
@@ -45,17 +72,35 @@ function LoginSiswa() {
           localStorage.setItem("nisSiswa", item.nis || nis);
           localStorage.setItem("kelasSiswa", item.kelas || "");
 
-          alert(`Login Berhasil! Selamat datang, ${item.nama}`);
-          navigate("/dashboard-siswa");
+          showAlert(
+            "success",
+            "Login Berhasil!",
+            `Selamat datang, ${item.nama}! Kamu berhasil masuk ke sistem pengaduan.`,
+            () => {
+              navigate("/dashboard-siswa");
+            }
+          );
         } else {
-          alert("Nama atau NIS tidak terdaftar! Silakan hubungi guru/admin.");
+          showAlert(
+            "error",
+            "Data Tidak Ditemukan",
+            "Nama atau NIS tidak terdaftar di sistem. Silakan periksa kembali atau hubungi Bapak/Ibu Guru."
+          );
         }
       } else {
-        alert("Belum ada data siswa yang terdaftar di sistem.");
+        showAlert(
+          "error",
+          "Data Kosong",
+          "Belum ada data siswa yang terdaftar di sistem sekolah."
+        );
       }
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan saat memeriksa data login.");
+      showAlert(
+        "error",
+        "Terjadi Kesalahan",
+        "Terjadi kesalahan saat memeriksa data login. Pastikan koneksi internet aktif."
+      );
     } finally {
       setLoading(false);
     }
@@ -74,6 +119,7 @@ function LoginSiswa() {
       background: "#F4FBEE", // Hijau muda segar
       padding: "15px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
+      boxSizing: "border-box",
     },
 
     card: {
@@ -131,6 +177,7 @@ function LoginSiswa() {
       marginBottom: "20px",
       fontWeight: "800",
       boxShadow: "0 4px 0 #FBC02D",
+      textTransform: "uppercase",
     },
 
     divider: {
@@ -197,6 +244,96 @@ function LoginSiswa() {
       fontWeight: "500",
       opacity: 0.95,
     },
+
+    // --- GAYA POP-UP MODAL KUSTOM ---
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      padding: "25px 20px",
+      borderRadius: "20px",
+      maxWidth: "380px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    modalTitle: {
+      marginBottom: "8px",
+      fontSize: "20px",
+      fontWeight: "800",
+    },
+    modalText: {
+      color: "#556B4D",
+      fontSize: "13px",
+      marginBottom: "20px",
+      lineHeight: "1.5",
+    },
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -261,6 +398,44 @@ function LoginSiswa() {
           </div>
         </div>
       </div>
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                ...styles.modalTitle,
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={styles.modalText}>{alertConfig.message}</p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

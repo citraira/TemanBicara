@@ -14,9 +14,37 @@ function LoginAdmin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // State Modal Lupa Kata Sandi
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
 
   const handleOpenResetModal = () => {
     if (email.trim()) {
@@ -29,12 +57,12 @@ function LoginAdmin() {
     e.preventDefault();
 
     if (!email.trim()) {
-      alert("Silakan masukkan email admin.");
+      showAlert("warning", "Email Kosong", "Silakan masukkan email admin terlebih dahulu.");
       return;
     }
 
     if (!password) {
-      alert("Silakan masukkan kata sandi.");
+      showAlert("warning", "Kata Sandi Kosong", "Silakan masukkan kata sandi Anda.");
       return;
     }
 
@@ -42,32 +70,36 @@ function LoginAdmin() {
 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      alert("Login Admin Berhasil!");
-      navigate("/dashboard-admin");
+      showAlert(
+        "success",
+        "Login Berhasil!",
+        "Selamat datang kembali di Dashboard Admin SDN 33 Parepare.",
+        () => {
+          navigate("/dashboard-admin");
+        }
+      );
     } catch (error) {
       console.error("Login Error:", error);
 
       switch (error.code) {
         case "auth/invalid-email":
-          alert("Format email tidak valid.");
+          showAlert("error", "Format Tidak Valid", "Format penulisan email admin tidak valid.");
           break;
         case "auth/invalid-credential":
-          alert("Email atau kata sandi salah.");
+        case "auth/wrong-password":
+          showAlert("error", "Login Gagal", "Email atau kata sandi yang Anda masukkan salah.");
           break;
         case "auth/user-not-found":
-          alert("Akun admin tidak ditemukan.");
-          break;
-        case "auth/wrong-password":
-          alert("Kata sandi salah.");
+          showAlert("error", "Akun Tidak Ditemukan", "Akun admin dengan email tersebut tidak terdaftar.");
           break;
         case "auth/user-disabled":
-          alert("Akun admin telah dinonaktifkan.");
+          showAlert("error", "Akun Dinonaktifkan", "Akun admin telah dinonaktifkan oleh administrator.");
           break;
         case "auth/too-many-requests":
-          alert("Terlalu banyak percobaan login. Silakan coba lagi nanti.");
+          showAlert("warning", "Terlalu Banyak Percobaan", "Terlalu banyak percobaan login yang gagal. Silakan coba lagi nanti.");
           break;
         default:
-          alert("Gagal login. Silakan coba lagi.\n\n" + error.message);
+          showAlert("error", "Gagal Login", error.message || "Terjadi kesalahan saat proses login.");
       }
     } finally {
       setLoading(false);
@@ -78,7 +110,7 @@ function LoginAdmin() {
     e.preventDefault();
 
     if (!resetEmail.trim()) {
-      alert("Silakan masukkan email admin.");
+      showAlert("warning", "Email Diperlukan", "Silakan masukkan email admin untuk mereset kata sandi.");
       return;
     }
 
@@ -86,14 +118,16 @@ function LoginAdmin() {
 
     try {
       await sendPasswordResetEmail(auth, resetEmail.trim());
-      alert(
-        "Email reset kata sandi berhasil dikirim!\n\nSilakan buka email Anda dan klik link reset kata sandi."
-      );
       setShowResetModal(false);
       setResetEmail("");
+      showAlert(
+        "success",
+        "Email Terkirim!",
+        "Tautan reset kata sandi berhasil dikirim ke email Anda. Silakan periksa kotak masuk (Inbox) atau folder Spam."
+      );
     } catch (error) {
       console.error("Reset Password Error:", error);
-      alert("Gagal mengirim email reset: " + error.message);
+      showAlert("error", "Gagal Mengirim Email", error.message || "Terjadi kendala saat mengirim email reset.");
     } finally {
       setResetLoading(false);
     }
@@ -284,6 +318,59 @@ function LoginAdmin() {
       boxShadow: "0 3px 0 #FBC02D",
       textTransform: "uppercase",
     },
+    // Gaya Khusus Pop-Up Notifikasi
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -307,8 +394,8 @@ function LoginAdmin() {
           />
 
           <label style={styles.label}>Kata Sandi</label>
-          
-          {/* INPUT PASSWORD DENGAN IKON VECTOR SVG */}
+
+          {/* INPUT PASSWORD DENGAN IKON MATA */}
           <div style={styles.passwordWrapper}>
             <input
               type={showPassword ? "text" : "password"}
@@ -326,14 +413,30 @@ function LoginAdmin() {
               aria-label="Tampilkan atau sembunyikan kata sandi"
             >
               {showPassword ? (
-                /* IKON MATA TERBUKA */
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               ) : (
-                /* IKON MATA TERTUTUP / DICORET */
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                   <line x1="1" y1="1" x2="23" y2="23"></line>
                 </svg>
@@ -362,18 +465,25 @@ function LoginAdmin() {
         </div>
       </div>
 
+      {/* MODAL RESET KATA SANDI */}
       {showResetModal && (
         <div
           style={styles.modalOverlay}
           onClick={() => !resetLoading && setShowResetModal(false)}
         >
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={{ textAlign: "center", fontSize: "45px", marginBottom: "5px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "45px",
+                marginBottom: "5px",
+              }}
+            >
               🔐
             </div>
             <h3 style={styles.modalTitle}>Lupa Kata Sandi?</h3>
             <p style={styles.modalText}>
-              Masukkan email akun admin Anda. Firebase akan mengirimkan link untuk membuat kata sandi baru.
+              Masukkan email akun admin Anda. Firebase akan mengirimkan tautan untuk membuat kata sandi baru.
             </p>
 
             <form onSubmit={handleResetPassword}>
@@ -410,6 +520,44 @@ function LoginAdmin() {
                 Batal
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                ...styles.modalTitle,
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={styles.modalText}>{alertConfig.message}</p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
           </div>
         </div>
       )}

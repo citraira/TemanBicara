@@ -11,6 +11,36 @@ function DataSiswa() {
   const [search, setSearch] = useState("");
   const [selectedQr, setSelectedQr] = useState(null);
 
+  // State untuk Modal Konfirmasi Hapus
+  const [deleteTarget, setDeleteTarget] = useState(null); // Menyimpan ID siswa yang akan dihapus
+
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   useEffect(() => {
     const siswaRef = ref(db, "siswa");
 
@@ -32,17 +62,22 @@ function DataSiswa() {
     return () => unsubscribe();
   }, []);
 
-  const handleDelete = (id) => {
-    const yakin = window.confirm("Apakah yakin ingin menghapus data siswa?");
-    if (!yakin) return;
+  // Membuka modal konfirmasi hapus
+  const confirmDelete = (id) => {
+    setDeleteTarget(id);
+  };
 
-    remove(ref(db, `siswa/${id}`))
-      .then(() => {
-        alert("Data berhasil dihapus.");
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
+  // Eksekusi penghapusan data setelah dikonfirmasi
+  const executeDelete = async () => {
+    const id = deleteTarget;
+    setDeleteTarget(null);
+
+    try {
+      await remove(ref(db, `siswa/${id}`));
+      showAlert("success", "Berhasil Dihapus", "Data siswa berhasil dihapus dari sistem.");
+    } catch (err) {
+      showAlert("error", "Gagal Menghapus", err.message || "Terjadi kesalahan saat menghapus data.");
+    }
   };
 
   const hasilPencarian = dataSiswa.filter((item) => {
@@ -193,16 +228,18 @@ function DataSiswa() {
       alignItems: "center",
       zIndex: 1000,
       padding: "15px",
+      boxSizing: "border-box",
     },
     modalCard: {
       background: "#fff",
       padding: "25px 20px",
       borderRadius: "20px",
       textAlign: "center",
-      maxWidth: "340px",
+      maxWidth: "360px",
       width: "100%",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
     },
     printBtn: {
       background: "#2E7D32",
@@ -231,6 +268,90 @@ function DataSiswa() {
       fontSize: "13px",
       boxShadow: "0 3px 0 #FBC02D",
     },
+    // Style Tambahan Tombol Modal Konfirmasi
+    modalBtnGroup: {
+      display: "flex",
+      gap: "10px",
+      marginTop: "20px",
+    },
+    confirmYesBtn: {
+      flex: 1,
+      background: "#D32F2F",
+      color: "#fff",
+      border: "none",
+      padding: "11px",
+      borderRadius: "10px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #9A0007",
+      textTransform: "uppercase",
+    },
+    confirmNoBtn: {
+      flex: 1,
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "11px",
+      borderRadius: "10px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #FBC02D",
+      textTransform: "uppercase",
+    },
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -306,7 +427,7 @@ function DataSiswa() {
 
                     <button
                       style={styles.deleteButton}
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => confirmDelete(item.id)}
                     >
                       Hapus
                     </button>
@@ -320,8 +441,8 @@ function DataSiswa() {
 
       {/* MODAL POPUP CETAK/LIHAT QR CODE */}
       {selectedQr && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+        <div style={styles.modalOverlay} onClick={() => setSelectedQr(null)}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ color: "#1B5E20", marginBottom: "5px", fontSize: "18px", fontWeight: "800" }}>
               Kartu QR Siswa
             </h3>
@@ -341,6 +462,71 @@ function DataSiswa() {
             </button>
             <button style={styles.closeBtn} onClick={() => setSelectedQr(null)}>
               Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL KONFIRMASI HAPUS */}
+      {deleteTarget && (
+        <div style={styles.modalOverlay} onClick={() => setDeleteTarget(null)}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper("warning")}>⚠️</div>
+            <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
+              Konfirmasi Hapus
+            </h3>
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
+              Apakah Anda yakin ingin menghapus data siswa ini dari sistem?
+            </p>
+            <div style={styles.modalBtnGroup}>
+              <button style={styles.confirmYesBtn} onClick={executeDelete}>
+                Ya, Hapus
+              </button>
+              <button style={styles.confirmNoBtn} onClick={() => setDeleteTarget(null)}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+              {alertConfig.message}
+            </p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
             </button>
           </div>
         </div>

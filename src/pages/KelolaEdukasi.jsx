@@ -15,6 +15,36 @@ function KelolaEdukasi() {
   const [isi, setIsi] = useState("");
   const [editId, setEditId] = useState(null);
 
+  // State Modal Konfirmasi Hapus
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   // Read Data Edukasi dari Firebase
   useEffect(() => {
     const edukasiRef = ref(db, "edukasi");
@@ -49,7 +79,7 @@ function KelolaEdukasi() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!judul.trim() || !isi.trim()) {
-      alert("Judul dan Isi Konten wajib diisi!");
+      showAlert("warning", "Data Belum Lengkap", "Judul dan Isi Konten edukasi wajib diisi!");
       return;
     }
 
@@ -57,27 +87,27 @@ function KelolaEdukasi() {
       if (editId) {
         // Mode Edit
         await update(ref(db, `edukasi/${editId}`), {
-          judul,
+          judul: judul.trim(),
           kategori,
-          ringkasan,
-          isi,
+          ringkasan: ringkasan.trim(),
+          isi: isi.trim(),
           updatedAt: new Date().toISOString(),
         });
-        alert("Konten edukasi berhasil diperbarui!");
+        showAlert("success", "Berhasil Diperbarui", "Konten edukasi anti-bullying berhasil diperbarui!");
       } else {
         // Mode Tambah
         await push(ref(db, "edukasi"), {
-          judul,
+          judul: judul.trim(),
           kategori,
-          ringkasan,
-          isi,
+          ringkasan: ringkasan.trim(),
+          isi: isi.trim(),
           createdAt: new Date().toISOString(),
         });
-        alert("Konten edukasi baru berhasil diterbitkan!");
+        showAlert("success", "Berhasil Diterbitkan", "Konten edukasi baru berhasil diterbitkan untuk siswa!");
       }
       resetForm();
     } catch (error) {
-      alert("Gagal menyimpan data: " + error.message);
+      showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan materi.");
     }
   };
 
@@ -88,17 +118,24 @@ function KelolaEdukasi() {
     setKategori(item.kategori || "Pencegahan");
     setRingkasan(item.ringkasan || "");
     setIsi(item.isi);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Hapus Konten
-  const handleHapus = async (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus konten edukasi ini?")) {
-      try {
-        await remove(ref(db, `edukasi/${id}`));
-        alert("Konten berhasil dihapus.");
-      } catch (error) {
-        alert("Gagal menghapus: " + error.message);
-      }
+  // Buka Modal Konfirmasi Hapus
+  const handleHapusClick = (id) => {
+    setDeleteTargetId(id);
+  };
+
+  // Eksekusi Hapus Konten
+  const executeDelete = async () => {
+    const id = deleteTargetId;
+    setDeleteTargetId(null);
+
+    try {
+      await remove(ref(db, `edukasi/${id}`));
+      showAlert("success", "Berhasil Dihapus", "Konten edukasi berhasil dihapus dari sistem.");
+    } catch (error) {
+      showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus materi.");
     }
   };
 
@@ -247,7 +284,116 @@ function KelolaEdukasi() {
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "12px",
+      boxShadow: "0 2px 0 #9A0007",
     },
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      padding: "25px 20px",
+      borderRadius: "20px",
+      maxWidth: "380px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    modalBtnGroup: {
+      display: "flex",
+      gap: "10px",
+      marginTop: "20px",
+    },
+    confirmYesBtn: {
+      flex: 1,
+      background: "#D32F2F",
+      color: "#fff",
+      border: "none",
+      padding: "11px",
+      borderRadius: "10px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #9A0007",
+      textTransform: "uppercase",
+    },
+    confirmNoBtn: {
+      flex: 1,
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "11px",
+      borderRadius: "10px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #FBC02D",
+      textTransform: "uppercase",
+    },
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -272,7 +418,7 @@ function KelolaEdukasi() {
         </h3>
         <form onSubmit={handleSubmit}>
           <div style={styles.group}>
-            <label style={styles.label}>Judul Artikel / Materi</label>
+            <label style={styles.label}>Judul Artikel / Materi *</label>
             <input
               type="text"
               placeholder="Contoh: Mengenal Bentuk-Bentuk Bullying"
@@ -284,7 +430,7 @@ function KelolaEdukasi() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
             <div style={styles.group}>
-              <label style={styles.label}>Kategori</label>
+              <label style={styles.label}>Kategori *</label>
               <select
                 value={kategori}
                 onChange={(e) => setKategori(e.target.value)}
@@ -310,7 +456,7 @@ function KelolaEdukasi() {
           </div>
 
           <div style={styles.group}>
-            <label style={styles.label}>Isi Lengkap Artikel / Materi</label>
+            <label style={styles.label}>Isi Lengkap Artikel / Materi *</label>
             <textarea
               placeholder="Tuliskan materi edukasi di sini secara detail..."
               value={isi}
@@ -364,13 +510,78 @@ function KelolaEdukasi() {
               </button>
               <button
                 style={styles.btnHapus}
-                onClick={() => handleHapus(item.id)}
+                onClick={() => handleHapusClick(item.id)}
               >
                 Hapus
               </button>
             </div>
           </div>
         ))
+      )}
+
+      {/* MODAL KONFIRMASI HAPUS KONTEN EDUKASI */}
+      {deleteTargetId && (
+        <div style={styles.modalOverlay} onClick={() => setDeleteTargetId(null)}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper("warning")}>⚠️</div>
+            <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
+              Konfirmasi Hapus Konten
+            </h3>
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
+              Apakah Anda yakin ingin menghapus materi edukasi ini dari sistem?
+            </p>
+            <div style={styles.modalBtnGroup}>
+              <button style={styles.confirmYesBtn} onClick={executeDelete}>
+                Ya, Hapus
+              </button>
+              <button style={styles.confirmNoBtn} onClick={() => setDeleteTargetId(null)}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+              {alertConfig.message}
+            </p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

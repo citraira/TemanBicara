@@ -40,6 +40,33 @@ function FormPengaduan() {
   const [foto, setFoto] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   useEffect(() => {
     const namaSaved = localStorage.getItem("namaSiswa");
     const kelasSaved = localStorage.getItem("kelasSiswa");
@@ -107,12 +134,20 @@ function FormPengaduan() {
       (jenis === "Lainnya" && jenisLainnya.trim() === "") ||
       cerita.trim() === ""
     ) {
-      alert("Mohon lengkapi semua data wajib terlebih dahulu.");
+      showAlert(
+        "warning",
+        "Data Belum Lengkap",
+        "Mohon lengkapi kolom Nama, Kelas, Tanggal, Lokasi, Jenis Kejadian, dan Cerita terlebih dahulu."
+      );
       return;
     }
 
     if (!setujuJujur) {
-      alert("Harap centang pernyataan kejujuran sebelum mengirimkan laporan.");
+      showAlert(
+        "warning",
+        "Pernyataan Kejujuran",
+        "Harap centang kotak pernyataan kejujuran sebelum mengirimkan laporan pengaduan."
+      );
       return;
     }
 
@@ -126,15 +161,15 @@ function FormPengaduan() {
       }
 
       await push(dbRef(db, "pengaduan"), {
-        nama,
-        kelas,
+        nama: nama.trim(),
+        kelas: kelas.trim(),
         peran,
         tanggal,
-        lokasi: lokasiFinal,
-        jenis: jenisFinal,
-        cerita,
+        lokasi: lokasiFinal.trim(),
+        jenis: jenisFinal.trim(),
+        cerita: cerita.trim(),
         pelaku: pelaku.trim() || "Tidak disebutkan",
-        saksi: saksi || "Tidak ada",
+        saksi: saksi || "Tidak",
         namaSaksi: saksi === "Ya" ? namaSaksi.trim() : "-",
         kelasSaksi: saksi === "Ya" ? kelasSaksi.trim() : "-",
         fotoUrl: imageUrl,
@@ -142,14 +177,21 @@ function FormPengaduan() {
         createdAt: new Date().toISOString(),
       });
 
-      alert(
-        "Laporan berhasil dikirim dan tersimpan!\n\nTerima kasih sudah berani melapor."
+      showAlert(
+        "success",
+        "Laporan Terkirim!",
+        "Laporanmu berhasil dikirim dan tersimpan dengan aman.\n\nTerima kasih sudah berani bercerita! Bapak/Ibu Guru BK akan segera menindaklanjuti.",
+        () => {
+          navigate("/dashboard-siswa");
+        }
       );
-
-      navigate("/dashboard-siswa");
     } catch (error) {
       console.error("Submit Error:", error);
-      alert("Gagal mengirim laporan: " + error.message);
+      showAlert(
+        "error",
+        "Gagal Mengirim",
+        error.message || "Terjadi kesalahan saat mengirim laporan. Silakan periksa koneksi internet."
+      );
     } finally {
       setLoading(false);
     }
@@ -226,6 +268,7 @@ function FormPengaduan() {
       borderRadius: "20px",
       boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
       border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
     },
 
     group: {
@@ -308,6 +351,97 @@ function FormPengaduan() {
       boxShadow: "0 4px 0 #FBC02D",
       textTransform: "uppercase",
     },
+
+    // Gaya Modal Pop-up Notifikasi Kustom
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      padding: "25px 20px",
+      borderRadius: "20px",
+      maxWidth: "380px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    modalTitle: {
+      marginBottom: "8px",
+      fontSize: "20px",
+      fontWeight: "800",
+    },
+    modalText: {
+      color: "#556B4D",
+      fontSize: "13px",
+      marginBottom: "20px",
+      lineHeight: "1.5",
+      whiteSpace: "pre-line",
+    },
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -341,23 +475,25 @@ function FormPengaduan() {
       <div style={styles.container}>
         {/* NAMA */}
         <div style={styles.group}>
-          <label style={styles.label}>Nama Siswa (Pelapor)</label>
+          <label style={styles.label}>Nama Siswa (Pelapor) *</label>
           <input
             type="text"
             placeholder="Masukkan nama lengkap"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             style={styles.input}
+            disabled={loading}
           />
         </div>
 
         {/* KELAS */}
         <div style={styles.group}>
-          <label style={styles.label}>Kelas</label>
+          <label style={styles.label}>Kelas *</label>
           <select
             value={kelas}
             onChange={(e) => setKelas(e.target.value)}
             style={styles.input}
+            disabled={loading}
           >
             <option value="">Pilih Kelas</option>
             <option>1</option>
@@ -371,11 +507,12 @@ function FormPengaduan() {
 
         {/* PERAN / STATUS PELAPOR */}
         <div style={styles.group}>
-          <label style={styles.label}>Kamu Melaporkan Sebagai Apa?</label>
+          <label style={styles.label}>Kamu Melaporkan Sebagai Apa? *</label>
           <select
             value={peran}
             onChange={(e) => setPeran(e.target.value)}
             style={styles.input}
+            disabled={loading}
           >
             <option value="Korban">
               Saya sendiri yang mengalami (Korban)
@@ -388,22 +525,24 @@ function FormPengaduan() {
 
         {/* TANGGAL */}
         <div style={styles.group}>
-          <label style={styles.label}>Kapan Kejadiannya?</label>
+          <label style={styles.label}>Kapan Kejadiannya? *</label>
           <input
             type="date"
             value={tanggal}
             onChange={(e) => setTanggal(e.target.value)}
             style={styles.input}
+            disabled={loading}
           />
         </div>
 
         {/* LOKASI */}
         <div style={styles.group}>
-          <label style={styles.label}>Di Mana Kejadiannya?</label>
+          <label style={styles.label}>Di Mana Kejadiannya? *</label>
           <select
             value={lokasi}
             onChange={(e) => setLokasi(e.target.value)}
             style={styles.input}
+            disabled={loading}
           >
             <option value="">Pilih Lokasi</option>
             <option value="Ruang Kelas">Ruang Kelas</option>
@@ -423,17 +562,19 @@ function FormPengaduan() {
               value={lokasiLainnya}
               onChange={(e) => setLokasiLainnya(e.target.value)}
               style={{ ...styles.input, marginTop: "10px" }}
+              disabled={loading}
             />
           )}
         </div>
 
         {/* JENIS BULLYING */}
         <div style={styles.group}>
-          <label style={styles.label}>Apa yang Terjadi?</label>
+          <label style={styles.label}>Apa yang Terjadi? *</label>
           <select
             value={jenis}
             onChange={(e) => setJenis(e.target.value)}
             style={styles.input}
+            disabled={loading}
           >
             <option value="">Pilih Jenis Bullying</option>
             <option value="Dipukul / Ditendang">Dipukul / Ditendang</option>
@@ -451,18 +592,20 @@ function FormPengaduan() {
               value={jenisLainnya}
               onChange={(e) => setJenisLainnya(e.target.value)}
               style={{ ...styles.input, marginTop: "10px" }}
+              disabled={loading}
             />
           )}
         </div>
 
         {/* CERITA */}
         <div style={styles.group}>
-          <label style={styles.label}>Ceritakan Apa yang Terjadi</label>
+          <label style={styles.label}>Ceritakan Apa yang Terjadi *</label>
           <textarea
             value={cerita}
             onChange={(e) => setCerita(e.target.value)}
             placeholder="Ceritakan kejadian secara rinci dan jujur..."
             style={styles.textarea}
+            disabled={loading}
           />
         </div>
 
@@ -475,6 +618,7 @@ function FormPengaduan() {
             onChange={(e) => setPelaku(e.target.value)}
             placeholder="Nama teman / orang yang melakukan (boleh dikosongkan)"
             style={styles.input}
+            disabled={loading}
           />
         </div>
 
@@ -485,6 +629,7 @@ function FormPengaduan() {
             value={saksi}
             onChange={(e) => setSaksi(e.target.value)}
             style={styles.input}
+            disabled={loading}
           >
             <option value="Tidak">Tidak Ada</option>
             <option value="Ya">Ya, Ada Saksi Mata</option>
@@ -502,6 +647,7 @@ function FormPengaduan() {
                 onChange={(e) => setNamaSaksi(e.target.value)}
                 placeholder="Nama teman yang melihat kejadian"
                 style={styles.input}
+                disabled={loading}
               />
             </div>
             <div style={{ ...styles.group, marginBottom: "0" }}>
@@ -512,6 +658,7 @@ function FormPengaduan() {
                 onChange={(e) => setKelasSaksi(e.target.value)}
                 placeholder="Contoh: Kelas 5B"
                 style={styles.input}
+                disabled={loading}
               />
             </div>
           </div>
@@ -525,6 +672,7 @@ function FormPengaduan() {
             accept="image/*"
             onChange={(e) => setFoto(e.target.files[0])}
             style={styles.input}
+            disabled={loading}
           />
         </div>
 
@@ -536,6 +684,7 @@ function FormPengaduan() {
             checked={setujuJujur}
             onChange={(e) => setSetujuJujur(e.target.checked)}
             style={{ width: "18px", height: "18px", cursor: "pointer", marginTop: "2px" }}
+            disabled={loading}
           />
           <label htmlFor="jujurCheck" style={{ fontSize: "13px", color: "#1B5E20", cursor: "pointer", lineHeight: "1.4", fontWeight: "600" }}>
             <strong>Pernyataan Kejujuran:</strong> Saya menyatakan bahwa laporan ini dibuat dengan sebenar-benarnya tanpa merekayasa cerita atau memfitnah pihak mana pun.
@@ -577,6 +726,44 @@ function FormPengaduan() {
           </button>
         </div>
       </div>
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                ...styles.modalTitle,
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={styles.modalText}>{alertConfig.message}</p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

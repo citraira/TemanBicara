@@ -23,6 +23,33 @@ function PengaturanAdmin() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
 
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   useEffect(() => {
     const loadAdminData = async () => {
       const currentUser = auth.currentUser;
@@ -57,9 +84,13 @@ function PengaturanAdmin() {
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
-      alert("Sesi login Anda telah berakhir. Silakan login kembali!");
-      navigate("/login-admin");
       setLoading(false);
+      showAlert(
+        "warning",
+        "Sesi Berakhir",
+        "Sesi login Anda telah berakhir demi keamanan. Silakan login kembali!",
+        () => navigate("/login-admin")
+      );
       return;
     }
 
@@ -71,8 +102,8 @@ function PengaturanAdmin() {
       // 1. JIKA KATA SANDI DIUBAH
       if (isPasswordChanged) {
         if (sandiBaru.trim().length < 6) {
-          alert("Kata sandi baru minimal harus 6 karakter!");
           setLoading(false);
+          showAlert("warning", "Kata Sandi Kurang", "Kata sandi baru minimal harus terdiri dari 6 karakter!");
           return;
         }
 
@@ -89,16 +120,16 @@ function PengaturanAdmin() {
       // 3. SIMPAN NAMA & NO WA KE FIREBASE REALTIME DATABASE & LOCALSTORAGE
       await saveOtherData(currentEmail);
 
-      let message = "Pengaturan berhasil diperbarui!";
+      let message = "Pengaturan profil admin berhasil diperbarui!";
       if (isPasswordChanged && isEmailChanged) {
-        message = "Kata sandi berhasil diubah! Link verifikasi email telah dikirim ke email baru Anda.";
+        message = "Kata sandi berhasil diubah dan tautan verifikasi telah dikirim ke email baru Anda.";
       } else if (isPasswordChanged) {
         message = "Kata sandi berhasil diubah! Silakan gunakan kata sandi baru saat login berikutnya.";
       } else if (isEmailChanged) {
-        message = "Link verifikasi telah dikirim ke email baru Anda!";
+        message = "Tautan verifikasi telah dikirim ke email baru Anda!";
       }
 
-      alert(message);
+      showAlert("success", "Pengaturan Disimpan", message);
       setSandiBaru("");
     } catch (error) {
       console.error("Gagal menyimpan pengaturan:", error);
@@ -107,14 +138,18 @@ function PengaturanAdmin() {
         error.code === "auth/requires-recent-login" || 
         error.code === "auth/user-token-expired"
       ) {
-        alert("Sesi login Anda telah kedaluwarsa demi keamanan. Silakan Keluar dan Login kembali!");
-        navigate("/login-admin");
+        showAlert(
+          "warning",
+          "Sesi Kedaluwarsa",
+          "Untuk mengubah data sensitif, Anda perlu keluar dan login ulang demi alasan keamanan.",
+          () => navigate("/login-admin")
+        );
       } else if (error.code === "auth/invalid-email") {
-        alert("Format email tidak valid!");
+        showAlert("error", "Email Tidak Valid", "Format penulisan email admin tidak valid!");
       } else if (error.code === "auth/weak-password") {
-        alert("Kata sandi terlalu lemah! Gunakan minimal 6 karakter.");
+        showAlert("error", "Kata Sandi Lemah", "Kata sandi terlalu lemah! Gunakan minimal 6 karakter kombinasi.");
       } else {
-        alert("Gagal menyimpan pengaturan: " + error.message);
+        showAlert("error", "Gagal Menyimpan", "Gagal menyimpan pengaturan: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -223,6 +258,7 @@ function PengaturanAdmin() {
       alignItems: "center",
       zIndex: 1000,
       padding: "15px",
+      boxSizing: "border-box",
     },
     modalCard: {
       background: "#fff",
@@ -233,6 +269,7 @@ function PengaturanAdmin() {
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
     },
     okBtn: {
       width: "100%",
@@ -248,6 +285,59 @@ function PengaturanAdmin() {
       textTransform: "uppercase",
       marginTop: "15px",
     },
+    // Gaya Pop-up Modal Kustom Notifikasi
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -334,6 +424,48 @@ function PengaturanAdmin() {
               onClick={() => setShowEmailModal(false)}
             >
               Saya Mengerti
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+              {alertConfig.message}
+            </p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
             </button>
           </div>
         </div>

@@ -16,6 +16,33 @@ function ScanQR() {
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
 
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", // 'success' | 'error' | 'warning'
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
+
+  const showAlert = (type, title, message, onCloseCallback = null) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onCloseCallback,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    if (callback) {
+      callback();
+    }
+  };
+
   const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
@@ -28,16 +55,17 @@ function ScanQR() {
       .then((devices) => {
         if (devices && devices.length > 0) {
           setCameras(devices);
-          
+
           // Cari kamera belakang secara otomatis
-          let backCamIndex = devices.findIndex((device) =>
-            device.label.toLowerCase().includes("back") ||
-            device.label.toLowerCase().includes("belakang") ||
-            device.label.toLowerCase().includes("environment")
+          let backCamIndex = devices.findIndex(
+            (device) =>
+              device.label.toLowerCase().includes("back") ||
+              device.label.toLowerCase().includes("belakang") ||
+              device.label.toLowerCase().includes("environment")
           );
 
-          if (backCamIndex === -1) backCamIndex = devices.length - 1; // Default ke kamera terakhir (biasanya belakang)
-          
+          if (backCamIndex === -1) backCamIndex = devices.length - 1; // Default ke kamera terakhir
+
           setCurrentCameraIndex(backCamIndex);
           startCamera(devices[backCamIndex].id);
         } else {
@@ -74,7 +102,7 @@ function ScanQR() {
         (decodedText) => {
           handleSuccessScan(decodedText);
         },
-        (errorMessage) => {
+        () => {
           // Frame scanner meredam error
         }
       );
@@ -89,7 +117,11 @@ function ScanQR() {
   // FUNGSI SWITCH / FLIP KAMERA
   const handleFlipCamera = () => {
     if (cameras.length < 2) {
-      alert("Hanya 1 kamera yang terdeteksi di perangkat Anda.");
+      showAlert(
+        "warning",
+        "Kamera Tunggal",
+        "Hanya 1 kamera yang terdeteksi di perangkat Anda."
+      );
       return;
     }
     const nextIndex = (currentCameraIndex + 1) % cameras.length;
@@ -144,10 +176,20 @@ function ScanQR() {
         localStorage.setItem("kelasSiswa", dataSiswa.kelas || "-");
         localStorage.setItem("nisnSiswa", cleanQrData);
 
-        alert(`Login Berhasil!\nSelamat datang, ${dataSiswa.nama}`);
-        navigate("/dashboard-siswa");
+        showAlert(
+          "success",
+          "Login Berhasil!",
+          `Selamat datang, ${dataSiswa.nama}! Kamu berhasil masuk ke sistem pengaduan.`,
+          () => {
+            navigate("/dashboard-siswa");
+          }
+        );
       } else {
         setErrorMsg("QR Code atau NISN tidak terdaftar dalam sistem!");
+        // Mulai ulang kamera jika verifikasi data gagal
+        if (cameras.length > 0) {
+          startCamera(cameras[currentCameraIndex].id);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -326,6 +368,96 @@ function ScanQR() {
       boxShadow: "0 3px 0 #9E9E9E",
       textTransform: "uppercase",
     },
+
+    // Gaya Modal Notifikasi Kustom
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      padding: "25px 20px",
+      borderRadius: "20px",
+      maxWidth: "380px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    modalTitle: {
+      marginBottom: "8px",
+      fontSize: "20px",
+      fontWeight: "800",
+    },
+    modalText: {
+      color: "#556B4D",
+      fontSize: "13px",
+      marginBottom: "20px",
+      lineHeight: "1.5",
+    },
+    alertIconWrapper: (type) => ({
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background:
+        type === "success"
+          ? "#E8F5E9"
+          : type === "error"
+          ? "#FFEBEE"
+          : "#FFFDE7",
+      border: `2px solid ${
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FBC02D"
+      }`,
+      color:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#F57F17",
+    }),
+    alertBtn: (type) => ({
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: type === "warning" ? "#1B5E20" : "#fff",
+      background:
+        type === "success"
+          ? "#2E7D32"
+          : type === "error"
+          ? "#D32F2F"
+          : "#FFEB3B",
+      boxShadow:
+        type === "success"
+          ? "0 3px 0 #1B5E20"
+          : type === "error"
+          ? "0 3px 0 #9A0007"
+          : "0 3px 0 #FBC02D",
+    }),
   };
 
   return (
@@ -353,7 +485,7 @@ function ScanQR() {
           )}
         </div>
 
-        {/* TOMBOL MENONJOL UNTUK UNGGAH GAMBAR QR (BAHASA INDONESIA) */}
+        {/* TOMBOL UNGGAH GAMBAR QR */}
         <label htmlFor="qr-file-input" style={styles.uploadBtnLabel}>
           🖼️ UNGGAH GAMBAR QR CODE
         </label>
@@ -389,7 +521,11 @@ function ScanQR() {
             onChange={(e) => setManualNis(e.target.value)}
             style={styles.inputManual}
           />
-          <button type="submit" style={styles.submitBtn} disabled={loadingManual}>
+          <button
+            type="submit"
+            style={styles.submitBtn}
+            disabled={loadingManual}
+          >
             {loadingManual ? "Memeriksa..." : "Masuk dengan NISN"}
           </button>
         </form>
@@ -398,6 +534,44 @@ function ScanQR() {
           Kembali ke Login
         </button>
       </div>
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper(alertConfig.type)}>
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
+            </div>
+
+            <h3
+              style={{
+                ...styles.modalTitle,
+                color:
+                  alertConfig.type === "success"
+                    ? "#1B5E20"
+                    : alertConfig.type === "error"
+                    ? "#C62828"
+                    : "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={styles.modalText}>{alertConfig.message}</p>
+
+            <button
+              style={styles.alertBtn(alertConfig.type)}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,27 @@ function HubungiGuru() {
 
   const [pesanWa, setPesanWa] = useState("");
 
+  // State Pop-Up Notifikasi Kustom (Pengganti alert())
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "warning",
+    title: "",
+    message: "",
+  });
+
+  const showAlert = (type, title, message) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     const fetchAdminContact = async () => {
       try {
@@ -54,7 +75,11 @@ function HubungiGuru() {
 
   const handleChatWhatsApp = () => {
     if (!guru.telepon) {
-      alert("Nomor WhatsApp guru belum diatur oleh admin.");
+      showAlert(
+        "warning",
+        "Kontak Belum Diatur",
+        "Nomor WhatsApp Guru BK belum diatur oleh admin sekolah. Silakan hubungi langsung di sekolah."
+      );
       return;
     }
     const namaSiswa = localStorage.getItem("namaSiswa") || "Siswa";
@@ -167,6 +192,57 @@ function HubungiGuru() {
       boxShadow: "0 3px 0 #FBC02D",
       textTransform: "uppercase",
     },
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      padding: "25px 20px",
+      borderRadius: "20px",
+      maxWidth: "380px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    alertIconWrapper: {
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background: "#FFFDE7",
+      border: "2px solid #FBC02D",
+      color: "#F57F17",
+    },
+    alertBtn: {
+      width: "100%",
+      padding: "12px",
+      border: "none",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "14px",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      color: "#1B5E20",
+      background: "#FFEB3B",
+      boxShadow: "0 3px 0 #FBC02D",
+    },
   };
 
   return (
@@ -230,6 +306,39 @@ function HubungiGuru() {
           Kembali ke Dashboard
         </button>
       </div>
+
+      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
+      {alertConfig.isOpen && (
+        <div style={styles.modalOverlay} onClick={handleCloseAlert}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper}>
+              ℹ
+            </div>
+
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
+                color: "#E65100",
+              }}
+            >
+              {alertConfig.title}
+            </h3>
+
+            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+              {alertConfig.message}
+            </p>
+
+            <button
+              style={styles.alertBtn}
+              onClick={handleCloseAlert}
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
