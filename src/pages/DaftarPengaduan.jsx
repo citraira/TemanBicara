@@ -1,9 +1,8 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, onValue, update, remove } from "firebase/database";
 import { db } from "../firebase";
 
-// Objek Styles di Luar Komponen agar Hemat Memori & Bebas Lag
 const styles = {
   page: {
     minHeight: "100dvh",
@@ -278,6 +277,13 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
   const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
   const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
 
+  // Update state lokal jika item props berubah dari luar
+  useEffect(() => {
+    setPenanganan(item.penanganan || "Dipisahkan");
+    setResponOrangTua(item.responOrangTua || "");
+    setTindakanSanksi(item.tindakanSanksi || "");
+  }, [item.penanganan, item.responOrangTua, item.tindakanSanksi]);
+
   return (
     <div style={styles.card}>
       <div style={styles.cardHeader}>
@@ -461,24 +467,26 @@ function DaftarPengaduan() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
+  const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
     setAlertConfig({ isOpen: true, type, title, message, onCloseCallback });
-  };
+  }, []);
 
-  const handleCloseAlert = () => {
-    const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) callback();
-  };
+  const handleCloseAlert = useCallback(() => {
+    setAlertConfig((prev) => {
+      if (prev.onCloseCallback) prev.onCloseCallback();
+      return { ...prev, isOpen: false };
+    });
+  }, []);
 
+  // Listener Database Stabil (Hanya ambil snapshot, tanpa looping)
   useEffect(() => {
     const pengaduanRef = ref(db, "pengaduan");
 
     const unsubscribe = onValue(
       pengaduanRef,
       (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
           const formattedList = Object.keys(data).map((key) => ({
             id: key,
             ...data[key],
@@ -503,8 +511,8 @@ function DaftarPengaduan() {
     return () => unsubscribe();
   }, []);
 
-  // OPTIMISTIC UPDATE: TAMPILAN BERUBAH SEKETIKA TANPA NUNGGU SINYAL
-  const handleStatusChange = async (id, statusBaru) => {
+  // Update Status Instan (Optimistic)
+  const handleStatusChange = useCallback(async (id, statusBaru) => {
     setLaporanList((prevList) =>
       prevList.map((item) =>
         item.id === id ? { ...item, status: statusBaru } : item
@@ -520,9 +528,10 @@ function DaftarPengaduan() {
     } catch (error) {
       showAlert("error", "Gagal Mengubah Status", error.message || "Terjadi kendala saat memperbarui status.");
     }
-  };
+  }, [showAlert]);
 
-  const handleSavePenanganan = async (id, formData) => {
+  // Simpan Catatan Penanganan
+  const handleSavePenanganan = useCallback(async (id, formData) => {
     try {
       await update(ref(db, `pengaduan/${id}`), {
         penanganan: formData.penanganan,
@@ -534,13 +543,14 @@ function DaftarPengaduan() {
     } catch (error) {
       showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
     }
-  };
+  }, [showAlert]);
 
-  const executeDelete = async () => {
+  // Hapus Laporan
+  const executeDelete = useCallback(async () => {
+    if (!deleteTargetId) return;
     const id = deleteTargetId;
     setDeleteTargetId(null);
 
-    // Optimistic delete di layar
     setLaporanList((prev) => prev.filter((item) => item.id !== id));
 
     try {
@@ -549,7 +559,7 @@ function DaftarPengaduan() {
     } catch (error) {
       showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
     }
-  };
+  }, [deleteTargetId, showAlert]);
 
   return (
     <div style={styles.page}>
@@ -566,8 +576,8 @@ function DaftarPengaduan() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#1B5E20", fontWeight: "600" }}>
-          Memuat data laporan dari database...
+        <div style={{ textAlign: "center", padding: "40px", color: "#1B5E20", fontWeight: "700" }}>
+          Memuat data laporan...
         </div>
       ) : laporanList.length === 0 ? (
         <div
@@ -590,8 +600,8 @@ function DaftarPengaduan() {
             item={item}
             onStatusChange={handleStatusChange}
             onSavePenanganan={handleSavePenanganan}
-            onDelete={(id) => setDeleteTargetId(id)}
-            onFotoClick={(url) => setSelectedFoto(url)}
+            onDelete={setDeleteTargetId}
+            onFotoClick={setSelectedFoto}
           />
         ))
       )}
