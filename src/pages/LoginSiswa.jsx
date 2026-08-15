@@ -3,6 +3,220 @@ import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase";
 
+// 1. Objek styles dipindahkan ke LUAR komponen agar referensi objek tetap statis dan tidak dibuat ulang saat mengetik
+const styles = {
+  page: {
+    minHeight: "100dvh", // Menggunakan dynamic viewport height yang aman untuk keyboard HP
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#F4FBEE",
+    padding: "15px",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    boxSizing: "border-box",
+  },
+  card: {
+    width: "100%",
+    maxWidth: "900px",
+    background: "#fff",
+    borderRadius: "24px",
+    display: "flex",
+    flexWrap: "wrap",
+    overflow: "hidden",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+    border: "2px solid #C8E6C9",
+  },
+  left: {
+    flex: "1 1 320px",
+    padding: "35px 25px",
+    boxSizing: "border-box",
+  },
+  right: {
+    flex: "1 1 320px",
+    background: "#2E7D32",
+    color: "#fff",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    padding: "35px 25px",
+    boxSizing: "border-box",
+  },
+  title: {
+    fontSize: "28px",
+    color: "#1B5E20",
+    fontWeight: "800",
+    marginBottom: "8px",
+  },
+  subtitle: {
+    color: "#556B4D",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    marginBottom: "25px",
+    fontWeight: "500",
+  },
+  qrButton: {
+    width: "100%",
+    padding: "14px",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    border: "none",
+    borderRadius: "14px",
+    fontSize: "16px",
+    cursor: "pointer",
+    marginBottom: "20px",
+    fontWeight: "800",
+    boxShadow: "0 4px 0 #FBC02D",
+    textTransform: "uppercase",
+  },
+  divider: {
+    textAlign: "center",
+    color: "#888",
+    marginBottom: "20px",
+    fontWeight: "bold",
+    fontSize: "13px",
+  },
+  label: {
+    display: "block",
+    marginBottom: "6px",
+    fontWeight: "700",
+    color: "#2E3D29",
+    fontSize: "14px",
+  },
+  input: {
+    width: "100%",
+    padding: "14px",
+    borderRadius: "12px",
+    border: "2px solid #C8E6C9",
+    marginBottom: "18px",
+    fontSize: "16px", // Ukuran 16px mencegah auto-zoom & keyboard drop di HP
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+  loginButton: (loading) => ({
+    width: "100%",
+    padding: "15px",
+    border: "none",
+    borderRadius: "14px",
+    background: loading ? "#A5D6A7" : "#2E7D32",
+    color: "#fff",
+    fontSize: "16px",
+    cursor: loading ? "not-allowed" : "pointer",
+    fontWeight: "800",
+    boxShadow: loading ? "none" : "0 4px 0 #1B5E20",
+    textTransform: "uppercase",
+  }),
+  back: {
+    marginTop: "20px",
+    textAlign: "center",
+    color: "#2E7D32",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+  },
+  stop: {
+    fontSize: "32px",
+    fontWeight: "800",
+    marginBottom: "15px",
+    color: "#FFEB3B",
+  },
+  desc: {
+    fontSize: "15px",
+    lineHeight: "1.6",
+    fontWeight: "500",
+    opacity: 0.95,
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    padding: "15px",
+    boxSizing: "border-box",
+  },
+  modalCard: {
+    background: "#fff",
+    padding: "25px 20px",
+    borderRadius: "20px",
+    maxWidth: "380px",
+    width: "100%",
+    textAlign: "center",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+    border: "2px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+  modalTitle: {
+    marginBottom: "8px",
+    fontSize: "20px",
+    fontWeight: "800",
+  },
+  modalText: {
+    color: "#556B4D",
+    fontSize: "13px",
+    marginBottom: "20px",
+    lineHeight: "1.5",
+  },
+  alertIconWrapper: (type) => ({
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    margin: "0 auto 12px auto",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "28px",
+    background:
+      type === "success"
+        ? "#E8F5E9"
+        : type === "error"
+        ? "#FFEBEE"
+        : "#FFFDE7",
+    border: `2px solid ${
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FBC02D"
+    }`,
+    color:
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#F57F17",
+  }),
+  alertBtn: (type) => ({
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "800",
+    fontSize: "14px",
+    cursor: "pointer",
+    textTransform: "uppercase",
+    color: type === "warning" ? "#1B5E20" : "#fff",
+    background:
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FFEB3B",
+    boxShadow:
+      type === "success"
+        ? "0 3px 0 #1B5E20"
+        : type === "error"
+        ? "0 3px 0 #9A0007"
+        : "0 3px 0 #FBC02D",
+  }),
+};
+
 function LoginSiswa() {
   const navigate = useNavigate();
 
@@ -10,10 +224,9 @@ function LoginSiswa() {
   const [nis, setNis] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // State Pop-up Modal Kustom Notifikasi (Pengganti alert())
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
-    type: "success", // 'success' | 'error' | 'warning'
+    type: "success",
     title: "",
     message: "",
     onCloseCallback: null,
@@ -106,248 +319,16 @@ function LoginSiswa() {
     }
   };
 
-  const handleScanQR = () => {
-    navigate("/scan-qr");
-  };
-
-  const styles = {
-    page: {
-      minHeight: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "#F4FBEE", // Hijau muda segar
-      padding: "15px",
-      fontFamily: "'Segoe UI', Roboto, sans-serif",
-      boxSizing: "border-box",
-    },
-
-    card: {
-      width: "100%",
-      maxWidth: "900px",
-      background: "#fff",
-      borderRadius: "24px",
-      display: "flex",
-      flexWrap: "wrap",
-      overflow: "hidden",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-      border: "2px solid #C8E6C9",
-    },
-
-    left: {
-      flex: "1 1 320px",
-      padding: "35px 25px",
-    },
-
-    right: {
-      flex: "1 1 320px",
-      background: "#2E7D32", // Hijau utama
-      color: "#fff",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      textAlign: "center",
-      padding: "35px 25px",
-    },
-
-    title: {
-      fontSize: "28px",
-      color: "#1B5E20",
-      fontWeight: "800",
-      marginBottom: "8px",
-    },
-
-    subtitle: {
-      color: "#556B4D",
-      fontSize: "14px",
-      lineHeight: "1.5",
-      marginBottom: "25px",
-      fontWeight: "500",
-    },
-
-    qrButton: {
-      width: "100%",
-      padding: "14px",
-      background: "#FFEB3B", // Kuning
-      color: "#1B5E20",
-      border: "none",
-      borderRadius: "14px",
-      fontSize: "16px",
-      cursor: "pointer",
-      marginBottom: "20px",
-      fontWeight: "800",
-      boxShadow: "0 4px 0 #FBC02D",
-      textTransform: "uppercase",
-    },
-
-    divider: {
-      textAlign: "center",
-      color: "#888",
-      marginBottom: "20px",
-      fontWeight: "bold",
-      fontSize: "13px",
-    },
-
-    label: {
-      display: "block",
-      marginBottom: "6px",
-      fontWeight: "700",
-      color: "#2E3D29",
-      fontSize: "14px",
-    },
-
-    input: {
-      width: "100%",
-      padding: "14px",
-      borderRadius: "12px",
-      border: "2px solid #C8E6C9",
-      marginBottom: "18px",
-      fontSize: "15px",
-      boxSizing: "border-box",
-      outline: "none",
-      background: "#FAFAFA",
-    },
-
-    loginButton: {
-      width: "100%",
-      padding: "15px",
-      border: "none",
-      borderRadius: "14px",
-      background: loading ? "#A5D6A7" : "#2E7D32",
-      color: "#fff",
-      fontSize: "16px",
-      cursor: loading ? "not-allowed" : "pointer",
-      fontWeight: "800",
-      boxShadow: loading ? "none" : "0 4px 0 #1B5E20",
-      textTransform: "uppercase",
-    },
-
-    back: {
-      marginTop: "20px",
-      textAlign: "center",
-      color: "#2E7D32",
-      cursor: "pointer",
-      fontWeight: "700",
-      fontSize: "14px",
-    },
-
-    stop: {
-      fontSize: "32px",
-      fontWeight: "800",
-      marginBottom: "15px",
-      color: "#FFEB3B",
-    },
-
-    desc: {
-      fontSize: "15px",
-      lineHeight: "1.6",
-      fontWeight: "500",
-      opacity: 0.95,
-    },
-
-    // --- GAYA POP-UP MODAL KUSTOM ---
-    modalOverlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.6)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-      padding: "15px",
-      boxSizing: "border-box",
-    },
-    modalCard: {
-      background: "#fff",
-      padding: "25px 20px",
-      borderRadius: "20px",
-      maxWidth: "380px",
-      width: "100%",
-      textAlign: "center",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
-      boxSizing: "border-box",
-    },
-    modalTitle: {
-      marginBottom: "8px",
-      fontSize: "20px",
-      fontWeight: "800",
-    },
-    modalText: {
-      color: "#556B4D",
-      fontSize: "13px",
-      marginBottom: "20px",
-      lineHeight: "1.5",
-    },
-    alertIconWrapper: (type) => ({
-      width: "60px",
-      height: "60px",
-      borderRadius: "50%",
-      margin: "0 auto 12px auto",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      fontSize: "28px",
-      background:
-        type === "success"
-          ? "#E8F5E9"
-          : type === "error"
-          ? "#FFEBEE"
-          : "#FFFDE7",
-      border: `2px solid ${
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#FBC02D"
-      }`,
-      color:
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#F57F17",
-    }),
-    alertBtn: (type) => ({
-      width: "100%",
-      padding: "12px",
-      border: "none",
-      borderRadius: "12px",
-      fontWeight: "800",
-      fontSize: "14px",
-      cursor: "pointer",
-      textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
-      background:
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#FFEB3B",
-      boxShadow:
-        type === "success"
-          ? "0 3px 0 #1B5E20"
-          : type === "error"
-          ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
-    }),
-  };
-
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        {/* BAGIAN KIRI - FORM LOGIN */}
         <div style={styles.left}>
           <div style={styles.title}>Login Siswa</div>
-
           <div style={styles.subtitle}>
             Selamat datang di Sistem Pengaduan Bullying SD.
           </div>
 
-          <button style={styles.qrButton} onClick={handleScanQR}>
+          <button type="button" style={styles.qrButton} onClick={() => navigate("/scan-qr")}>
             SCAN QR CODE LOGIN
           </button>
 
@@ -362,6 +343,7 @@ function LoginSiswa() {
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               disabled={loading}
+              autoComplete="name"
             />
 
             <label style={styles.label}>Nomor Induk Siswa (NIS)</label>
@@ -372,11 +354,12 @@ function LoginSiswa() {
               value={nis}
               onChange={(e) => setNis(e.target.value)}
               disabled={loading}
+              inputMode="numeric"
             />
 
             <button
               type="submit"
-              style={styles.loginButton}
+              style={styles.loginButton(loading)}
               disabled={loading}
             >
               {loading ? "Memeriksa..." : "MASUK SEKARANG"}
@@ -388,7 +371,6 @@ function LoginSiswa() {
           </div>
         </div>
 
-        {/* BAGIAN KANAN - PESAN EDUKASI */}
         <div style={styles.right}>
           <div>
             <div style={styles.stop}>Stop Bullying!</div>
@@ -399,7 +381,6 @@ function LoginSiswa() {
         </div>
       </div>
 
-      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
       {alertConfig.isOpen && (
         <div style={styles.modalOverlay} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>

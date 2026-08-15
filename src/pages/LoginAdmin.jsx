@@ -6,6 +6,246 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 
+// 1. Objek styles dipindahkan ke LUAR komponen
+const styles = {
+  page: {
+    minHeight: "100dvh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#F4FBEE",
+    padding: "20px 15px",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    boxSizing: "border-box",
+  },
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    background: "#fff",
+    borderRadius: "20px",
+    padding: "30px 20px",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+    border: "2px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+  logo: {
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "28px",
+    fontWeight: "800",
+    margin: "0 auto 15px",
+    border: "3px solid #2E7D32",
+  },
+  title: {
+    fontSize: "24px",
+    color: "#1B5E20",
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: "5px",
+  },
+  subtitle: {
+    color: "#556B4D",
+    textAlign: "center",
+    fontSize: "13px",
+    marginBottom: "25px",
+    fontWeight: "500",
+  },
+  label: {
+    display: "block",
+    marginBottom: "6px",
+    fontWeight: "700",
+    color: "#1B5E20",
+    fontSize: "14px",
+  },
+  input: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: "2px solid #C8E6C9",
+    marginBottom: "18px",
+    fontSize: "16px", // 16px mencegah zoom & keyboard collapse
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+  passwordWrapper: {
+    position: "relative",
+    width: "100%",
+    marginBottom: "18px",
+    display: "flex",
+    alignItems: "center",
+  },
+  passwordInput: {
+    width: "100%",
+    padding: "12px 45px 12px 14px",
+    borderRadius: "12px",
+    border: "2px solid #C8E6C9",
+    fontSize: "16px", // 16px stabil saat keyboard naik
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+  eyeBtn: {
+    position: "absolute",
+    right: "12px",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "4px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2E7D32",
+  },
+  forgotContainer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: "20px",
+  },
+  forgotBtn: {
+    background: "none",
+    border: "none",
+    color: "#1B5E20",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "700",
+    padding: 0,
+    textDecoration: "underline",
+  },
+  loginBtn: (loading) => ({
+    width: "100%",
+    padding: "14px",
+    border: "none",
+    borderRadius: "12px",
+    background: loading ? "#A5D6A7" : "#2E7D32",
+    color: "#fff",
+    fontSize: "16px",
+    cursor: loading ? "not-allowed" : "pointer",
+    fontWeight: "800",
+    boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+    textTransform: "uppercase",
+  }),
+  back: {
+    marginTop: "20px",
+    textAlign: "center",
+    color: "#1B5E20",
+    cursor: "pointer",
+    fontWeight: "800",
+    fontSize: "13px",
+    textTransform: "uppercase",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    padding: "15px",
+    boxSizing: "border-box",
+  },
+  modalCard: {
+    background: "#fff",
+    padding: "25px 20px",
+    borderRadius: "20px",
+    maxWidth: "380px",
+    width: "100%",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+    border: "2px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+  modalTitle: {
+    color: "#1B5E20",
+    marginBottom: "8px",
+    fontSize: "20px",
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  modalText: {
+    color: "#556B4D",
+    fontSize: "13px",
+    marginBottom: "18px",
+    lineHeight: "1.5",
+    textAlign: "center",
+  },
+  cancelBtn: (resetLoading) => ({
+    width: "100%",
+    padding: "12px",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "800",
+    cursor: resetLoading ? "not-allowed" : "pointer",
+    marginTop: "10px",
+    fontSize: "13px",
+    boxShadow: "0 3px 0 #FBC02D",
+    textTransform: "uppercase",
+  }),
+  alertIconWrapper: (type) => ({
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    margin: "0 auto 12px auto",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "28px",
+    background:
+      type === "success"
+        ? "#E8F5E9"
+        : type === "error"
+        ? "#FFEBEE"
+        : "#FFFDE7",
+    border: `2px solid ${
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FBC02D"
+    }`,
+    color:
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#F57F17",
+  }),
+  alertBtn: (type) => ({
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "800",
+    fontSize: "14px",
+    cursor: "pointer",
+    textTransform: "uppercase",
+    color: type === "warning" ? "#1B5E20" : "#fff",
+    background:
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FFEB3B",
+    boxShadow:
+      type === "success"
+        ? "0 3px 0 #1B5E20"
+        : type === "error"
+        ? "0 3px 0 #9A0007"
+        : "0 3px 0 #FBC02D",
+  }),
+};
+
 function LoginAdmin() {
   const navigate = useNavigate();
 
@@ -14,15 +254,13 @@ function LoginAdmin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // State Modal Lupa Kata Sandi
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
-  // State Pop-Up Notifikasi Kustom (Pengganti alert())
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
-    type: "success", // 'success' | 'error' | 'warning'
+    type: "success",
     title: "",
     message: "",
     onCloseCallback: null,
@@ -133,246 +371,6 @@ function LoginAdmin() {
     }
   };
 
-  const styles = {
-    page: {
-      minHeight: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "#F4FBEE",
-      padding: "20px 15px",
-      fontFamily: "'Segoe UI', Roboto, sans-serif",
-      boxSizing: "border-box",
-    },
-    card: {
-      width: "100%",
-      maxWidth: "420px",
-      background: "#fff",
-      borderRadius: "20px",
-      padding: "30px 20px",
-      boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-      border: "2px solid #C8E6C9",
-      boxSizing: "border-box",
-    },
-    logo: {
-      width: "70px",
-      height: "70px",
-      borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      fontSize: "28px",
-      fontWeight: "800",
-      margin: "0 auto 15px",
-      border: "3px solid #2E7D32",
-    },
-    title: {
-      fontSize: "24px",
-      color: "#1B5E20",
-      fontWeight: "800",
-      textAlign: "center",
-      marginBottom: "5px",
-    },
-    subtitle: {
-      color: "#556B4D",
-      textAlign: "center",
-      fontSize: "13px",
-      marginBottom: "25px",
-      fontWeight: "500",
-    },
-    label: {
-      display: "block",
-      marginBottom: "6px",
-      fontWeight: "700",
-      color: "#1B5E20",
-      fontSize: "14px",
-    },
-    input: {
-      width: "100%",
-      padding: "12px 14px",
-      borderRadius: "12px",
-      border: "2px solid #C8E6C9",
-      marginBottom: "18px",
-      fontSize: "14px",
-      boxSizing: "border-box",
-      outline: "none",
-      background: "#FAFAFA",
-    },
-    passwordWrapper: {
-      position: "relative",
-      width: "100%",
-      marginBottom: "18px",
-      display: "flex",
-      alignItems: "center",
-    },
-    passwordInput: {
-      width: "100%",
-      padding: "12px 45px 12px 14px",
-      borderRadius: "12px",
-      border: "2px solid #C8E6C9",
-      fontSize: "14px",
-      boxSizing: "border-box",
-      outline: "none",
-      background: "#FAFAFA",
-    },
-    eyeBtn: {
-      position: "absolute",
-      right: "12px",
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      padding: "4px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "#2E7D32",
-    },
-    forgotContainer: {
-      display: "flex",
-      justifyContent: "flex-end",
-      marginBottom: "20px",
-    },
-    forgotBtn: {
-      background: "none",
-      border: "none",
-      color: "#1B5E20",
-      cursor: "pointer",
-      fontSize: "13px",
-      fontWeight: "700",
-      padding: 0,
-      textDecoration: "underline",
-    },
-    loginBtn: {
-      width: "100%",
-      padding: "14px",
-      border: "none",
-      borderRadius: "12px",
-      background: loading ? "#A5D6A7" : "#2E7D32",
-      color: "#fff",
-      fontSize: "15px",
-      cursor: loading ? "not-allowed" : "pointer",
-      fontWeight: "800",
-      boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
-      textTransform: "uppercase",
-    },
-    back: {
-      marginTop: "20px",
-      textAlign: "center",
-      color: "#1B5E20",
-      cursor: "pointer",
-      fontWeight: "800",
-      fontSize: "13px",
-      textTransform: "uppercase",
-    },
-    modalOverlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.6)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-      padding: "15px",
-      boxSizing: "border-box",
-    },
-    modalCard: {
-      background: "#fff",
-      padding: "25px 20px",
-      borderRadius: "20px",
-      maxWidth: "380px",
-      width: "100%",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
-      boxSizing: "border-box",
-    },
-    modalTitle: {
-      color: "#1B5E20",
-      marginBottom: "8px",
-      fontSize: "20px",
-      fontWeight: "800",
-      textAlign: "center",
-    },
-    modalText: {
-      color: "#556B4D",
-      fontSize: "13px",
-      marginBottom: "18px",
-      lineHeight: "1.5",
-      textAlign: "center",
-    },
-    cancelBtn: {
-      width: "100%",
-      padding: "12px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
-      border: "none",
-      borderRadius: "12px",
-      fontWeight: "800",
-      cursor: resetLoading ? "not-allowed" : "pointer",
-      marginTop: "10px",
-      fontSize: "13px",
-      boxShadow: "0 3px 0 #FBC02D",
-      textTransform: "uppercase",
-    },
-    // Gaya Khusus Pop-Up Notifikasi
-    alertIconWrapper: (type) => ({
-      width: "60px",
-      height: "60px",
-      borderRadius: "50%",
-      margin: "0 auto 12px auto",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      fontSize: "28px",
-      background:
-        type === "success"
-          ? "#E8F5E9"
-          : type === "error"
-          ? "#FFEBEE"
-          : "#FFFDE7",
-      border: `2px solid ${
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#FBC02D"
-      }`,
-      color:
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#F57F17",
-    }),
-    alertBtn: (type) => ({
-      width: "100%",
-      padding: "12px",
-      border: "none",
-      borderRadius: "12px",
-      fontWeight: "800",
-      fontSize: "14px",
-      cursor: "pointer",
-      textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
-      background:
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#FFEB3B",
-      boxShadow:
-        type === "success"
-          ? "0 3px 0 #1B5E20"
-          : type === "error"
-          ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
-    }),
-  };
-
   return (
     <div style={styles.page}>
       <div style={styles.card}>
@@ -395,7 +393,6 @@ function LoginAdmin() {
 
           <label style={styles.label}>Kata Sandi</label>
 
-          {/* INPUT PASSWORD DENGAN IKON MATA */}
           <div style={styles.passwordWrapper}>
             <input
               type={showPassword ? "text" : "password"}
@@ -423,7 +420,7 @@ function LoginAdmin() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11 8-11 8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               ) : (
@@ -455,7 +452,7 @@ function LoginAdmin() {
             </button>
           </div>
 
-          <button type="submit" style={styles.loginBtn} disabled={loading}>
+          <button type="submit" style={styles.loginBtn(loading)} disabled={loading}>
             {loading ? "Memproses..." : "Login Admin"}
           </button>
         </form>
@@ -465,7 +462,6 @@ function LoginAdmin() {
         </div>
       </div>
 
-      {/* MODAL RESET KATA SANDI */}
       {showResetModal && (
         <div
           style={styles.modalOverlay}
@@ -496,16 +492,11 @@ function LoginAdmin() {
                 onChange={(e) => setResetEmail(e.target.value)}
                 disabled={resetLoading}
                 autoComplete="email"
-                autoFocus
               />
 
               <button
                 type="submit"
-                style={{
-                  ...styles.loginBtn,
-                  marginTop: 0,
-                  background: resetLoading ? "#A5D6A7" : "#2E7D32",
-                }}
+                style={styles.loginBtn(resetLoading)}
                 disabled={resetLoading}
               >
                 {resetLoading ? "Mengirim Email..." : "📨 Kirim Email Reset"}
@@ -513,7 +504,7 @@ function LoginAdmin() {
 
               <button
                 type="button"
-                style={styles.cancelBtn}
+                style={styles.cancelBtn(resetLoading)}
                 onClick={() => setShowResetModal(false)}
                 disabled={resetLoading}
               >
@@ -524,7 +515,6 @@ function LoginAdmin() {
         </div>
       )}
 
-      {/* POP-UP NOTIFIKASI KUSTOM BERDESAIN (PENGGANTI ALERT) */}
       {alertConfig.isOpen && (
         <div style={styles.modalOverlay} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
