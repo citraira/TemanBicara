@@ -10,7 +10,7 @@ function DashboardSiswa() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // State untuk Pop-Up Toast Realtime saat Status Berubah
+  // State Toast Realtime
   const [toastStatus, setToastStatus] = useState(null);
 
   useEffect(() => {
@@ -30,7 +30,6 @@ function DashboardSiswa() {
           ...data[key],
         }));
 
-        // Filter pengaduan milik siswa yang sedang login
         const aduanSaya = savedNama
           ? formatted.filter(
               (item) =>
@@ -39,7 +38,6 @@ function DashboardSiswa() {
             )
           : formatted;
 
-        // Urutkan berdasarkan update terbaru atau tanggal dibuat
         aduanSaya.sort(
           (a, b) =>
             new Date(b.updatedAt || b.createdAt) -
@@ -50,45 +48,40 @@ function DashboardSiswa() {
         const storageKey = `lastReadNotif_${savedNama || "guest"}`;
         const lastReadTime = localStorage.getItem(storageKey);
 
-        // Hitung unread jika tanggal update/dibuat lebih baru dari waktu buka notif terakhir
         if (lastReadTime) {
           const unread = aduanSaya.filter((item) => {
-            const waktuAktivitas = new Date(item.updatedAt || item.createdAt);
-            return waktuAktivitas > new Date(lastReadTime);
+            const waktu = new Date(item.updatedAt || item.createdAt);
+            return waktu > new Date(lastReadTime);
           }).length;
           setUnreadCount(unread);
         } else {
           setUnreadCount(aduanSaya.length);
         }
 
-        // --- REALTIME TOAST NOTIFIKASI KETIKA GURU MENGUBAH STATUS ---
+        // Notifikasi Toast Realtime saat Status Berubah
         if (!initialLoad && aduanSaya.length > 0) {
           const aduanTerbaru = aduanSaya[0];
           const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
           const lastSavedStatus = localStorage.getItem(lastStatusKey);
 
-          // Munculkan toast jika status berubah dari status yang disimpan sebelumnya
           if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
             setToastStatus({
               jenis: aduanTerbaru.jenis || "Pengaduan",
               status: aduanTerbaru.status,
             });
 
-            // Putar audio notifikasi
             try {
               const audio = new Audio(
                 "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
               );
               audio.play();
             } catch (err) {
-              console.log("Audio play blocked by browser:", err);
+              console.log("Audio diblokir browser:", err);
             }
           }
 
-          // Simpan status terbaru ke LocalStorage
           localStorage.setItem(lastStatusKey, aduanTerbaru.status);
         } else if (initialLoad && aduanSaya.length > 0) {
-          // Inisialisasi status saat halaman pertama kali dibuka
           aduanSaya.forEach((item) => {
             localStorage.setItem(`lastSeenStatus_${item.id}`, item.status);
           });
@@ -104,7 +97,6 @@ function DashboardSiswa() {
     return () => unsubscribe();
   }, []);
 
-  // TANDAI NOTIFIKASI SUDAH DIBACA
   const markNotifAsRead = () => {
     const savedNama = localStorage.getItem("namaSiswa") || "guest";
     const nowIso = new Date().toISOString();
@@ -124,7 +116,7 @@ function DashboardSiswa() {
   };
 
   const handleLogout = () => {
-    if (window.confirm("Apakah kamu yakin ingin keluar?")) {
+    if (window.confirm("Apakah kamu ingin keluar?")) {
       localStorage.removeItem("namaSiswa");
       localStorage.removeItem("nisSiswa");
       localStorage.removeItem("kelasSiswa");
@@ -143,9 +135,9 @@ function DashboardSiswa() {
     header: {
       background: "#2E7D32",
       color: "#fff",
-      padding: "20px 20px 25px 20px",
-      borderBottomLeftRadius: "24px",
-      borderBottomRightRadius: "24px",
+      padding: "20px 20px 24px 20px",
+      borderBottomLeftRadius: "26px",
+      borderBottomRightRadius: "26px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
     },
     topRow: {
@@ -159,19 +151,20 @@ function DashboardSiswa() {
       gap: "12px",
     },
     avatar: {
-      width: "50px",
-      height: "50px",
+      width: "52px",
+      height: "52px",
       borderRadius: "50%",
       background: "#FFEB3B",
       color: "#1B5E20",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      fontSize: "20px",
+      fontSize: "22px",
       fontWeight: "800",
+      boxShadow: "0 3px 6px rgba(0,0,0,0.12)",
     },
-    hello: { fontSize: "13px", opacity: ".9" },
-    name: { fontSize: "18px", fontWeight: "800" },
+    hello: { fontSize: "13px", opacity: 0.9, fontWeight: "600" },
+    name: { fontSize: "19px", fontWeight: "800" },
     headerActions: {
       display: "flex",
       alignItems: "center",
@@ -181,16 +174,15 @@ function DashboardSiswa() {
       position: "relative",
       fontSize: "22px",
       cursor: "pointer",
-      background: "rgba(255, 255, 255, 0.2)",
+      background: "rgba(255, 255, 255, 0.25)",
       border: "none",
       color: "#fff",
-      padding: "8px 12px",
       borderRadius: "50%",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      width: "42px",
-      height: "42px",
+      width: "44px",
+      height: "44px",
     },
     badgeCount: {
       position: "absolute",
@@ -208,96 +200,119 @@ function DashboardSiswa() {
       color: "#1B5E20",
       border: "none",
       padding: "8px 14px",
-      borderRadius: "20px",
+      borderRadius: "18px",
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
+      boxShadow: "0 2px 0 #FBC02D",
     },
 
-    // TOAST NOTIFIKASI
+    // TOAST
     toast: {
       position: "fixed",
-      top: "20px",
-      right: "20px",
-      left: "20px",
-      maxWidth: "380px",
+      top: "16px",
+      left: "16px",
+      right: "16px",
+      maxWidth: "400px",
       margin: "0 auto",
       background: "#2E7D32",
       color: "#fff",
-      padding: "14px 18px",
-      borderRadius: "16px",
-      boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+      padding: "14px 16px",
+      borderRadius: "18px",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
       zIndex: 2000,
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      border: "2px solid #FFF59D",
-      animation: "popIn 0.3s ease-out",
+      border: "2px solid #FFEB3B",
     },
 
-    welcomeCard: {
-      background: "#FFFDE7",
-      margin: "20px 15px",
-      borderRadius: "20px",
-      padding: "20px",
+    // BANNER VISUAL UTAMA
+    bannerCard: {
+      background: "linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%)",
+      margin: "18px 15px 15px",
+      borderRadius: "22px",
+      padding: "18px 20px",
       border: "2px solid #FFF59D",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.03)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+      display: "flex",
+      alignItems: "center",
+      gap: "14px",
     },
-    welcomeTitle: {
-      fontSize: "22px",
+    bannerIcon: {
+      fontSize: "38px",
+      lineHeight: "1",
+    },
+    bannerTitle: {
+      fontSize: "18px",
       fontWeight: "800",
       color: "#1B5E20",
-      marginBottom: "8px",
+      marginBottom: "2px",
     },
-    welcomeText: {
+    bannerText: {
+      fontSize: "13px",
       color: "#556B4D",
-      lineHeight: "1.5",
-      fontSize: "14px",
-      fontWeight: "500",
+      margin: 0,
+      fontWeight: "600",
     },
 
-    sectionTitle: {
-      fontSize: "20px",
-      fontWeight: "800",
-      color: "#1B5E20",
-      margin: "0 15px 15px 15px",
-    },
-
+    // GRID MENU VISUAL BERWARNA
     menuGrid: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-      gap: "12px",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "14px",
       padding: "0 15px",
+      marginTop: "10px",
     },
-
-    menuCard: {
-      background: "#fff",
-      borderRadius: "18px",
-      padding: "22px 15px",
+    actionCard: (bgColor, borderColor) => ({
+      background: bgColor,
+      borderRadius: "22px",
+      padding: "24px 12px",
       textAlign: "center",
       cursor: "pointer",
+      border: `2.5px solid ${borderColor}`,
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      border: "2px solid #C8E6C9",
-    },
-    menuTitle: {
-      fontSize: "17px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "10px",
+      transition: "transform 0.15s ease",
+    }),
+    cardIconCircle: (circleBg) => ({
+      width: "65px",
+      height: "65px",
+      borderRadius: "50%",
+      background: circleBg,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "32px",
+      boxShadow: "0 4px 8px rgba(0,0,0,0.06)",
+    }),
+    cardLabel: {
+      fontSize: "16px",
       fontWeight: "800",
       color: "#1B5E20",
-      marginBottom: "8px",
+      margin: 0,
     },
-    menuDesc: {
-      color: "#667C5E",
-      lineHeight: "1.4",
-      fontSize: "13px",
+    cardTag: {
+      fontSize: "11px",
+      fontWeight: "700",
+      color: "#4E6647",
+      background: "rgba(255,255,255,0.7)",
+      padding: "3px 8px",
+      borderRadius: "10px",
     },
 
+    // SIDE PANEL NOTIFIKASI
     modalOverlay: {
       position: "fixed",
       top: 0,
       left: 0,
       width: "100vw",
       height: "100vh",
-      background: "rgba(0,0,0,0.4)",
+      background: "rgba(0,0,0,0.45)",
       zIndex: 1000,
       display: "flex",
       justifyContent: "flex-end",
@@ -317,10 +332,12 @@ function DashboardSiswa() {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: "20px",
+      marginBottom: "16px",
+      borderBottom: "1.5px solid #E8F5E9",
+      paddingBottom: "12px",
     },
     panelTitle: {
-      fontSize: "22px",
+      fontSize: "19px",
       fontWeight: "800",
       color: "#1B5E20",
       margin: 0,
@@ -333,30 +350,28 @@ function DashboardSiswa() {
       color: "#555",
       fontWeight: "800",
     },
-
-    emptyState: {
-      textAlign: "center",
-      padding: "30px 10px",
-    },
-
     notifItemCard: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "12px 0",
-      borderBottom: "1px solid #E8F5E9",
+      padding: "12px",
+      background: "#F9FCF7",
+      borderRadius: "14px",
+      border: "1.5px solid #E8F5E9",
+      marginBottom: "10px",
     },
     actionBtn: {
-      padding: "6px 12px",
+      padding: "8px 14px",
       background: "#2E7D32",
       color: "#fff",
       border: "none",
       borderRadius: "10px",
-      fontWeight: "700",
+      fontWeight: "800",
       fontSize: "12px",
       cursor: "pointer",
     },
 
+    // BOTTOM NAV
     bottomNav: {
       position: "fixed",
       bottom: 0,
@@ -367,8 +382,8 @@ function DashboardSiswa() {
       display: "flex",
       justifyContent: "space-around",
       alignItems: "center",
-      boxShadow: "0 -2px 10px rgba(0,0,0,0.06)",
-      borderTop: "1px solid #E8F5E9",
+      boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
+      borderTop: "1.5px solid #E8F5E9",
     },
     navItem: {
       display: "flex",
@@ -377,30 +392,28 @@ function DashboardSiswa() {
       justifyContent: "center",
       cursor: "pointer",
       color: "#2E7D32",
-      fontWeight: "700",
+      fontWeight: "800",
       fontSize: "11px",
-      gap: "3px",
+      gap: "2px",
     },
     navIcon: {
-      fontSize: "20px",
+      fontSize: "22px",
       lineHeight: "1",
     },
   };
 
   return (
     <div style={styles.page}>
-      {/* TOAST POP-UP REALTIME SAAT STATUS LAPORAN BERUBAH */}
+      {/* TOAST UPDATE STATUS */}
       {toastStatus && (
         <div style={styles.toast}>
           <div>
-            <strong style={{ fontSize: "14px", color: "#FFEB3B" }}>
-              🔔 Update Laporan!
-            </strong>
-            <br />
-            <span style={{ fontSize: "12px" }}>
-              Status laporan <strong>{toastStatus.jenis}</strong> kamu diubah menjadi:{" "}
-              <strong>"{toastStatus.status}"</strong>
-            </span>
+            <div style={{ fontSize: "14px", fontWeight: "800", color: "#FFEB3B" }}>
+              Pemberitahuan Guru
+            </div>
+            <div style={{ fontSize: "13px", marginTop: "2px" }}>
+              Laporanmu: <strong>"{toastStatus.status}"</strong>
+            </div>
           </div>
           <button
             onClick={() => setToastStatus(null)}
@@ -410,8 +423,7 @@ function DashboardSiswa() {
               color: "#fff",
               fontWeight: "800",
               cursor: "pointer",
-              marginLeft: "10px",
-              fontSize: "16px",
+              fontSize: "18px",
             }}
           >
             ✕
@@ -419,7 +431,7 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* HEADER DASHBOARD */}
+      {/* HEADER ATAS */}
       <div style={styles.header}>
         <div style={styles.topRow}>
           <div style={styles.profile}>
@@ -427,7 +439,7 @@ function DashboardSiswa() {
               {namaSiswa ? namaSiswa.charAt(0).toUpperCase() : "S"}
             </div>
             <div>
-              <div style={styles.hello}>Halo,</div>
+              <div style={styles.hello}>Hai Teman!</div>
               <div style={styles.name}>{namaSiswa}</div>
             </div>
           </div>
@@ -436,7 +448,7 @@ function DashboardSiswa() {
             <button
               style={styles.notifBtn}
               onClick={handleOpenNotif}
-              title="Pemberitahuan"
+              title="Notifikasi"
             >
               🔔
               {unreadCount > 0 && (
@@ -451,76 +463,95 @@ function DashboardSiswa() {
         </div>
       </div>
 
-      {/* KARTU SAMBUTAN */}
-      <div style={styles.welcomeCard}>
-        <div style={styles.welcomeTitle}>Berani Bicara!</div>
-        <div style={styles.welcomeText}>
-          Selamat datang di Sistem Pengaduan Bullying. Jangan takut melapor apabila kamu mengalami atau melihat tindakan bullying di sekolah.
+      {/* KARTU BANNER VISUAL */}
+      <div style={styles.bannerCard}>
+        <div style={styles.bannerIcon}>🛡️</div>
+        <div>
+          <div style={styles.bannerTitle}>Jangan Takut Melapor!</div>
+          <p style={styles.bannerText}>
+            Guru BK siap membantu menjaga keamananmu di sekolah.
+          </p>
         </div>
       </div>
 
-      {/* MENU UTAMA */}
-      <div style={styles.sectionTitle}>Menu Utama</div>
-
+      {/* 4 MENU UTAMA KARTU BESAR BERIKON */}
       <div style={styles.menuGrid}>
-        <div style={styles.menuCard} onClick={() => navigate("/pengaduan")}>
-          <div style={styles.menuTitle}>Buat Laporan</div>
-          <div style={styles.menuDesc}>Laporkan tindakan bullying dengan aman.</div>
+        {/* 1. BUAT LAPORAN */}
+        <div
+          style={styles.actionCard("#E8F5E9", "#A5D6A7")}
+          onClick={() => navigate("/pengaduan")}
+        >
+          <div style={styles.cardIconCircle("#C8E6C9")}>✏️</div>
+          <h3 style={styles.cardLabel}>Buat Laporan</h3>
+          <span style={styles.cardTag}>Ceritakan Masalahmu</span>
         </div>
 
-        <div style={styles.menuCard} onClick={() => navigate("/riwayat")}>
-          <div style={styles.menuTitle}>Riwayat</div>
-          <div style={styles.menuDesc}>Lihat status laporan yang pernah dikirim.</div>
+        {/* 2. LIHAT RIWAYAT */}
+        <div
+          style={styles.actionCard("#FFFDE7", "#FFE082")}
+          onClick={() => navigate("/riwayat")}
+        >
+          <div style={styles.cardIconCircle("#FFF59D")}>📋</div>
+          <h3 style={styles.cardLabel}>Riwayat Saya</h3>
+          <span style={styles.cardTag}>Cek Status Laporan</span>
         </div>
 
-        <div style={styles.menuCard} onClick={() => navigate("/edukasi")}>
-          <div style={styles.menuTitle}>Edukasi</div>
-          <div style={styles.menuDesc}>Pelajari cara mencegah tindakan bullying.</div>
+        {/* 3. PUSAT EDUKASI */}
+        <div
+          style={styles.actionCard("#E1F5FE", "#90CAF9")}
+          onClick={() => navigate("/edukasi")}
+        >
+          <div style={styles.cardIconCircle("#BBDEFB")}>📖</div>
+          <h3 style={styles.cardLabel}>Materi Edukasi</h3>
+          <span style={styles.cardTag}>Bacaan & Panduan</span>
         </div>
 
-        <div style={styles.menuCard} onClick={() => navigate("/hubungi-guru")}>
-          <div style={styles.menuTitle}>Hubungi Guru</div>
-          <div style={styles.menuDesc}>Dapatkan bantuan langsung dari Guru BK.</div>
+        {/* 4. HUBUNGI GURU */}
+        <div
+          style={styles.actionCard("#F3E5F5", "#CE93D8")}
+          onClick={() => navigate("/hubungi-guru")}
+        >
+          <div style={styles.cardIconCircle("#E1BEE7")}>👨‍🏫</div>
+          <h3 style={styles.cardLabel}>Hubungi Guru</h3>
+          <span style={styles.cardTag}>Chat WhatsApp BK</span>
         </div>
       </div>
 
-      {/* POP-UP MODAL NOTIFIKASI SISI KANAN */}
+      {/* SIDE PANEL NOTIFIKASI */}
       {showNotifModal && (
         <div style={styles.modalOverlay} onClick={() => setShowNotifModal(false)}>
           <div style={styles.sidePanel} onClick={(e) => e.stopPropagation()}>
             <div style={styles.panelHeader}>
-              <h2 style={styles.panelTitle}>Notifikasi</h2>
+              <h2 style={styles.panelTitle}>Notifikasi Laporan</h2>
               <button style={styles.closeBtn} onClick={() => setShowNotifModal(false)}>
                 ✕
               </button>
             </div>
 
             {notifList.length === 0 ? (
-              <div style={styles.emptyState}>
-                <h4 style={{ fontSize: "16px", color: "#1B5E20", margin: "10px 0 5px 0" }}>
-                  Belum Ada Aktivitas
-                </h4>
-                <p style={{ color: "#667C5E", fontSize: "13px" }}>
-                  Saat guru memperbarui status laporanmu, pemberitahuan akan muncul di sini.
-                </p>
+              <div style={{ textAlign: "center", padding: "40px 10px", color: "#667C5E" }}>
+                <div style={{ fontSize: "40px", marginBottom: "10px" }}>📭</div>
+                <div style={{ fontWeight: "700", fontSize: "15px", color: "#1B5E20" }}>
+                  Belum Ada Laporan
+                </div>
               </div>
             ) : (
               <div>
                 {notifList.map((item) => (
                   <div key={item.id} style={styles.notifItemCard}>
                     <div>
-                      <p style={{ fontSize: "13px", fontWeight: "700", margin: "0 0 4px 0", color: "#2E3D29" }}>
-                        Laporan: {item.jenis || "Pengaduan"}
-                      </p>
-                      <span style={{ fontSize: "12px", color: "#556B4D" }}>
+                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#1B5E20" }}>
+                        {item.jenis || "Pengaduan"}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#556B4D", marginTop: "3px" }}>
                         Status: <strong>{item.status || "Diproses"}</strong>
-                      </span>
+                      </div>
                     </div>
                     <button
                       style={styles.actionBtn}
                       onClick={handleBukaDetailRiwayat}
                     >
-                      Lihat
+                      Buka
                     </button>
                   </div>
                 ))}
@@ -530,14 +561,14 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION */}
+      {/* BOTTOM NAV */}
       <div style={styles.bottomNav}>
         <div style={styles.navItem} onClick={() => navigate("/dashboard-siswa")}>
           <span style={styles.navIcon}>🏠</span>
           <span>Beranda</span>
         </div>
         <div style={styles.navItem} onClick={() => navigate("/pengaduan")}>
-          <span style={styles.navIcon}>📝</span>
+          <span style={styles.navIcon}>✏️</span>
           <span>Lapor</span>
         </div>
         <div style={styles.navItem} onClick={() => navigate("/edukasi")}>

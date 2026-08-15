@@ -704,7 +704,6 @@ function FormPengaduan() {
                   type="text"
                   value={kelasSaksi}
                   onChange={(e) => setKelasSaksi(e.target.value)}
-                  placeholder="Contoh: Kelas 4"
                   style={styles.input}
                   disabled={loading}
                 />
