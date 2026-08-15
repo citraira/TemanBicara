@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue } from "firebase/database";
-import { db } from "../firebase";
+import { ref, onValue, set } from "firebase/database";
+import { getToken } from "firebase/messaging";
+import { db, messaging } from "../firebase";
 
 function DashboardSiswa() {
   const navigate = useNavigate();
@@ -16,12 +17,45 @@ function DashboardSiswa() {
   // State Toast Realtime Update Status
   const [toastStatus, setToastStatus] = useState(null);
 
+  // VAPID KEY FCM ANDA
+  const VAPID_KEY =
+    "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
+
+  // Inisialisasi Data & Registrasi Push Notification FCM
   useEffect(() => {
     const savedNama = localStorage.getItem("namaSiswa");
+    const savedNis = localStorage.getItem("nisSiswa") || "anonim";
+
     if (savedNama) {
       setNamaSiswa(savedNama);
     }
 
+    // Minta Izin & Daftarkan Token Notifikasi ke Background HP
+    const setupFCM = async () => {
+      try {
+        const msg = await messaging();
+        if (!msg) return;
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
+          if (currentToken) {
+            const cleanKey = savedNis.replace(/[.#$[\]]/g, "_");
+            await set(ref(db, `fcmTokens/siswa/${cleanKey}`), {
+              nama: savedNama || "Siswa",
+              token: currentToken,
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("FCM Notifikasi belum aktif:", err);
+      }
+    };
+
+    setupFCM();
+
+    // Listener Realtime Data Pengaduan
     const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
@@ -61,7 +95,7 @@ function DashboardSiswa() {
           setUnreadCount(aduanSaya.length);
         }
 
-        // Notifikasi Toast Realtime saat Status Berubah
+        // Pemicu Pop-Up Toast saat Status Berubah Realtime
         if (!initialLoad && aduanSaya.length > 0) {
           const aduanTerbaru = aduanSaya[0];
           const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
@@ -118,7 +152,6 @@ function DashboardSiswa() {
     navigate("/riwayat");
   };
 
-  // Eksekusi Keluar Akun
   const handleConfirmLogout = () => {
     localStorage.removeItem("namaSiswa");
     localStorage.removeItem("nisSiswa");
@@ -208,8 +241,6 @@ function DashboardSiswa() {
       fontSize: "13px",
       boxShadow: "0 2px 0 #FBC02D",
     },
-
-    // TOAST
     toast: {
       position: "fixed",
       top: "16px",
@@ -228,8 +259,6 @@ function DashboardSiswa() {
       justifyContent: "space-between",
       border: "2px solid #FFEB3B",
     },
-
-    // BANNER VISUAL UTAMA
     bannerCard: {
       background: "linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%)",
       margin: "18px 15px 15px",
@@ -241,10 +270,7 @@ function DashboardSiswa() {
       alignItems: "center",
       gap: "14px",
     },
-    bannerIcon: {
-      fontSize: "36px",
-      lineHeight: "1",
-    },
+    bannerIcon: { fontSize: "36px", lineHeight: "1" },
     bannerTitle: {
       fontSize: "18px",
       fontWeight: "800",
@@ -257,8 +283,6 @@ function DashboardSiswa() {
       margin: 0,
       fontWeight: "600",
     },
-
-    // GRID MENU VISUAL BERWARNA
     menuGrid: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -279,7 +303,6 @@ function DashboardSiswa() {
       alignItems: "center",
       justifyContent: "center",
       gap: "10px",
-      transition: "transform 0.15s ease",
     }),
     cardIconCircle: (circleBg) => ({
       width: "65px",
@@ -306,8 +329,6 @@ function DashboardSiswa() {
       padding: "3px 8px",
       borderRadius: "10px",
     },
-
-    // SIDE PANEL NOTIFIKASI
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -372,8 +393,6 @@ function DashboardSiswa() {
       fontSize: "12px",
       cursor: "pointer",
     },
-
-    // MODAL KONFIRMASI KELUAR
     centerModalOverlay: {
       position: "fixed",
       top: 0,
@@ -412,11 +431,7 @@ function DashboardSiswa() {
       background: "#FFFDE7",
       border: "2px solid #FBC02D",
     },
-    modalBtnGroup: {
-      display: "flex",
-      gap: "10px",
-      marginTop: "18px",
-    },
+    modalBtnGroup: { display: "flex", gap: "10px", marginTop: "18px" },
     yesBtn: {
       flex: 1,
       background: "#D32F2F",
@@ -443,8 +458,6 @@ function DashboardSiswa() {
       boxShadow: "0 3px 0 #FBC02D",
       textTransform: "uppercase",
     },
-
-    // BOTTOM NAV
     bottomNav: {
       position: "fixed",
       bottom: 0,
@@ -469,10 +482,7 @@ function DashboardSiswa() {
       fontSize: "11px",
       gap: "2px",
     },
-    navIcon: {
-      fontSize: "22px",
-      lineHeight: "1",
-    },
+    navIcon: { fontSize: "22px", lineHeight: "1" },
   };
 
   return (
@@ -536,7 +546,7 @@ function DashboardSiswa() {
         </div>
       </div>
 
-      {/* KARTU BANNER VISUAL */}
+      {/* BANNER VISUAL */}
       <div style={styles.bannerCard}>
         <div style={styles.bannerIcon}>🛡️</div>
         <div>
@@ -547,9 +557,8 @@ function DashboardSiswa() {
         </div>
       </div>
 
-      {/* 4 MENU UTAMA KARTU BESAR BERIKON */}
+      {/* MENU UTAMA VISUAL */}
       <div style={styles.menuGrid}>
-        {/* 1. BUAT LAPORAN */}
         <div
           style={styles.actionCard("#E8F5E9", "#A5D6A7")}
           onClick={() => navigate("/pengaduan")}
@@ -559,7 +568,6 @@ function DashboardSiswa() {
           <span style={styles.cardTag}>Ceritakan Masalahmu</span>
         </div>
 
-        {/* 2. LIHAT RIWAYAT */}
         <div
           style={styles.actionCard("#FFFDE7", "#FFE082")}
           onClick={() => navigate("/riwayat")}
@@ -569,7 +577,6 @@ function DashboardSiswa() {
           <span style={styles.cardTag}>Cek Status Laporan</span>
         </div>
 
-        {/* 3. PUSAT EDUKASI */}
         <div
           style={styles.actionCard("#E1F5FE", "#90CAF9")}
           onClick={() => navigate("/edukasi")}
@@ -579,7 +586,6 @@ function DashboardSiswa() {
           <span style={styles.cardTag}>Bacaan & Panduan</span>
         </div>
 
-        {/* 4. HUBUNGI GURU */}
         <div
           style={styles.actionCard("#F3E5F5", "#CE93D8")}
           onClick={() => navigate("/hubungi-guru")}
@@ -658,7 +664,7 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* BOTTOM NAV */}
+      {/* BOTTOM NAVIGATION */}
       <div style={styles.bottomNav}>
         <div style={styles.navItem} onClick={() => navigate("/dashboard-siswa")}>
           <span style={styles.navIcon}>🏠</span>

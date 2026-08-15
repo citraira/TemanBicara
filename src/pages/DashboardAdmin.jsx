@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue } from "firebase/database";
-import { db } from "../firebase";
+import { ref, onValue, set } from "firebase/database";
+import { getToken } from "firebase/messaging";
+import { db, messaging } from "../firebase";
 
 function DashboardAdmin() {
   const navigate = useNavigate();
@@ -11,17 +12,43 @@ function DashboardAdmin() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // State Modal Statistik
+  // State Modal Statistik & Modal Keluar
   const [showStatistikModal, setShowStatistikModal] = useState(false);
-
-  // State Modal Konfirmasi Keluar
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Ambil data profil admin dari localStorage
   const namaGuru = localStorage.getItem("namaGuru") || "Guru BK";
   const soundEnabled = localStorage.getItem("soundEnabled") !== "false";
 
+  // VAPID KEY FCM ANDA
+  const VAPID_KEY =
+    "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
+
   useEffect(() => {
+    // Daftarkan Token FCM Admin ke Database
+    const setupAdminFCM = async () => {
+      try {
+        const msg = await messaging();
+        if (!msg) return;
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
+          if (currentToken) {
+            await set(ref(db, "fcmTokens/admin/utama"), {
+              nama: namaGuru,
+              token: currentToken,
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("FCM Admin belum aktif:", err);
+      }
+    };
+
+    setupAdminFCM();
+
+    // Listener Realtime Pengaduan
     const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
@@ -43,7 +70,6 @@ function DashboardAdmin() {
           );
           setJumlahAduanBaru(aduanDiproses.length);
 
-          // Hitung Unread berdasarkan timestamp terakhir kali notif dibuka
           const lastReadTime = localStorage.getItem("lastReadAdminNotif");
           if (lastReadTime) {
             const unread = list.filter(
@@ -54,7 +80,7 @@ function DashboardAdmin() {
             setUnreadCount(0);
           }
 
-          // Pop-Up Toast saat ada aduan baru masuk secara realtime
+          // Pop-Up Toast Realtime saat Aduan Baru Masuk
           const lastShownToastId = localStorage.getItem("lastShownToastId");
           if (!initialLoad && list.length > 0) {
             const aduanTerbaru = list[0];
@@ -88,16 +114,14 @@ function DashboardAdmin() {
     );
 
     return () => unsubscribe();
-  }, [soundEnabled]);
+  }, [soundEnabled, namaGuru]);
 
-  // BUKA NOTIFIKASI
   const handleOpenNotif = () => {
     setShowNotifModal(true);
     setUnreadCount(0);
     localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
   };
 
-  // BUKA LAPORAN
   const handleBukaLaporan = () => {
     setShowNotifModal(false);
     setUnreadCount(0);
@@ -105,12 +129,10 @@ function DashboardAdmin() {
     navigate("/daftar-pengaduan");
   };
 
-  // EKSEKUSI LOGOUT ADMIN
   const handleConfirmLogout = () => {
     navigate("/");
   };
 
-  // Perhitungan Data Statistik
   const totalAduan = aduanList.length;
   const totalDiproses = aduanList.filter(
     (item) => !item.status || item.status.includes("Diproses")
@@ -261,8 +283,6 @@ function DashboardAdmin() {
       boxShadow: "0 3px 0 #1B5E20",
       textTransform: "uppercase",
     },
-
-    // --- MODAL DI TENGAH ---
     centerModalOverlay: {
       position: "fixed",
       top: 0,
@@ -289,8 +309,6 @@ function DashboardAdmin() {
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       border: "2px solid #C8E6C9",
     },
-
-    // --- MODAL KONFIRMASI KELUAR ---
     logoutModalCard: {
       background: "#fff",
       borderRadius: "22px",
@@ -314,11 +332,7 @@ function DashboardAdmin() {
       background: "#FFFDE7",
       border: "2px solid #FBC02D",
     },
-    modalBtnGroup: {
-      display: "flex",
-      gap: "10px",
-      marginTop: "20px",
-    },
+    modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
     yesBtn: {
       flex: 1,
       background: "#D32F2F",
@@ -345,8 +359,6 @@ function DashboardAdmin() {
       boxShadow: "0 3px 0 #FBC02D",
       textTransform: "uppercase",
     },
-
-    // --- SIDE PANEL NOTIFIKASI KANAN ---
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -433,7 +445,7 @@ function DashboardAdmin() {
 
   return (
     <div style={styles.page}>
-      {/* TOAST POPUP NOTIFIKASI LAPORAN BARU */}
+      {/* TOAST ADUAN BARU */}
       {notifBaru && (
         <div style={styles.toast}>
           <div>
@@ -485,22 +497,18 @@ function DashboardAdmin() {
 
       {/* GRID MENU ADMIN */}
       <div style={styles.grid}>
-        {/* 1. DAFTAR PENGADUAN */}
         <div style={styles.card}>
           {jumlahAduanBaru > 0 && (
             <div style={styles.badgeNotifCard}>{jumlahAduanBaru}</div>
           )}
           <div style={styles.iconBadge}>DP</div>
           <div style={styles.cardTitle}>Daftar Pengaduan</div>
-          <div style={styles.desc}>
-            Lihat seluruh laporan bullying dari siswa.
-          </div>
+          <div style={styles.desc}>Lihat seluruh laporan bullying dari siswa.</div>
           <button style={styles.button} onClick={handleBukaLaporan}>
             Buka ({jumlahAduanBaru} Baru)
           </button>
         </div>
 
-        {/* 2. PENGADUAN DIPROSES */}
         <div style={styles.card}>
           <div style={styles.iconBadge}>PR</div>
           <div style={styles.cardTitle}>Pengaduan Diproses</div>
@@ -510,19 +518,15 @@ function DashboardAdmin() {
           </button>
         </div>
 
-        {/* 3. KELOLA EDUKASI */}
         <div style={styles.card}>
           <div style={styles.iconBadge}>ED</div>
           <div style={styles.cardTitle}>Kelola Edukasi</div>
-          <div style={styles.desc}>
-            Tambah dan edit artikel / materi edukasi siswa.
-          </div>
+          <div style={styles.desc}>Tambah dan edit artikel edukasi siswa.</div>
           <button style={styles.button} onClick={() => navigate("/kelola-edukasi")}>
             Buka
           </button>
         </div>
 
-        {/* 4. DATA SISWA */}
         <div style={styles.card}>
           <div style={styles.iconBadge}>DS</div>
           <div style={styles.cardTitle}>Data Siswa</div>
@@ -532,7 +536,6 @@ function DashboardAdmin() {
           </button>
         </div>
 
-        {/* 5. STATISTIK */}
         <div style={styles.card}>
           <div style={styles.iconBadge}>ST</div>
           <div style={styles.cardTitle}>Statistik</div>
@@ -542,20 +545,17 @@ function DashboardAdmin() {
           </button>
         </div>
 
-        {/* 6. PENGATURAN */}
         <div style={styles.card}>
           <div style={styles.iconBadge}>PG</div>
           <div style={styles.cardTitle}>Pengaturan</div>
-          <div style={styles.desc}>
-            Atur akun guru, WA, Email login, dan profil admin.
-          </div>
+          <div style={styles.desc}>Atur profil guru, WhatsApp, dan sandi admin.</div>
           <button style={styles.button} onClick={() => navigate("/pengaturan-admin")}>
             Buka
           </button>
         </div>
       </div>
 
-      {/* --- MODAL POP-UP STATISTIK --- */}
+      {/* MODAL STATISTIK */}
       {showStatistikModal && (
         <div
           style={styles.centerModalOverlay}
@@ -633,7 +633,7 @@ function DashboardAdmin() {
         </div>
       )}
 
-      {/* --- POP-UP MODAL NOTIFIKASI SISI KANAN --- */}
+      {/* NOTIFIKASI PANEL KANAN */}
       {showNotifModal && (
         <div
           style={styles.modalOverlay}
@@ -703,7 +703,7 @@ function DashboardAdmin() {
         </div>
       )}
 
-      {/* --- POP-UP MODAL KONFIRMASI KELUAR ADMIN --- */}
+      {/* POP-UP MODAL KONFIRMASI KELUAR ADMIN */}
       {showLogoutModal && (
         <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
           <div style={styles.logoutModalCard} onClick={(e) => e.stopPropagation()}>
