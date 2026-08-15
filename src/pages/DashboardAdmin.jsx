@@ -14,6 +14,9 @@ function DashboardAdmin() {
   // State Modal Statistik
   const [showStatistikModal, setShowStatistikModal] = useState(false);
 
+  // State Modal Konfirmasi Keluar
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   // Ambil data profil admin dari localStorage
   const namaGuru = localStorage.getItem("namaGuru") || "Guru BK";
   const soundEnabled = localStorage.getItem("soundEnabled") !== "false";
@@ -48,10 +51,10 @@ function DashboardAdmin() {
             ).length;
             setUnreadCount(unread);
           } else {
-            setUnreadCount(0); // Default 0 jika tidak ada aduan baru setelah login
+            setUnreadCount(0);
           }
 
-          // Tampilkan Pop-Up Toast hanya jika ada aduan masuk secara REALTIME setelah halaman dibuka
+          // Pop-Up Toast saat ada aduan baru masuk secara realtime
           const lastShownToastId = localStorage.getItem("lastShownToastId");
           if (!initialLoad && list.length > 0) {
             const aduanTerbaru = list[0];
@@ -87,20 +90,24 @@ function DashboardAdmin() {
     return () => unsubscribe();
   }, [soundEnabled]);
 
-  // FUNGSI SAAT TOMBOL LONCENG NOTIFIKASI DIBUKA
+  // BUKA NOTIFIKASI
   const handleOpenNotif = () => {
     setShowNotifModal(true);
     setUnreadCount(0);
-    // Tandai seluruh notifikasi sudah dibaca per detik ini
     localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
   };
 
-  // FUNGSI BUKA LAPORAN & TANDAI DIBACA
+  // BUKA LAPORAN
   const handleBukaLaporan = () => {
     setShowNotifModal(false);
     setUnreadCount(0);
     localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
     navigate("/daftar-pengaduan");
+  };
+
+  // EKSEKUSI LOGOUT ADMIN
+  const handleConfirmLogout = () => {
+    navigate("/");
   };
 
   // Perhitungan Data Statistik
@@ -255,14 +262,15 @@ function DashboardAdmin() {
       textTransform: "uppercase",
     },
 
-    // --- MODAL POPUP DI TENGAH ---
+    // --- MODAL DI TENGAH ---
     centerModalOverlay: {
       position: "fixed",
       top: 0,
       left: 0,
       width: "100vw",
       height: "100vh",
-      background: "rgba(0,0,0,0.6)",
+      background: "rgba(0,0,0,0.55)",
+      backdropFilter: "blur(2px)",
       zIndex: 1100,
       display: "flex",
       justifyContent: "center",
@@ -282,7 +290,63 @@ function DashboardAdmin() {
       border: "2px solid #C8E6C9",
     },
 
-    // --- POP-UP MODAL PANEL KANAN ---
+    // --- MODAL KONFIRMASI KELUAR ---
+    logoutModalCard: {
+      background: "#fff",
+      borderRadius: "22px",
+      padding: "26px 20px",
+      maxWidth: "370px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    logoutIconBox: {
+      width: "65px",
+      height: "65px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background: "#FFFDE7",
+      border: "2px solid #FBC02D",
+    },
+    modalBtnGroup: {
+      display: "flex",
+      gap: "10px",
+      marginTop: "20px",
+    },
+    yesBtn: {
+      flex: 1,
+      background: "#D32F2F",
+      color: "#fff",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #9A0007",
+      textTransform: "uppercase",
+    },
+    cancelBtn: {
+      flex: 1,
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #FBC02D",
+      textTransform: "uppercase",
+    },
+
+    // --- SIDE PANEL NOTIFIKASI KANAN ---
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -391,7 +455,7 @@ function DashboardAdmin() {
               fontSize: "16px",
             }}
           >
-            X
+            ✕
           </button>
         </div>
       )}
@@ -413,7 +477,7 @@ function DashboardAdmin() {
             )}
           </button>
 
-          <button style={styles.logout} onClick={() => navigate("/")}>
+          <button style={styles.logout} onClick={() => setShowLogoutModal(true)}>
             Keluar
           </button>
         </div>
@@ -431,10 +495,7 @@ function DashboardAdmin() {
           <div style={styles.desc}>
             Lihat seluruh laporan bullying dari siswa.
           </div>
-          <button
-            style={styles.button}
-            onClick={handleBukaLaporan}
-          >
+          <button style={styles.button} onClick={handleBukaLaporan}>
             Buka ({jumlahAduanBaru} Baru)
           </button>
         </div>
@@ -444,10 +505,7 @@ function DashboardAdmin() {
           <div style={styles.iconBadge}>PR</div>
           <div style={styles.cardTitle}>Pengaduan Diproses</div>
           <div style={styles.desc}>Kelola laporan yang sedang diproses.</div>
-          <button
-            style={styles.button}
-            onClick={() => navigate("/daftar-pengaduan")}
-          >
+          <button style={styles.button} onClick={() => navigate("/daftar-pengaduan")}>
             Buka
           </button>
         </div>
@@ -459,10 +517,7 @@ function DashboardAdmin() {
           <div style={styles.desc}>
             Tambah dan edit artikel / materi edukasi siswa.
           </div>
-          <button
-            style={styles.button}
-            onClick={() => navigate("/kelola-edukasi")}
-          >
+          <button style={styles.button} onClick={() => navigate("/kelola-edukasi")}>
             Buka
           </button>
         </div>
@@ -472,10 +527,7 @@ function DashboardAdmin() {
           <div style={styles.iconBadge}>DS</div>
           <div style={styles.cardTitle}>Data Siswa</div>
           <div style={styles.desc}>Kelola data siswa dan QR Code login.</div>
-          <button
-            style={styles.button}
-            onClick={() => navigate("/data-siswa")}
-          >
+          <button style={styles.button} onClick={() => navigate("/data-siswa")}>
             Buka
           </button>
         </div>
@@ -485,10 +537,7 @@ function DashboardAdmin() {
           <div style={styles.iconBadge}>ST</div>
           <div style={styles.cardTitle}>Statistik</div>
           <div style={styles.desc}>Lihat grafik dan ringkasan pengaduan.</div>
-          <button
-            style={styles.button}
-            onClick={() => setShowStatistikModal(true)}
-          >
+          <button style={styles.button} onClick={() => setShowStatistikModal(true)}>
             Buka
           </button>
         </div>
@@ -498,12 +547,9 @@ function DashboardAdmin() {
           <div style={styles.iconBadge}>PG</div>
           <div style={styles.cardTitle}>Pengaturan</div>
           <div style={styles.desc}>
-            Atur akun guru, WA, Email login, dan pesan otomatis.
+            Atur akun guru, WA, Email login, dan profil admin.
           </div>
-          <button
-            style={styles.button}
-            onClick={() => navigate("/pengaturan-admin")}
-          >
+          <button style={styles.button} onClick={() => navigate("/pengaturan-admin")}>
             Buka
           </button>
         </div>
@@ -527,7 +573,7 @@ function DashboardAdmin() {
                 style={styles.closeBtn}
                 onClick={() => setShowStatistikModal(false)}
               >
-                X
+                ✕
               </button>
             </div>
 
@@ -544,13 +590,7 @@ function DashboardAdmin() {
               }}
             >
               <div style={styles.statBox}>
-                <div
-                  style={{
-                    fontSize: "24px",
-                    fontWeight: "800",
-                    color: "#1B5E20",
-                  }}
-                >
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#1B5E20" }}>
                   {totalAduan}
                 </div>
                 <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
@@ -558,13 +598,7 @@ function DashboardAdmin() {
                 </div>
               </div>
               <div style={styles.statBox}>
-                <div
-                  style={{
-                    fontSize: "24px",
-                    fontWeight: "800",
-                    color: "#D32F2F",
-                  }}
-                >
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#D32F2F" }}>
                   {totalDiproses}
                 </div>
                 <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
@@ -572,13 +606,7 @@ function DashboardAdmin() {
                 </div>
               </div>
               <div style={styles.statBox}>
-                <div
-                  style={{
-                    fontSize: "24px",
-                    fontWeight: "800",
-                    color: "#2E7D32",
-                  }}
-                >
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#2E7D32" }}>
                   {totalSelesai}
                 </div>
                 <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
@@ -586,13 +614,7 @@ function DashboardAdmin() {
                 </div>
               </div>
               <div style={styles.statBox}>
-                <div
-                  style={{
-                    fontSize: "24px",
-                    fontWeight: "800",
-                    color: "#E65100",
-                  }}
-                >
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#E65100" }}>
                   {persentaseSelesai}%
                 </div>
                 <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
@@ -624,7 +646,7 @@ function DashboardAdmin() {
                 style={styles.closeBtn}
                 onClick={() => setShowNotifModal(false)}
               >
-                X
+                ✕
               </button>
             </div>
 
@@ -677,6 +699,30 @@ function DashboardAdmin() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* --- POP-UP MODAL KONFIRMASI KELUAR ADMIN --- */}
+      {showLogoutModal && (
+        <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
+          <div style={styles.logoutModalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.logoutIconBox}>🚪</div>
+            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#1B5E20", margin: "0 0 8px 0" }}>
+              Keluar Akun Admin?
+            </h3>
+            <p style={{ fontSize: "13px", color: "#556B4D", margin: "0 0 10px 0", lineHeight: "1.5" }}>
+              Apakah Bapak/Ibu Guru yakin ingin keluar dari panel admin?
+            </p>
+
+            <div style={styles.modalBtnGroup}>
+              <button style={styles.yesBtn} onClick={handleConfirmLogout}>
+                Ya, Keluar
+              </button>
+              <button style={styles.cancelBtn} onClick={() => setShowLogoutModal(false)}>
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}

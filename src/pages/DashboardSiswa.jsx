@@ -10,7 +10,10 @@ function DashboardSiswa() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // State Toast Realtime
+  // State Modal Konfirmasi Keluar Kustom
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // State Toast Realtime Update Status
   const [toastStatus, setToastStatus] = useState(null);
 
   useEffect(() => {
@@ -115,13 +118,12 @@ function DashboardSiswa() {
     navigate("/riwayat");
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Apakah kamu ingin keluar?")) {
-      localStorage.removeItem("namaSiswa");
-      localStorage.removeItem("nisSiswa");
-      localStorage.removeItem("kelasSiswa");
-      navigate("/");
-    }
+  // Eksekusi Keluar Akun
+  const handleConfirmLogout = () => {
+    localStorage.removeItem("namaSiswa");
+    localStorage.removeItem("nisSiswa");
+    localStorage.removeItem("kelasSiswa");
+    navigate("/");
   };
 
   const styles = {
@@ -199,7 +201,7 @@ function DashboardSiswa() {
       background: "#FFEB3B",
       color: "#1B5E20",
       border: "none",
-      padding: "8px 14px",
+      padding: "8px 16px",
       borderRadius: "18px",
       cursor: "pointer",
       fontWeight: "800",
@@ -240,7 +242,7 @@ function DashboardSiswa() {
       gap: "14px",
     },
     bannerIcon: {
-      fontSize: "38px",
+      fontSize: "36px",
       lineHeight: "1",
     },
     bannerTitle: {
@@ -287,7 +289,7 @@ function DashboardSiswa() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "32px",
+      fontSize: "30px",
       boxShadow: "0 4px 8px rgba(0,0,0,0.06)",
     }),
     cardLabel: {
@@ -369,6 +371,77 @@ function DashboardSiswa() {
       fontWeight: "800",
       fontSize: "12px",
       cursor: "pointer",
+    },
+
+    // MODAL KONFIRMASI KELUAR
+    centerModalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.5)",
+      backdropFilter: "blur(2px)",
+      zIndex: 2000,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: "20px",
+      boxSizing: "border-box",
+    },
+    modalCard: {
+      background: "#fff",
+      borderRadius: "22px",
+      padding: "26px 20px",
+      maxWidth: "360px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    logoutIconBox: {
+      width: "65px",
+      height: "65px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "30px",
+      background: "#FFFDE7",
+      border: "2px solid #FBC02D",
+    },
+    modalBtnGroup: {
+      display: "flex",
+      gap: "10px",
+      marginTop: "18px",
+    },
+    yesBtn: {
+      flex: 1,
+      background: "#D32F2F",
+      color: "#fff",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #9A0007",
+      textTransform: "uppercase",
+    },
+    cancelBtn: {
+      flex: 1,
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #FBC02D",
+      textTransform: "uppercase",
     },
 
     // BOTTOM NAV
@@ -456,7 +529,7 @@ function DashboardSiswa() {
               )}
             </button>
 
-            <button style={styles.logoutBtn} onClick={handleLogout}>
+            <button style={styles.logoutBtn} onClick={() => setShowLogoutModal(true)}>
               Keluar
             </button>
           </div>
@@ -557,6 +630,30 @@ function DashboardSiswa() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP MODAL KONFIRMASI KELUAR */}
+      {showLogoutModal && (
+        <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.logoutIconBox}>🚪</div>
+            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#1B5E20", margin: "0 0 6px 0" }}>
+              Ingin Keluar?
+            </h3>
+            <p style={{ fontSize: "13px", color: "#556B4D", margin: "0 0 8px 0", lineHeight: "1.5" }}>
+              Apakah kamu yakin ingin keluar dari akun <strong>{namaSiswa}</strong>?
+            </p>
+
+            <div style={styles.modalBtnGroup}>
+              <button style={styles.yesBtn} onClick={handleConfirmLogout}>
+                Ya, Keluar
+              </button>
+              <button style={styles.cancelBtn} onClick={() => setShowLogoutModal(false)}>
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}
