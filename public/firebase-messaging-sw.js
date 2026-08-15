@@ -12,16 +12,33 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Menampilkan notifikasi sistem saat aplikasi ditutup / di latar belakang
+// Menampilkan notifikasi saat aplikasi berada di latar belakang
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || "Notifikasi Teman Bicara";
+  const title = payload.notification?.title || payload.data?.title || "Teman Bicara";
   const options = {
-    body: payload.notification?.body || "Ada pembaruan laporan baru.",
-    icon: "/icon-192x192.png",
-    badge: "/icon-192x192.png",
+    body: payload.notification?.body || payload.data?.body || "Ada pembaruan status laporan.",
+    icon: "/pwa-192x192.png",
+    badge: "/pwa-192x192.png",
     vibrate: [200, 100, 200],
     data: payload.data || {},
   };
 
   self.registration.showNotification(title, options);
+});
+
+// Aksi saat notifikasi di status bar HP diklik
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url.includes('/') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/dashboard-siswa');
+      }
+    })
+  );
 });

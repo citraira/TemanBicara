@@ -11,17 +11,12 @@ function DashboardSiswa() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // State Modal Konfirmasi Keluar Kustom
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  // State Toast Realtime Update Status
   const [toastStatus, setToastStatus] = useState(null);
 
-  // VAPID KEY FCM ANDA
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
-  // Inisialisasi Data & Registrasi Push Notification FCM
   useEffect(() => {
     const savedNama = localStorage.getItem("namaSiswa");
     const savedNis = localStorage.getItem("nisSiswa") || "anonim";
@@ -30,7 +25,7 @@ function DashboardSiswa() {
       setNamaSiswa(savedNama);
     }
 
-    // Minta Izin & Daftarkan Token Notifikasi ke Background HP
+    // Registrasi Token Notifikasi
     const setupFCM = async () => {
       try {
         const msg = await messaging();
@@ -55,7 +50,7 @@ function DashboardSiswa() {
 
     setupFCM();
 
-    // Listener Realtime Data Pengaduan
+    // Listener Realtime Pengaduan
     const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
@@ -95,17 +90,32 @@ function DashboardSiswa() {
           setUnreadCount(aduanSaya.length);
         }
 
-        // Pemicu Pop-Up Toast saat Status Berubah Realtime
+        // Pemicu Notifikasi Realtime HP saat Status Berubah
         if (!initialLoad && aduanSaya.length > 0) {
           const aduanTerbaru = aduanSaya[0];
           const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
           const lastSavedStatus = localStorage.getItem(lastStatusKey);
 
           if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
+            // 1. Tampilkan Toast di dalam aplikasi
             setToastStatus({
               jenis: aduanTerbaru.jenis || "Pengaduan",
               status: aduanTerbaru.status,
             });
+
+            // 2. MUNCULKAN DI STATUS BAR HP / LUAR WEB
+            if (Notification.permission === "granted") {
+              if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.ready.then((reg) => {
+                  reg.showNotification("Pembaruan Laporan - Teman Bicara", {
+                    body: `Laporan ${aduanTerbaru.jenis || ""} kamu diubah statusnya menjadi: "${aduanTerbaru.status}"`,
+                    icon: "/pwa-192x192.png",
+                    badge: "/pwa-192x192.png",
+                    vibrate: [200, 100, 200],
+                  });
+                });
+              }
+            }
 
             try {
               const audio = new Audio(

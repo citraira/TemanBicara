@@ -21,7 +21,7 @@ export const db = getDatabase(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 
-// Inisialisasi Messaging (FCM)
+// Inisialisasi FCM Messaging
 export const messaging = async () => {
   const supported = await isSupported();
   return supported ? getMessaging(app) : null;

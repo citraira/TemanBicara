@@ -12,19 +12,17 @@ function DashboardAdmin() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // State Modal Statistik & Modal Keluar
   const [showStatistikModal, setShowStatistikModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const namaGuru = localStorage.getItem("namaGuru") || "Guru BK";
   const soundEnabled = localStorage.getItem("soundEnabled") !== "false";
 
-  // VAPID KEY FCM ANDA
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
   useEffect(() => {
-    // Daftarkan Token FCM Admin ke Database
+    // Daftarkan Token FCM Admin
     const setupAdminFCM = async () => {
       try {
         const msg = await messaging();
@@ -48,7 +46,7 @@ function DashboardAdmin() {
 
     setupAdminFCM();
 
-    // Listener Realtime Pengaduan
+    // Listener Realtime Pengaduan Masuk
     const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
@@ -80,7 +78,7 @@ function DashboardAdmin() {
             setUnreadCount(0);
           }
 
-          // Pop-Up Toast Realtime saat Aduan Baru Masuk
+          // Pemicu Notifikasi Sistem HP Admin saat ada Laporan Masuk
           const lastShownToastId = localStorage.getItem("lastShownToastId");
           if (!initialLoad && list.length > 0) {
             const aduanTerbaru = list[0];
@@ -88,6 +86,20 @@ function DashboardAdmin() {
             if (aduanTerbaru.id !== lastShownToastId) {
               setNotifBaru(aduanTerbaru);
               localStorage.setItem("lastShownToastId", aduanTerbaru.id);
+
+              // Tampilkan di Status Bar HP / Desktop Admin
+              if (Notification.permission === "granted") {
+                if ("serviceWorker" in navigator) {
+                  navigator.serviceWorker.ready.then((reg) => {
+                    reg.showNotification("Laporan Pengaduan Baru!", {
+                      body: `Dari ${aduanTerbaru.nama || "Siswa"} (Kelas ${aduanTerbaru.kelas || "-"}): ${aduanTerbaru.jenis || "Bullying"}`,
+                      icon: "/pwa-192x192.png",
+                      badge: "/pwa-192x192.png",
+                      vibrate: [200, 100, 200],
+                    });
+                  });
+                }
+              }
 
               if (soundEnabled) {
                 try {
