@@ -3,17 +3,252 @@ import { useNavigate } from "react-router-dom";
 import { ref as dbRef, push } from "firebase/database";
 import { db } from "../firebase";
 
+const styles = {
+  page: {
+    minHeight: "100dvh",
+    background: "#F4FBEE",
+    padding: "20px 15px 40px",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    boxSizing: "border-box",
+  },
+  header: {
+    background: "#2E7D32",
+    color: "#fff",
+    padding: "22px 20px",
+    borderRadius: "18px",
+    marginBottom: "16px",
+    textAlign: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  },
+  title: { fontSize: "22px", fontWeight: "800", margin: "0 0 6px 0" },
+  subtitle: { fontSize: "13px", lineHeight: "1.5", margin: 0, opacity: 0.95 },
+  hotlineBox: {
+    background: "#FFFDE7",
+    border: "1.5px solid #FFF59D",
+    borderRadius: "14px",
+    padding: "14px 18px",
+    maxWidth: "750px",
+    margin: "0 auto 16px auto",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "10px",
+    boxSizing: "border-box",
+  },
+  hotlineText: { color: "#1B5E20", fontSize: "13px", lineHeight: "1.4" },
+  hotlineBtn: {
+    background: "#25D366",
+    color: "#fff",
+    padding: "8px 14px",
+    borderRadius: "10px",
+    textDecoration: "none",
+    fontWeight: "700",
+    fontSize: "13px",
+  },
+  container: {
+    background: "#fff",
+    maxWidth: "750px",
+    margin: "0 auto",
+    padding: "24px 20px",
+    borderRadius: "18px",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
+    border: "1.5px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+  group: { marginBottom: "20px" },
+  label: {
+    display: "block",
+    marginBottom: "8px",
+    fontWeight: "700",
+    color: "#1B5E20",
+    fontSize: "13.5px",
+  },
+  input: {
+    width: "100%",
+    padding: "11px 14px",
+    borderRadius: "10px",
+    border: "1.5px solid #C8E6C9",
+    fontSize: "16px",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+  textarea: {
+    width: "100%",
+    minHeight: "110px",
+    padding: "11px 14px",
+    borderRadius: "10px",
+    border: "1.5px solid #C8E6C9",
+    fontSize: "16px",
+    resize: "vertical",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+  gridKelas: {
+    display: "grid",
+    gridTemplateColumns: "repeat(6, 1fr)",
+    gap: "8px",
+  },
+  btnKelas: (selected) => ({
+    padding: "10px 0",
+    textAlign: "center",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? "#2E7D32" : "#FAFAFA",
+    color: selected ? "#fff" : "#333",
+  }),
+  gridPeran: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+  },
+  btnPeran: (selected) => ({
+    padding: "12px",
+    textAlign: "center",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "13px",
+    border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? "#E8F5E9" : "#FAFAFA",
+    color: selected ? "#1B5E20" : "#444",
+  }),
+  gridLokasi: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+    gap: "8px",
+  },
+  btnLokasi: (selected) => ({
+    padding: "10px 8px",
+    textAlign: "center",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "12.5px",
+    border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? "#2E7D32" : "#FAFAFA",
+    color: selected ? "#fff" : "#333",
+  }),
+  gridJenis: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "10px",
+  },
+  cardJenis: (selected) => ({
+    padding: "12px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? "#E8F5E9" : "#FAFAFA",
+    boxSizing: "border-box",
+  }),
+  gridSaksi: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+  },
+  btnSaksi: (selected) => ({
+    padding: "11px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "13px",
+    textAlign: "center",
+    border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? "#2E7D32" : "#FAFAFA",
+    color: selected ? "#fff" : "#333",
+  }),
+  antiFitnahBox: {
+    background: "#FFFDE7",
+    border: "1.5px solid #FFF59D",
+    borderRadius: "12px",
+    padding: "12px 14px",
+    marginBottom: "20px",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+  },
+  btnContainer: { display: "flex", gap: "10px", flexWrap: "wrap" },
+  submitBtn: (disabled) => ({
+    flex: "1 1 180px",
+    padding: "13px",
+    background: disabled ? "#A5D6A7" : "#2E7D32",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    cursor: disabled ? "not-allowed" : "pointer",
+    fontSize: "14px",
+    fontWeight: "800",
+    boxShadow: disabled ? "none" : "0 3px 0 #1B5E20",
+    textTransform: "uppercase",
+  }),
+  backBtn: {
+    flex: "1 1 180px",
+    padding: "13px",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    border: "none",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "800",
+    boxShadow: "0 3px 0 #FBC02D",
+    textTransform: "uppercase",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    padding: "15px",
+    boxSizing: "border-box",
+  },
+  modalCard: {
+    background: "#fff",
+    padding: "24px 20px",
+    borderRadius: "18px",
+    maxWidth: "360px",
+    width: "100%",
+    textAlign: "center",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+    border: "1.5px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+  modalTitle: { fontSize: "18px", fontWeight: "800", margin: "0 0 8px 0" },
+  modalMsg: { fontSize: "13px", color: "#556B4D", lineHeight: "1.5", margin: "0 0 18px 0" },
+  alertBtn: (type) => ({
+    width: "100%",
+    padding: "11px",
+    border: "none",
+    borderRadius: "10px",
+    fontWeight: "800",
+    fontSize: "13px",
+    cursor: "pointer",
+    textTransform: "uppercase",
+    color: type === "warning" ? "#1B5E20" : "#fff",
+    background: type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
+    boxShadow: type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
+  }),
+};
+
 function FormPengaduan() {
   const navigate = useNavigate();
 
-  // Konfigurasi Cloudinary
   const CLOUD_NAME = "r61tomq9";
   const UPLOAD_PRESET = "ml_default";
-
-  // Nomor Hotline Sekolah
   const NOMOR_WA_GURU = "6281234567890";
 
-  // State Form
   const [nama, setNama] = useState("");
   const [kelas, setKelas] = useState("");
   const [peran, setPeran] = useState("Korban");
@@ -36,7 +271,6 @@ function FormPengaduan() {
   const [foto, setFoto] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // State Modal Notifikasi
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "success",
@@ -46,13 +280,7 @@ function FormPengaduan() {
   });
 
   const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
+    setAlertConfig({ isOpen: true, type, title, message, onCloseCallback });
   };
 
   const handleCloseAlert = () => {
@@ -64,19 +292,15 @@ function FormPengaduan() {
   useEffect(() => {
     const namaSaved = localStorage.getItem("namaSiswa");
     const kelasSaved = localStorage.getItem("kelasSiswa");
-
     if (namaSaved) setNama(namaSaved);
     if (kelasSaved) setKelas(kelasSaved);
   }, []);
 
-  // Data Pilihan
   const listKelas = ["1", "2", "3", "4", "5", "6"];
-
   const listPeran = [
     { id: "Korban", label: "Saya Sendiri (Korban)" },
     { id: "Saksi / Teman", label: "Teman Saya (Saksi Mata)" },
   ];
-
   const listLokasi = [
     "Ruang Kelas",
     "Halaman Sekolah",
@@ -87,7 +311,6 @@ function FormPengaduan() {
     "Depan Gerbang",
     "Lainnya",
   ];
-
   const listJenisBullying = [
     { label: "Kekerasan Fisik", sub: "Dipukul, ditendang, didorong" },
     { label: "Kekerasan Verbal", sub: "Diejek, dihina, dipanggil nama buruk" },
@@ -97,12 +320,26 @@ function FormPengaduan() {
     { label: "Lainnya", sub: "Ketik jenis kejadian lainnya" },
   ];
 
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
+  // Kompresi Gambar Cepat agar Ringan di Jaringan Lambat
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800;
+          const scale = MAX_WIDTH / img.width;
+          canvas.width = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
+          canvas.height = img.width > MAX_WIDTH ? img.height * scale : img.height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.7)); // Kompres kualitas 70%
+        };
+      };
     });
   };
 
@@ -113,27 +350,21 @@ function FormPengaduan() {
       formData.append("upload_preset", UPLOAD_PRESET);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 detik batas timeout
 
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-          signal: controller.signal,
-        }
-      );
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
 
       clearTimeout(timeoutId);
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error?.message || "Gagal unggah gambar");
-      }
+      if (!res.ok) throw new Error(data.error?.message || "Gagal upload");
       return data.secure_url;
     } catch (err) {
-      console.warn("Beralih ke penyimpanan lokal...", err);
-      return await convertToBase64(file);
+      console.warn("Upload lambat, kompres lokal:", err);
+      return await compressImage(file);
     }
   };
 
@@ -153,20 +384,12 @@ function FormPengaduan() {
       (jenis === "Lainnya" && jenisLainnya.trim() === "") ||
       cerita.trim() === ""
     ) {
-      showAlert(
-        "warning",
-        "Form Belum Lengkap",
-        "Mohon lengkapi seluruh data wajib sebelum mengirimkan laporan."
-      );
+      showAlert("warning", "Form Belum Lengkap", "Mohon lengkapi seluruh data wajib sebelum mengirimkan laporan.");
       return;
     }
 
     if (!setujuJujur) {
-      showAlert(
-        "warning",
-        "Pernyataan Kejujuran",
-        "Harap centang konfirmasi kejujuran di bagian bawah sebelum mengirim."
-      );
+      showAlert("warning", "Pernyataan Kejujuran", "Harap centang konfirmasi kejujuran di bagian bawah.");
       return;
     }
 
@@ -174,7 +397,6 @@ function FormPengaduan() {
 
     try {
       let imageUrl = "-";
-
       if (foto) {
         imageUrl = await uploadToCloudinary(foto);
       }
@@ -205,289 +427,19 @@ function FormPengaduan() {
         }
       );
     } catch (error) {
-      showAlert(
-        "error",
-        "Gagal Mengirim",
-        error.message || "Terjadi kendala jaringan saat mengirim laporan."
-      );
+      showAlert("error", "Gagal Mengirim", error.message || "Terjadi kendala jaringan saat mengirim laporan.");
     } finally {
       setLoading(false);
     }
   };
 
-  const styles = {
-    page: {
-      minHeight: "100vh",
-      background: "#F4FBEE",
-      padding: "20px 15px 40px",
-      fontFamily: "'Segoe UI', Roboto, sans-serif",
-      boxSizing: "border-box",
-    },
-    header: {
-      background: "#2E7D32",
-      color: "#fff",
-      padding: "22px 20px",
-      borderRadius: "18px",
-      marginBottom: "16px",
-      textAlign: "center",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-    },
-    title: { fontSize: "22px", fontWeight: "800", margin: "0 0 6px 0" },
-    subtitle: { fontSize: "13px", lineHeight: "1.5", margin: 0, opacity: 0.95 },
-    
-    hotlineBox: {
-      background: "#FFFDE7",
-      border: "1.5px solid #FFF59D",
-      borderRadius: "14px",
-      padding: "14px 18px",
-      maxWidth: "750px",
-      margin: "0 auto 16px auto",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      flexWrap: "wrap",
-      gap: "10px",
-      boxSizing: "border-box",
-    },
-    hotlineText: { color: "#1B5E20", fontSize: "13px", lineHeight: "1.4" },
-    hotlineBtn: {
-      background: "#25D366",
-      color: "#fff",
-      padding: "8px 14px",
-      borderRadius: "10px",
-      textDecoration: "none",
-      fontWeight: "700",
-      fontSize: "13px",
-    },
-
-    container: {
-      background: "#fff",
-      maxWidth: "750px",
-      margin: "0 auto",
-      padding: "24px 20px",
-      borderRadius: "18px",
-      boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
-      border: "1.5px solid #C8E6C9",
-      boxSizing: "border-box",
-    },
-    group: { marginBottom: "20px" },
-    label: {
-      display: "block",
-      marginBottom: "8px",
-      fontWeight: "700",
-      color: "#1B5E20",
-      fontSize: "13.5px",
-    },
-    input: {
-      width: "100%",
-      padding: "11px 14px",
-      borderRadius: "10px",
-      border: "1.5px solid #C8E6C9",
-      fontSize: "14px",
-      boxSizing: "border-box",
-      outline: "none",
-      background: "#FAFAFA",
-    },
-    textarea: {
-      width: "100%",
-      minHeight: "110px",
-      padding: "11px 14px",
-      borderRadius: "10px",
-      border: "1.5px solid #C8E6C9",
-      fontSize: "14px",
-      resize: "vertical",
-      boxSizing: "border-box",
-      outline: "none",
-      background: "#FAFAFA",
-    },
-
-    // Pilihan Kelas (Chips Angka Bersih)
-    gridKelas: {
-      display: "grid",
-      gridTemplateColumns: "repeat(6, 1fr)",
-      gap: "8px",
-    },
-    btnKelas: (selected) => ({
-      padding: "10px 0",
-      textAlign: "center",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: "700",
-      fontSize: "14px",
-      border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
-      background: selected ? "#2E7D32" : "#FAFAFA",
-      color: selected ? "#fff" : "#333",
-      transition: "background 0.15s ease",
-    }),
-
-    // Pilihan Peran (2 Kolom Bersih)
-    gridPeran: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "10px",
-    },
-    btnPeran: (selected) => ({
-      padding: "12px",
-      textAlign: "center",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: "700",
-      fontSize: "13px",
-      border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
-      background: selected ? "#E8F5E9" : "#FAFAFA",
-      color: selected ? "#1B5E20" : "#444",
-      transition: "background 0.15s ease",
-    }),
-
-    // Pilihan Lokasi (Chips Bersih)
-    gridLokasi: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
-      gap: "8px",
-    },
-    btnLokasi: (selected) => ({
-      padding: "10px 8px",
-      textAlign: "center",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: "600",
-      fontSize: "12.5px",
-      border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
-      background: selected ? "#2E7D32" : "#FAFAFA",
-      color: selected ? "#fff" : "#333",
-      transition: "background 0.15s ease",
-    }),
-
-    // Pilihan Jenis Bullying (Kartu Rapi)
-    gridJenis: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-      gap: "10px",
-    },
-    cardJenis: (selected) => ({
-      padding: "12px 14px",
-      borderRadius: "12px",
-      cursor: "pointer",
-      border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
-      background: selected ? "#E8F5E9" : "#FAFAFA",
-      boxSizing: "border-box",
-      transition: "background 0.15s ease",
-    }),
-
-    // Pilihan Saksi
-    gridSaksi: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "10px",
-    },
-    btnSaksi: (selected) => ({
-      padding: "11px",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: "700",
-      fontSize: "13px",
-      textAlign: "center",
-      border: `1.5px solid ${selected ? "#2E7D32" : "#E0E0E0"}`,
-      background: selected ? "#2E7D32" : "#FAFAFA",
-      color: selected ? "#fff" : "#333",
-    }),
-
-    antiFitnahBox: {
-      background: "#FFFDE7",
-      border: "1.5px solid #FFF59D",
-      borderRadius: "12px",
-      padding: "12px 14px",
-      marginBottom: "20px",
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "10px",
-    },
-    btnContainer: {
-      display: "flex",
-      gap: "10px",
-      flexWrap: "wrap",
-    },
-    submitBtn: {
-      flex: "1 1 180px",
-      padding: "13px",
-      background: loading || !setujuJujur ? "#A5D6A7" : "#2E7D32",
-      color: "#fff",
-      border: "none",
-      borderRadius: "10px",
-      cursor: loading || !setujuJujur ? "not-allowed" : "pointer",
-      fontSize: "14px",
-      fontWeight: "800",
-      boxShadow: loading || !setujuJujur ? "none" : "0 3px 0 #1B5E20",
-      textTransform: "uppercase",
-    },
-    backBtn: {
-      flex: "1 1 180px",
-      padding: "13px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
-      border: "none",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "800",
-      boxShadow: "0 3px 0 #FBC02D",
-      textTransform: "uppercase",
-    },
-
-    // Modal Notifikasi
-    modalOverlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-      padding: "15px",
-      boxSizing: "border-box",
-    },
-    modalCard: {
-      background: "#fff",
-      padding: "24px 20px",
-      borderRadius: "18px",
-      maxWidth: "360px",
-      width: "100%",
-      textAlign: "center",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-      border: "1.5px solid #C8E6C9",
-      boxSizing: "border-box",
-    },
-    modalTitle: { fontSize: "18px", fontWeight: "800", margin: "0 0 8px 0" },
-    modalMsg: { fontSize: "13px", color: "#556B4D", lineHeight: "1.5", margin: "0 0 18px 0" },
-    alertBtn: (type) => ({
-      width: "100%",
-      padding: "11px",
-      border: "none",
-      borderRadius: "10px",
-      fontWeight: "800",
-      fontSize: "13px",
-      cursor: "pointer",
-      textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
-      background: type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
-      boxShadow: type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
-    }),
-  };
-
   return (
     <div style={styles.page}>
-      {/* HEADER */}
       <div style={styles.header}>
         <h1 style={styles.title}>Formulir Pengaduan Siswa</h1>
-        <p style={styles.subtitle}>
-          Ceritakan kejadian yang dialami atau disaksikan secara jujur dan aman.
-        </p>
+        <p style={styles.subtitle}>Ceritakan kejadian yang dialami atau disaksikan secara jujur dan aman.</p>
       </div>
 
-      {/* HOTLINE */}
       <div style={styles.hotlineBox}>
         <div style={styles.hotlineText}>
           <strong>Perlu bantuan langsung?</strong> Hubungi Guru BK melalui WhatsApp.
@@ -502,10 +454,8 @@ function FormPengaduan() {
         </a>
       </div>
 
-      {/* FORM UTAMA */}
       <div style={styles.container}>
         <form onSubmit={handleSubmit}>
-          {/* 1. NAMA */}
           <div style={styles.group}>
             <label style={styles.label}>Nama Siswa (Pelapor) *</label>
             <input
@@ -518,7 +468,6 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* 2. KELAS */}
           <div style={styles.group}>
             <label style={styles.label}>Pilih Kelas *</label>
             <div style={styles.gridKelas}>
@@ -535,7 +484,6 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* 3. PERAN */}
           <div style={styles.group}>
             <label style={styles.label}>Melaporkan Sebagai *</label>
             <div style={styles.gridPeran}>
@@ -552,7 +500,6 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* 4. TANGGAL */}
           <div style={styles.group}>
             <label style={styles.label}>Tanggal Kejadian *</label>
             <input
@@ -564,7 +511,6 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* 5. LOKASI */}
           <div style={styles.group}>
             <label style={styles.label}>Lokasi Kejadian *</label>
             <div style={styles.gridLokasi}>
@@ -592,7 +538,6 @@ function FormPengaduan() {
             )}
           </div>
 
-          {/* 6. JENIS KEJADIAN */}
           <div style={styles.group}>
             <label style={styles.label}>Bentuk Tindakan yang Terjadi *</label>
             <div style={styles.gridJenis}>
@@ -630,7 +575,6 @@ function FormPengaduan() {
             )}
           </div>
 
-          {/* 7. CERITA */}
           <div style={styles.group}>
             <label style={styles.label}>Kronologi / Cerita Kejadian *</label>
             <textarea
@@ -642,7 +586,6 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* 8. PELAKU */}
           <div style={styles.group}>
             <label style={styles.label}>Pihak yang Terlibat / Pelaku (Opsional)</label>
             <input
@@ -655,7 +598,6 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* 9. SAKSI */}
           <div style={styles.group}>
             <label style={styles.label}>Apakah Ada Saksi Mata?</label>
             <div style={styles.gridSaksi}>
@@ -676,7 +618,6 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* DETAIL SAKSI */}
           {saksi === "Ya" && (
             <div
               style={{
@@ -711,7 +652,6 @@ function FormPengaduan() {
             </div>
           )}
 
-          {/* 10. UNGGAH FOTO */}
           <div style={styles.group}>
             <label style={styles.label}>Unggah Foto Bukti (Opsional)</label>
             <input
@@ -723,7 +663,6 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* PERNYATAAN KEJUJURAN */}
           <div style={styles.antiFitnahBox}>
             <input
               type="checkbox"
@@ -747,11 +686,10 @@ function FormPengaduan() {
             </label>
           </div>
 
-          {/* TOMBOL AKSI */}
           <div style={styles.btnContainer}>
             <button
               type="submit"
-              style={styles.submitBtn}
+              style={styles.submitBtn(loading || !setujuJujur)}
               disabled={loading || !setujuJujur}
             >
               {loading ? "Mengirim..." : "Kirim Laporan"}
@@ -769,7 +707,6 @@ function FormPengaduan() {
         </form>
       </div>
 
-      {/* POP-UP NOTIFIKASI */}
       {alertConfig.isOpen && (
         <div style={styles.modalOverlay} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
@@ -789,10 +726,7 @@ function FormPengaduan() {
 
             <p style={styles.modalMsg}>{alertConfig.message}</p>
 
-            <button
-              style={styles.alertBtn(alertConfig.type)}
-              onClick={handleCloseAlert}
-            >
+            <button style={styles.alertBtn(alertConfig.type)} onClick={handleCloseAlert}>
               Mengerti
             </button>
           </div>
