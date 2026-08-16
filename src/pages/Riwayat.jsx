@@ -10,108 +10,86 @@ import { db } from "../firebase";
 function Riwayat() {
   const navigate = useNavigate();
 
+  // Ambil identitas siswa dari localStorage langsung saat inisialisasi state
+  const [namaSiswa] = useState(() => (localStorage.getItem("namaSiswa") || "").trim());
+  const [nisSiswa] = useState(() => (localStorage.getItem("nisSiswa") || "").trim());
+  const [kelasSiswa] = useState(() => (localStorage.getItem("kelasSiswa") || "").trim());
+
   const [riwayatList, setRiwayatList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const [namaSiswa, setNamaSiswa] = useState("");
-  const [nisSiswa, setNisSiswa] = useState("");
-  const [kelasSiswa, setKelasSiswa] = useState("");
   const [selectedFoto, setSelectedFoto] = useState(null);
 
-  useEffect(() => {
-    const savedNama = localStorage.getItem("namaSiswa") || "";
-    const savedNis = localStorage.getItem("nisSiswa") || "";
-    const savedKelas = localStorage.getItem("kelasSiswa") || "";
+  // Fungsi Fetch Data dari Firebase
+  const fetchRiwayatData = useCallback(async (isSilent = false) => {
+    if (!isSilent) {
+      setLoading(true);
+    }
 
-    setNamaSiswa(savedNama.trim());
-    setNisSiswa(savedNis.trim());
-    setKelasSiswa(savedKelas.trim());
-  }, []);
-
-  const loadRiwayat = useCallback(
-    async (showInitialLoading = false) => {
-      try {
-        if (showInitialLoading) {
-          setLoading(true);
-        }
-
-        const savedNama = (localStorage.getItem("namaSiswa") || "").trim();
-        const savedNis = (localStorage.getItem("nisSiswa") || "").trim();
-        const savedKelas = (localStorage.getItem("kelasSiswa") || "").trim();
-
-        setNamaSiswa(savedNama);
-        setNisSiswa(savedNis);
-        setKelasSiswa(savedKelas);
-
-        if (!savedNis && !savedNama) {
-          setRiwayatList([]);
-          return;
-        }
-
-        // Ambil data seluruh pengaduan dari Firebase
-        const snapshot = await get(ref(db, "pengaduan"));
-
-        if (!snapshot.exists()) {
-          setRiwayatList([]);
-          return;
-        }
-
-        const data = snapshot.val();
-
-        // Filter fleksibel: Mencocokkan NIS ATAU Nama Siswa
-        const formattedList = Object.entries(data)
-          .map(([key, value]) => ({
-            id: key,
-            ...value,
-          }))
-          .filter((item) => {
-            const itemNis = String(item.nis || "").trim();
-            const itemNama = String(item.nama || "").trim().toLowerCase();
-
-            const matchNis = savedNis && itemNis === savedNis;
-            const matchNama = savedNama && itemNama === savedNama.toLowerCase();
-
-            return matchNis || matchNama;
-          })
-          .sort((a, b) => {
-            const timeA =
-              Number(a.createdAtMs || 0) ||
-              new Date(a.updatedAt || a.createdAt || 0).getTime();
-            const timeB =
-              Number(b.createdAtMs || 0) ||
-              new Date(b.updatedAt || b.createdAt || 0).getTime();
-            return timeB - timeA;
-          });
-
-        setRiwayatList(formattedList);
-      } catch (error) {
-        console.error("Gagal mengambil data riwayat:", error);
-        setRiwayatList([]);
-      } finally {
-        if (showInitialLoading) {
-          setLoading(false);
-        }
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    loadRiwayat(true);
-  }, [loadRiwayat]);
-
-  const refreshRiwayat = useCallback(async () => {
-    if (refreshing) return;
     try {
-      setRefreshing(true);
-      await loadRiwayat(false);
+      const currentNama = (localStorage.getItem("namaSiswa") || "").trim();
+      const currentNis = (localStorage.getItem("nisSiswa") || "").trim();
+
+      if (!currentNis && !currentNama) {
+        setRiwayatList([]);
+        return;
+      }
+
+      const snapshot = await get(ref(db, "pengaduan"));
+
+      if (!snapshot.exists()) {
+        setRiwayatList([]);
+        return;
+      }
+
+      const data = snapshot.val();
+
+      // Filter fleksibel: Berdasarkan NIS atau Nama
+      const formattedList = Object.entries(data)
+        .map(([key, value]) => ({
+          id: key,
+          ...value,
+        }))
+        .filter((item) => {
+          const itemNis = String(item.nis || "").trim();
+          const itemNama = String(item.nama || "").trim().toLowerCase();
+
+          const matchNis = currentNis && itemNis === currentNis;
+          const matchNama = currentNama && itemNama === currentNama.toLowerCase();
+
+          return matchNis || matchNama;
+        })
+        .sort((a, b) => {
+          const timeA =
+            Number(a.createdAtMs || 0) ||
+            new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const timeB =
+            Number(b.createdAtMs || 0) ||
+            new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return timeB - timeA;
+        });
+
+      setRiwayatList(formattedList);
     } catch (error) {
-      console.error("Gagal refresh riwayat:", error);
+      console.error("Gagal memuat data riwayat:", error);
+      setRiwayatList([]);
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
-  }, [loadRiwayat, refreshing]);
+  }, []);
+
+  // Hanya jalankan 1 kali saat komponen dimuat
+  useEffect(() => {
+    fetchRiwayatData(false);
+  }, [fetchRiwayatData]);
+
+  // Handler Tombol Refresh Manual
+  const handleRefresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    fetchRiwayatData(true); // Silent refresh agar tidak memicu kedip
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -309,7 +287,7 @@ function Riwayat() {
                 opacity: refreshing ? 0.6 : 1,
                 cursor: refreshing ? "not-allowed" : "pointer",
               }}
-              onClick={refreshRiwayat}
+              onClick={handleRefresh}
               disabled={refreshing}
             >
               {refreshing ? "Memuat..." : "↻ Refresh"}
@@ -355,8 +333,8 @@ function Riwayat() {
             <strong>{namaSiswa || "siswa ini"}</strong>.
           </div>
         ) : (
-          /* LIST RIWAYAT */
-          riwayatList.slice(0, 100).map((item) => {
+          /* DAFTAR RIWAYAT */
+          riwayatList.map((item) => {
             const statusInfo = getStatusBadge(item.status);
 
             return (
