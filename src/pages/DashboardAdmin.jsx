@@ -274,6 +274,7 @@ function DashboardAdmin() {
         kepalaSekolah += 1;
       } else if (status === "Eskalasi: Dinas/Pengawas") {
         dinas += 1;
+      }
     }
 
     return {
