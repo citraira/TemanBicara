@@ -52,6 +52,20 @@ function DashboardSiswa() {
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
   // =========================================================
+  // AUTO-CLOSE TOAST NOTIFIKASI DI DALAM APLIKASI
+  // =========================================================
+
+  useEffect(() => {
+    if (!toastStatus) return undefined;
+
+    const timer = setTimeout(() => {
+      setToastStatus(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [toastStatus]);
+
+  // =========================================================
   // SINKRONISASI NAMA
   // =========================================================
 
@@ -1120,22 +1134,6 @@ function DashboardSiswa() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setToastStatus(null)
-            }
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontWeight: "800",
-              cursor: "pointer",
-              fontSize: "18px",
-            }}
-          >
-            ✕
-          </button>
         </div>
       )}
 

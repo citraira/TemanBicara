@@ -21,6 +21,17 @@ function DashboardAdmin() {
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
+  // Toast laporan baru otomatis hilang tanpa perlu ditekan.
+  useEffect(() => {
+    if (!notifBaru) return undefined;
+
+    const timer = setTimeout(() => {
+      setNotifBaru(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [notifBaru]);
+
   // Registrasi FCM Admin dilakukan sekali saat dashboard dibuka.
   // Tidak digabung dengan listener pengaduan agar listener tidak dibuat ulang
   // ketika pengaturan suara/nama berubah.
@@ -590,20 +601,6 @@ function DashboardAdmin() {
               Dari: {notifBaru.nama || "Siswa"} (Kelas {notifBaru.kelas || "-"})
             </span>
           </div>
-          <button
-            onClick={() => setNotifBaru(null)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontWeight: "800",
-              cursor: "pointer",
-              marginLeft: "10px",
-              fontSize: "16px",
-            }}
-          >
-            ✕
-          </button>
         </div>
       )}
 
