@@ -12,11 +12,6 @@ import {
   push,
 } from "firebase/database";
 
-import {
-  getFunctions,
-  httpsCallable,
-} from "firebase/functions";
-
 import { db } from "../firebase";
 
 // ======================================================
@@ -736,198 +731,176 @@ function FormPengaduan() {
   }, []);
 
   // ====================================================
-  // TTS BAHASA INDONESIA
+  // TTS BAHASA INDONESIA - TANPA API / TANPA AUDIO FILE
   // ====================================================
 
-  const speakText = async (
-    text
-  ) => {
-    /*
-     * Hentikan audio sebelumnya.
-     */
+  const getIndonesianVoice = useCallback(() => {
+    if (!("speechSynthesis" in window)) {
+      return null;
+    }
 
-    stopAudio();
+    const voices =
+      window.speechSynthesis.getVoices() || [];
 
-    setIsSpeaking(true);
+    if (!voices.length) {
+      return null;
+    }
 
-    try {
-      /*
-       * Ambil Cloud Function.
-       *
-       * Region harus sama dengan region function.
-       */
+    // Prioritas utama: voice Indonesia yang benar-benar id-ID.
+    const exactId = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-") === "id-id"
+    );
 
-      const functions =
-        getFunctions(
-          undefined,
-          "asia-southeast1"
-        );
+    if (exactId) {
+      return exactId;
+    }
 
-      const generateSpeech =
-        httpsCallable(
-          functions,
-          "generateIndonesianSpeech"
-        );
+    // Cadangan: semua voice yang diawali id-
+    const indonesiaVoice = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-")
+          .startsWith("id-")
+    );
 
-      const result =
-        await generateSpeech({
-          text: String(text),
-        });
+    return indonesiaVoice || null;
+  }, []);
 
-      const data =
-        result?.data || {};
-
-      if (!data.audioContent) {
-        throw new Error(
-          "Audio Bahasa Indonesia tidak diterima dari server."
-        );
-      }
-
-      /*
-       * Google TTS mengembalikan base64.
-       * Kita ubah menjadi Blob audio.
-       */
-
-      const binaryString =
-        window.atob(
-          data.audioContent
-        );
-
-      const len =
-        binaryString.length;
-
-      const bytes =
-        new Uint8Array(len);
-
-      for (
-        let i = 0;
-        i < len;
-        i++
-      ) {
-        bytes[i] =
-          binaryString.charCodeAt(
-            i
-          );
-      }
-
-      const blob =
-        new Blob(
-          [bytes],
-          {
-            type: "audio/mpeg",
-          }
-        );
-
-      const audioUrl =
-        URL.createObjectURL(
-          blob
-        );
-
-      audioUrlRef.current =
-        audioUrl;
-
-      const audio =
-        new Audio(audioUrl);
-
-      audioRef.current =
-        audio;
-
-      audio.volume = 1;
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-
-        if (
-          audioUrlRef.current
-        ) {
-          URL.revokeObjectURL(
-            audioUrlRef.current
-          );
-
-          audioUrlRef.current =
-            null;
-        }
-
-        audioRef.current =
-          null;
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-
-        if (
-          audioUrlRef.current
-        ) {
-          URL.revokeObjectURL(
-            audioUrlRef.current
-          );
-
-          audioUrlRef.current =
-            null;
-        }
-
-        audioRef.current =
-          null;
-
+  const speakText = useCallback(
+    (text) => {
+      if (!("speechSynthesis" in window)) {
         showAlert(
-          "error",
-          "Suara Gagal Diputar",
-          "Audio Bahasa Indonesia berhasil dibuat, tetapi tidak dapat diputar."
+          "warning",
+          "Suara Tidak Tersedia",
+          "Browser ini belum mendukung fitur suara. Silakan gunakan Chrome atau Edge terbaru."
         );
-      };
+        return;
+      }
 
-      await audio.play();
-    } catch (error) {
-      console.error(
-        "TTS Bahasa Indonesia:",
-        error
-      );
+      const cleanText = String(text || "").trim();
 
+      if (!cleanText) {
+        return;
+      }
+
+      // Hentikan bacaan sebelumnya.
+      window.speechSynthesis.cancel();
       setIsSpeaking(false);
 
-      showAlert(
-        "error",
-        "Suara Belum Berhasil",
-        error?.message ||
-          "Tidak dapat mengambil suara Bahasa Indonesia. Periksa koneksi internet."
-      );
-    }
-  };
+      const startSpeaking = () => {
+        const voice = getIndonesianVoice();
 
-  // ====================================================
-  // STOP AUDIO
-  // ====================================================
+        // Jangan diam-diam menggunakan voice Inggris.
+        if (!voice) {
+          setIsSpeaking(false);
 
-  const stopAudio = () => {
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
+          showAlert(
+            "warning",
+            "Suara Bahasa Indonesia Tidak Ditemukan",
+            "Perangkat atau browser ini belum menyediakan voice Bahasa Indonesia (id-ID). Coba buka aplikasi di Chrome atau Edge dan pastikan voice Bahasa Indonesia tersedia di perangkat."
+          );
 
-        audioRef.current.currentTime =
-          0;
-      } catch (error) {
-        console.warn(error);
-      }
+          return;
+        }
 
-      audioRef.current =
-        null;
-    }
+        const utterance =
+          new SpeechSynthesisUtterance(
+            cleanText
+          );
 
-    if (audioUrlRef.current) {
-      try {
-        URL.revokeObjectURL(
-          audioUrlRef.current
+        utterance.lang = "id-ID";
+        utterance.voice = voice;
+
+        // Kecepatan sedikit diperlambat agar lebih mudah
+        // dipahami oleh anak SD.
+        utterance.rate = 0.88;
+        utterance.pitch = 1.05;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+          setIsSpeaking(true);
+        };
+
+        utterance.onend = () => {
+          setIsSpeaking(false);
+        };
+
+        utterance.onerror = (event) => {
+          console.warn(
+            "Speech synthesis error:",
+            event.error
+          );
+
+          setIsSpeaking(false);
+        };
+
+        window.speechSynthesis.speak(
+          utterance
         );
-      } catch (error) {
-        console.warn(error);
+      };
+
+      // Pada beberapa browser, getVoices() kosong pada pemanggilan pertama.
+      // Beri kesempatan browser memuat daftar voice terlebih dahulu.
+      const voices =
+        window.speechSynthesis.getVoices();
+
+      if (voices.length > 0) {
+        startSpeaking();
+        return;
       }
 
-      audioUrlRef.current =
-        null;
+      let finished = false;
+
+      const handleVoicesChanged = () => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+        startSpeaking();
+      };
+
+      window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        handleVoicesChanged
+      );
+
+      // Fallback jika browser tidak menembakkan voiceschanged.
+      setTimeout(() => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+        startSpeaking();
+      }, 1000);
+    },
+    [getIndonesianVoice, showAlert]
+  );
+
+  // ====================================================
+  // STOP TTS
+  // ====================================================
+
+  const stopAudio = useCallback(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
     }
 
     setIsSpeaking(false);
-  };
+  }, []);
 
   // ====================================================
   // SPEECH TO TEXT
