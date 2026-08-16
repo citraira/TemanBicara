@@ -19,6 +19,7 @@ const styles = {
     alignItems: "center",
     boxSizing: "border-box",
   },
+
   card: {
     width: "100%",
     maxWidth: "420px",
@@ -30,6 +31,7 @@ const styles = {
     textAlign: "center",
     boxSizing: "border-box",
   },
+
   title: {
     color: "#1B5E20",
     fontSize: "22px",
@@ -37,6 +39,7 @@ const styles = {
     marginBottom: "6px",
     marginTop: 0,
   },
+
   desc: {
     color: "#556B4D",
     fontSize: "13px",
@@ -44,6 +47,7 @@ const styles = {
     marginBottom: "15px",
     fontWeight: "500",
   },
+
   scannerWrapper: {
     position: "relative",
     margin: "15px 0",
@@ -58,11 +62,15 @@ const styles = {
     justifyContent: "center",
     boxSizing: "border-box",
   },
+
   videoElement: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    display: "block",
+    background: "#000",
   },
+
   scannerOverlay: {
     position: "absolute",
     width: "180px",
@@ -72,6 +80,7 @@ const styles = {
     pointerEvents: "none",
     boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
   },
+
   flipBtn: {
     position: "absolute",
     bottom: "12px",
@@ -90,6 +99,7 @@ const styles = {
     boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
     zIndex: 20,
   },
+
   cameraStatus: {
     color: "#fff",
     background: "rgba(0,0,0,0.65)",
@@ -105,6 +115,7 @@ const styles = {
     pointerEvents: "none",
     whiteSpace: "nowrap",
   },
+
   uploadBtnLabel: {
     display: "block",
     width: "100%",
@@ -121,9 +132,11 @@ const styles = {
     margin: "15px 0",
     border: "2px solid #A5D6A7",
   },
+
   hiddenFileInput: {
     display: "none",
   },
+
   successBox: {
     color: "#1B5E20",
     background: "#E8F5E9",
@@ -135,6 +148,7 @@ const styles = {
     border: "1px solid #C8E6C9",
     wordBreak: "break-word",
   },
+
   errorBox: {
     color: "#C62828",
     background: "#FFEBEE",
@@ -145,6 +159,7 @@ const styles = {
     margin: "12px 0",
     border: "1px solid #FFCDD2",
   },
+
   divider: {
     display: "flex",
     alignItems: "center",
@@ -153,11 +168,13 @@ const styles = {
     fontSize: "12px",
     fontWeight: "700",
   },
+
   dividerLine: {
     flex: 1,
     height: "1px",
     background: "#C8E6C9",
   },
+
   inputManual: {
     width: "100%",
     padding: "12px",
@@ -172,6 +189,7 @@ const styles = {
     color: "#1B5E20",
     background: "#FAFAFA",
   },
+
   submitBtn: (loading) => ({
     width: "100%",
     padding: "12px",
@@ -186,6 +204,7 @@ const styles = {
     textTransform: "uppercase",
     marginBottom: "15px",
   }),
+
   backBtn: {
     width: "100%",
     padding: "12px",
@@ -199,6 +218,7 @@ const styles = {
     boxShadow: "0 3px 0 #9E9E9E",
     textTransform: "uppercase",
   },
+
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -213,6 +233,7 @@ const styles = {
     padding: "15px",
     boxSizing: "border-box",
   },
+
   modalCard: {
     background: "#fff",
     padding: "25px 20px",
@@ -224,17 +245,20 @@ const styles = {
     border: "2px solid #C8E6C9",
     boxSizing: "border-box",
   },
+
   modalTitle: {
     marginBottom: "8px",
     fontSize: "20px",
     fontWeight: "800",
   },
+
   modalText: {
     color: "#556B4D",
     fontSize: "13px",
     marginBottom: "20px",
     lineHeight: "1.5",
   },
+
   alertIconWrapper: (type) => ({
     width: "60px",
     height: "60px",
@@ -245,13 +269,26 @@ const styles = {
     alignItems: "center",
     fontSize: "28px",
     background:
-      type === "success" ? "#E8F5E9" : type === "error" ? "#FFEBEE" : "#FFFDE7",
+      type === "success"
+        ? "#E8F5E9"
+        : type === "error"
+        ? "#FFEBEE"
+        : "#FFFDE7",
     border: `2px solid ${
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FBC02D"
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FBC02D"
     }`,
     color:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#F57F17",
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#F57F17",
   }),
+
   alertBtn: (type) => ({
     width: "100%",
     padding: "12px",
@@ -263,9 +300,17 @@ const styles = {
     textTransform: "uppercase",
     color: type === "warning" ? "#1B5E20" : "#fff",
     background:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FFEB3B",
     boxShadow:
-      type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
+      type === "success"
+        ? "0 3px 0 #1B5E20"
+        : type === "error"
+        ? "0 3px 0 #9A0007"
+        : "0 3px 0 #FBC02D",
   }),
 };
 
@@ -288,232 +333,546 @@ function ScanQR() {
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const intervalRef = useRef(null);
+
+  // ID sesi kamera untuk mencegah stream lama mengambil alih stream baru
+  const cameraSessionRef = useRef(0);
+
+  // requestAnimationFrame ID
+  const scanAnimationRef = useRef(null);
+
+  // Mencegah detect() berjalan bersamaan
+  const detectingRef = useRef(false);
+
+  // Mencegah proses login dipanggil berkali-kali
   const isHandlingScan = useRef(false);
+
   const currentModeRef = useRef("environment");
 
-  const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  }, []);
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
   const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
+
     setAlertConfig((prev) => ({
       ...prev,
       isOpen: false,
       onCloseCallback: null,
     }));
+
     if (callback) callback();
   }, [alertConfig.onCloseCallback]);
 
-  const normalizeNis = (value) => String(value || "").trim();
-
-  // Pencarian Siswa di Firebase
-  const findStudent = useCallback(async (nis) => {
-    const cleanNis = normalizeNis(nis);
-    const siswaRef = ref(db, "siswa");
-
-    try {
-      const q = query(siswaRef, orderByChild("nis"), equalTo(cleanNis));
-      const snapshot = await get(q);
-      if (snapshot.exists()) {
-        const entries = Object.entries(snapshot.val());
-        if (entries.length > 0) return entries[0];
-      }
-    } catch (err) {
-      console.warn("Query NIS:", err);
-    }
-
-    try {
-      const allSnapshot = await get(siswaRef);
-      if (allSnapshot.exists()) {
-        const data = allSnapshot.val();
-        const found = Object.entries(data).find(([key, val]) => {
-          const dbNis = normalizeNis(val?.nis);
-          return dbNis === cleanNis || String(key).trim() === cleanNis;
-        });
-        if (found) return found;
-      }
-    } catch (err) {
-      console.error("Fallback search:", err);
-    }
-
-    return null;
+  const normalizeNis = useCallback((value) => {
+    return String(value || "").trim();
   }, []);
 
-  // Hentikan Stream Kamera
+  // =========================================================
+  // CARI DATA SISWA
+  // =========================================================
+  const findStudent = useCallback(
+    async (nis) => {
+      const cleanNis = normalizeNis(nis);
+      const siswaRef = ref(db, "siswa");
+
+      try {
+        const q = query(
+          siswaRef,
+          orderByChild("nis"),
+          equalTo(cleanNis)
+        );
+
+        const snapshot = await get(q);
+
+        if (snapshot.exists()) {
+          const entries = Object.entries(snapshot.val());
+
+          if (entries.length > 0) {
+            return entries[0];
+          }
+        }
+      } catch (err) {
+        console.warn("Query NIS:", err);
+      }
+
+      try {
+        const allSnapshot = await get(siswaRef);
+
+        if (allSnapshot.exists()) {
+          const data = allSnapshot.val();
+
+          const found = Object.entries(data).find(
+            ([key, val]) => {
+              const dbNis = normalizeNis(val?.nis);
+
+              return (
+                dbNis === cleanNis ||
+                String(key).trim() === cleanNis
+              );
+            }
+          );
+
+          if (found) {
+            return found;
+          }
+        }
+      } catch (err) {
+        console.error("Fallback search:", err);
+      }
+
+      return null;
+    },
+    [normalizeNis]
+  );
+
+  // =========================================================
+  // STOP SEMUA PROSES KAMERA
+  // =========================================================
   const stopMediaStream = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    // Batalkan animation frame
+    if (scanAnimationRef.current) {
+      cancelAnimationFrame(scanAnimationRef.current);
+      scanAnimationRef.current = null;
     }
+
+    detectingRef.current = false;
+
+    // Hentikan stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (err) {
+          console.warn("Gagal menghentikan track:", err);
+        }
+      });
+
       streamRef.current = null;
     }
+
+    // Bersihkan video
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (err) {
+        // ignore
+      }
+
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
-  // Verifikasi Data Siswa & Login
-  const verifyStudentData = useCallback(async (qrData) => {
-    const cleanNis = normalizeNis(qrData);
-    if (!cleanNis) {
-      setErrorMsg("QR Code atau NIS tidak valid.");
-      isHandlingScan.current = false;
-      return;
-    }
+  // =========================================================
+  // VERIFIKASI SISWA
+  // =========================================================
+  const verifyStudentData = useCallback(
+    async (qrData) => {
+      const cleanNis = normalizeNis(qrData);
 
-    setErrorMsg("");
-    setLoadingManual(true);
-
-    try {
-      const studentEntry = await findStudent(cleanNis);
-
-      if (!studentEntry) {
-        setErrorMsg("NIS / Barcode (" + cleanNis + ") tidak terdaftar di database sekolah.");
+      if (!cleanNis) {
+        setErrorMsg("QR Code atau NIS tidak valid.");
         isHandlingScan.current = false;
         return;
       }
 
-      const [studentId, studentData] = studentEntry;
-      const nama = String(studentData?.nama || "Siswa").trim();
-      const nisFinal = normalizeNis(studentData?.nis) || String(studentId).trim();
-      const kelas = String(studentData?.kelas || "-").trim();
+      setErrorMsg("");
+      setLoadingManual(true);
 
-      localStorage.removeItem("namaSiswa");
-      localStorage.removeItem("nisSiswa");
-      localStorage.removeItem("kelasSiswa");
+      try {
+        const studentEntry = await findStudent(cleanNis);
 
-      localStorage.setItem("namaSiswa", nama);
-      localStorage.setItem("nisSiswa", nisFinal);
-      localStorage.setItem("kelasSiswa", kelas);
+        if (!studentEntry) {
+          setErrorMsg(
+            "NIS / Barcode (" +
+              cleanNis +
+              ") tidak terdaftar di database sekolah."
+          );
 
-      setScanResult(nisFinal);
+          isHandlingScan.current = false;
+          return;
+        }
+
+        const [studentId, studentData] = studentEntry;
+
+        const nama = String(
+          studentData?.nama || "Siswa"
+        ).trim();
+
+        const nisFinal =
+          normalizeNis(studentData?.nis) ||
+          String(studentId).trim();
+
+        const kelas = String(
+          studentData?.kelas || "-"
+        ).trim();
+
+        localStorage.removeItem("namaSiswa");
+        localStorage.removeItem("nisSiswa");
+        localStorage.removeItem("kelasSiswa");
+
+        localStorage.setItem("namaSiswa", nama);
+        localStorage.setItem("nisSiswa", nisFinal);
+        localStorage.setItem("kelasSiswa", kelas);
+
+        setScanResult(nisFinal);
+
+        stopMediaStream();
+
+        showAlert(
+          "success",
+          "Login Berhasil!",
+          `Selamat datang, ${nama}! Kamu berhasil masuk ke sistem.`,
+          () => {
+            navigate("/dashboard-siswa", {
+              replace: true,
+            });
+          }
+        );
+      } catch (err) {
+        console.error("Verifikasi error:", err);
+
+        setErrorMsg(
+          "Kendala koneksi saat memeriksa data siswa."
+        );
+
+        isHandlingScan.current = false;
+      } finally {
+        setLoadingManual(false);
+      }
+    },
+    [
+      findStudent,
+      navigate,
+      normalizeNis,
+      showAlert,
+      stopMediaStream,
+    ]
+  );
+
+  // =========================================================
+  // QR TERDETEKSI
+  // =========================================================
+  const handleDetectedQR = useCallback(
+    async (decodedText) => {
+      if (isHandlingScan.current) return;
+
+      const cleanData = normalizeNis(decodedText);
+
+      if (!cleanData) return;
+
+      // Lock SEBELUM melakukan proses apa pun
+      isHandlingScan.current = true;
+
+      setScanResult(cleanData);
+      setErrorMsg("");
+
+      // Hentikan kamera segera setelah QR ditemukan
       stopMediaStream();
 
-      showAlert(
-        "success",
-        "Login Berhasil!",
-        `Selamat datang, ${nama}! Kamu berhasil masuk ke sistem.`,
-        () => {
-          navigate("/dashboard-siswa", { replace: true });
+      await verifyStudentData(cleanData);
+    },
+    [
+      normalizeNis,
+      stopMediaStream,
+      verifyStudentData,
+    ]
+  );
+
+  // =========================================================
+  // LOOP SCAN QR YANG STABIL
+  // =========================================================
+  const startBarcodeDetection = useCallback(
+    (sessionId) => {
+      if (!("BarcodeDetector" in window)) {
+        console.warn(
+          "BarcodeDetector tidak tersedia di browser ini."
+        );
+        return;
+      }
+
+      const barcodeDetector =
+        new window.BarcodeDetector({
+          formats: ["qr_code"],
+        });
+
+      const scanLoop = async () => {
+        // Jangan lanjut kalau sesi kamera sudah berubah
+        if (sessionId !== cameraSessionRef.current) {
+          return;
         }
-      );
-    } catch (err) {
-      console.error("Verifikasi error:", err);
-      setErrorMsg("Kendala koneksi saat memeriksa data siswa.");
-      isHandlingScan.current = false;
-    } finally {
-      setLoadingManual(false);
-    }
-  }, [findStudent, navigate, showAlert, stopMediaStream]);
 
-  // Handler Deteksi QR
-  const handleDetectedQR = useCallback(async (decodedText) => {
-    if (isHandlingScan.current) return;
-    isHandlingScan.current = true;
+        // Jangan lanjut kalau kamera sudah dihentikan
+        if (!streamRef.current) {
+          return;
+        }
 
-    const cleanData = normalizeNis(decodedText);
-    if (!cleanData) return;
+        const video = videoRef.current;
 
-    setScanResult(cleanData);
-    setErrorMsg("");
-    stopMediaStream();
+        if (!video) {
+          scanAnimationRef.current =
+            requestAnimationFrame(scanLoop);
+          return;
+        }
 
-    await verifyStudentData(cleanData);
-  }, [verifyStudentData, stopMediaStream]);
+        // Pastikan video sudah benar-benar siap
+        if (
+          video.readyState >=
+          HTMLMediaElement.HAVE_ENOUGH_DATA
+        ) {
+          // Jangan jalankan detect kedua sebelum detect pertama selesai
+          if (!detectingRef.current) {
+            detectingRef.current = true;
 
-  // Fungsi Inisialisasi Kamera Bebas Restart Loop
-  const startCameraStream = useCallback(async (mode) => {
-    stopMediaStream();
-    setCameraLoading(true);
-    setErrorMsg("");
+            try {
+              const barcodes =
+                await barcodeDetector.detect(video);
 
-    try {
-      const constraints = {
-        video: {
-          facingMode: mode ? { exact: mode } : "environment",
-          width: { ideal: 640 },
-          height: { ideal: 640 },
-        },
-        audio: false,
+              if (
+                sessionId === cameraSessionRef.current &&
+                !isHandlingScan.current &&
+                barcodes.length > 0
+              ) {
+                const rawValue =
+                  barcodes[0]?.rawValue;
+
+                if (rawValue) {
+                  await handleDetectedQR(rawValue);
+                  return;
+                }
+              }
+            } catch (err) {
+              // BarcodeDetector kadang gagal satu frame.
+              // Tidak perlu mematikan kamera.
+              console.debug(
+                "QR detect frame error:",
+                err
+              );
+            } finally {
+              detectingRef.current = false;
+            }
+          }
+        }
+
+        if (
+          sessionId === cameraSessionRef.current &&
+          streamRef.current &&
+          !isHandlingScan.current
+        ) {
+          scanAnimationRef.current =
+            requestAnimationFrame(scanLoop);
+        }
       };
 
-      let stream;
+      scanAnimationRef.current =
+        requestAnimationFrame(scanLoop);
+    },
+    [handleDetectedQR]
+  );
+
+  // =========================================================
+  // START CAMERA
+  // =========================================================
+  const startCameraStream = useCallback(
+    async (mode) => {
+      // Buat sesi baru
+      const sessionId =
+        cameraSessionRef.current + 1;
+
+      cameraSessionRef.current = sessionId;
+
+      // Stop stream sebelumnya
+      stopMediaStream();
+
+      setCameraLoading(true);
+      setErrorMsg("");
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (e) {
-        // Fallback jika exact mode ditolak di browser HP
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: mode || "environment" },
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+          throw new Error(
+            "Browser tidak mendukung kamera."
+          );
+        }
+
+        // Jangan menggunakan { exact: mode }
+        // karena beberapa HP akan gagal/restart kamera.
+        const constraints = {
+          video: {
+            facingMode: {
+              ideal: mode || "environment",
+            },
+            width: {
+              ideal: 640,
+            },
+            height: {
+              ideal: 480,
+            },
+            frameRate: {
+              ideal: 24,
+              max: 30,
+            },
+          },
           audio: false,
-        });
-      }
+        };
 
-      streamRef.current = stream;
+        const stream =
+          await navigator.mediaDevices.getUserMedia(
+            constraints
+          );
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true");
-        await videoRef.current.play();
+        // Jika request ini sudah bukan sesi terbaru,
+        // jangan pasang stream ke video.
+        if (
+          sessionId !== cameraSessionRef.current
+        ) {
+          stream
+            .getTracks()
+            .forEach((track) => track.stop());
+
+          return;
+        }
+
+        streamRef.current = stream;
+
+        const video = videoRef.current;
+
+        if (!video) {
+          stream
+            .getTracks()
+            .forEach((track) => track.stop());
+
+          streamRef.current = null;
+          return;
+        }
+
+        // Pasang stream SEKALI
+        video.srcObject = stream;
+
+        video.setAttribute(
+          "playsinline",
+          "true"
+        );
+
+        video.setAttribute(
+          "webkit-playsinline",
+          "true"
+        );
+
+        video.muted = true;
+
+        try {
+          await video.play();
+        } catch (playError) {
+          console.warn(
+            "Video play ditunda:",
+            playError
+          );
+        }
+
+        // Pastikan sesi masih sama
+        if (
+          sessionId !== cameraSessionRef.current
+        ) {
+          return;
+        }
+
         setCameraLoading(false);
 
-        // Detektor Barcode Otomatis
-        if ("BarcodeDetector" in window) {
-          const barcodeDetector = new window.BarcodeDetector({
-            formats: ["qr_code"],
-          });
+        // Mulai detector setelah video aktif
+        startBarcodeDetection(sessionId);
+      } catch (err) {
+        console.error(
+          "Kamera error:",
+          err
+        );
 
-          intervalRef.current = setInterval(async () => {
-            if (
-              videoRef.current &&
-              videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA &&
-              !isHandlingScan.current
-            ) {
-              try {
-                const barcodes = await barcodeDetector.detect(videoRef.current);
-                if (barcodes.length > 0 && barcodes[0].rawValue) {
-                  handleDetectedQR(barcodes[0].rawValue);
-                }
-              } catch (e) {}
-            }
-          }, 350);
+        // Jangan tampilkan error kalau request
+        // memang sudah digantikan sesi baru.
+        if (
+          sessionId !== cameraSessionRef.current
+        ) {
+          return;
         }
-      }
-    } catch (err) {
-      console.error("Kamera error:", err);
-      setCameraLoading(false);
-      setErrorMsg("Kamera tidak dapat dibuka. Berikan izin akses kamera pada browser.");
-    }
-  }, [stopMediaStream, handleDetectedQR]);
 
-  // Buka kamera hanya sekali saat halaman pertama kali dibuka
+        setCameraLoading(false);
+
+        setErrorMsg(
+          "Kamera tidak dapat dibuka. Pastikan izin kamera sudah diberikan pada browser."
+        );
+      }
+    },
+    [startBarcodeDetection, stopMediaStream]
+  );
+
+  // =========================================================
+  // INIT CAMERA
+  // =========================================================
   useEffect(() => {
+    let mounted = true;
+
     isHandlingScan.current = false;
     currentModeRef.current = "environment";
-    startCameraStream("environment");
+
+    if (mounted) {
+      startCameraStream("environment");
+    }
 
     return () => {
+      mounted = false;
+
+      // Invalidasi sesi kamera
+      cameraSessionRef.current += 1;
+
       stopMediaStream();
     };
-  }, []); // Mengosongkan dependency array agar tidak terjadi loop restart
+  }, [startCameraStream, stopMediaStream]);
 
-  // Tombol Flip Kamera
-  const handleFlipCamera = () => {
-    const nextMode = currentModeRef.current === "environment" ? "user" : "environment";
+  // =========================================================
+  // FLIP CAMERA
+  // =========================================================
+  const handleFlipCamera = useCallback(() => {
+    if (
+      cameraLoading ||
+      loadingManual ||
+      isHandlingScan.current
+    ) {
+      return;
+    }
+
+    const nextMode =
+      currentModeRef.current === "environment"
+        ? "user"
+        : "environment";
+
     currentModeRef.current = nextMode;
-    startCameraStream(nextMode);
-  };
 
-  // Upload Gambar QR
+    startCameraStream(nextMode);
+  }, [
+    cameraLoading,
+    loadingManual,
+    startCameraStream,
+  ]);
+
+  // =========================================================
+  // UPLOAD QR IMAGE
+  // =========================================================
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
+
     e.target.value = "";
+
     if (!file) return;
 
     try {
@@ -521,47 +880,91 @@ function ScanQR() {
       setErrorMsg("");
 
       if ("BarcodeDetector" in window) {
-        const barcodeDetector = new window.BarcodeDetector({ formats: ["qr_code"] });
-        const img = await createImageBitmap(file);
-        const barcodes = await barcodeDetector.detect(img);
-        if (barcodes.length > 0 && barcodes[0].rawValue) {
-          handleDetectedQR(barcodes[0].rawValue);
+        const barcodeDetector =
+          new window.BarcodeDetector({
+            formats: ["qr_code"],
+          });
+
+        const img =
+          await createImageBitmap(file);
+
+        const barcodes =
+          await barcodeDetector.detect(img);
+
+        img.close?.();
+
+        if (
+          barcodes.length > 0 &&
+          barcodes[0]?.rawValue
+        ) {
+          await handleDetectedQR(
+            barcodes[0].rawValue
+          );
+
           return;
         }
       }
 
-      setErrorMsg("Tidak dapat membaca QR Code dari gambar. Coba scan langsung dengan kamera atau ketik NIS.");
+      setErrorMsg(
+        "Tidak dapat membaca QR Code dari gambar. Coba scan langsung dengan kamera atau ketik NIS."
+      );
     } catch (err) {
-      console.error("Gagal baca gambar QR:", err);
-      setErrorMsg("Format gambar QR tidak terbaca.");
+      console.error(
+        "Gagal baca gambar QR:",
+        err
+      );
+
+      setErrorMsg(
+        "Format gambar QR tidak terbaca."
+      );
     } finally {
       setLoadingManual(false);
     }
   };
 
-  // Input NIS Manual
+  // =========================================================
+  // INPUT NIS MANUAL
+  // =========================================================
   const handleManualSubmit = async (e) => {
     e.preventDefault();
-    if (loadingManual || isHandlingScan.current) return;
+
+    if (
+      loadingManual ||
+      isHandlingScan.current
+    ) {
+      return;
+    }
 
     const nis = normalizeNis(manualNis);
+
     if (!nis) {
-      setErrorMsg("Silakan masukkan NIS siswa.");
+      setErrorMsg(
+        "Silakan masukkan NIS siswa."
+      );
+
       return;
     }
 
     isHandlingScan.current = true;
+
     stopMediaStream();
+
     await verifyStudentData(nis);
   };
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Scan QR Code Siswa</h2>
-        <p style={styles.desc}>Arahkan QR Code Kartu Siswa ke dalam kotak kamera.</p>
+        <h2 style={styles.title}>
+          Scan QR Code Siswa
+        </h2>
 
-        {/* AREA KAMERA NATIVE STABIL */}
+        <p style={styles.desc}>
+          Arahkan QR Code Kartu Siswa ke dalam
+          kotak kamera.
+        </p>
+
+        {/* AREA KAMERA */}
         <div style={styles.scannerWrapper}>
           <video
             ref={videoRef}
@@ -574,24 +977,34 @@ function ScanQR() {
           <div style={styles.scannerOverlay} />
 
           {cameraLoading && (
-            <div style={styles.cameraStatus}>Membuka kamera...</div>
+            <div style={styles.cameraStatus}>
+              Membuka kamera...
+            </div>
           )}
 
           <button
             type="button"
             style={styles.flipBtn}
             onClick={handleFlipCamera}
-            disabled={cameraLoading || loadingManual}
+            disabled={
+              cameraLoading ||
+              loadingManual ||
+              isHandlingScan.current
+            }
             title="Putar Kamera"
           >
             🔄
           </button>
         </div>
 
-        {/* TOMBOL UNGGAH GAMBAR */}
-        <label htmlFor="qr-file-input" style={styles.uploadBtnLabel}>
+        {/* UPLOAD QR */}
+        <label
+          htmlFor="qr-file-input"
+          style={styles.uploadBtnLabel}
+        >
           🖼️ UNGGAH GAMBAR QR CODE
         </label>
+
         <input
           id="qr-file-input"
           type="file"
@@ -603,16 +1016,25 @@ function ScanQR() {
 
         {scanResult && (
           <div style={styles.successBox}>
-            QR Code Terdeteksi: <strong>{scanResult}</strong>
+            QR Code Terdeteksi:{" "}
+            <strong>{scanResult}</strong>
           </div>
         )}
 
-        {errorMsg && <div style={styles.errorBox}>{errorMsg}</div>}
+        {errorMsg && (
+          <div style={styles.errorBox}>
+            {errorMsg}
+          </div>
+        )}
 
-        {/* INPUT NIS MANUAL */}
+        {/* INPUT NIS */}
         <div style={styles.divider}>
           <div style={styles.dividerLine} />
-          <span style={{ padding: "0 10px" }}>ATAU MASUKKAN NIS</span>
+
+          <span style={{ padding: "0 10px" }}>
+            ATAU MASUKKAN NIS
+          </span>
+
           <div style={styles.dividerLine} />
         </div>
 
@@ -621,7 +1043,9 @@ function ScanQR() {
             type="text"
             placeholder="Ketik NIS Siswa di sini..."
             value={manualNis}
-            onChange={(e) => setManualNis(e.target.value)}
+            onChange={(e) =>
+              setManualNis(e.target.value)
+            }
             style={styles.inputManual}
             inputMode="numeric"
             autoComplete="off"
@@ -630,38 +1054,61 @@ function ScanQR() {
 
           <button
             type="submit"
-            style={styles.submitBtn(loadingManual)}
+            style={styles.submitBtn(
+              loadingManual
+            )}
             disabled={loadingManual}
           >
-            {loadingManual ? "MEMERIKSA..." : "MASUK DENGAN NIS"}
+            {loadingManual
+              ? "MEMERIKSA..."
+              : "MASUK DENGAN NIS"}
           </button>
         </form>
 
         <button
           type="button"
           style={styles.backBtn}
-          onClick={() => navigate("/login-siswa")}
+          onClick={() =>
+            navigate("/login-siswa")
+          }
           disabled={loadingManual}
         >
           Kembali ke Login
         </button>
       </div>
 
-      {/* POP-UP NOTIFIKASI */}
+      {/* POP-UP */}
       {alertConfig.isOpen && (
-        <div style={styles.modalOverlay} role="presentation">
-          <div style={styles.modalCard} role="dialog" aria-modal="true">
-            <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "✕" : "ℹ"}
+        <div
+          style={styles.modalOverlay}
+          role="presentation"
+        >
+          <div
+            style={styles.modalCard}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              style={styles.alertIconWrapper(
+                alertConfig.type
+              )}
+            >
+              {alertConfig.type === "success"
+                ? "✓"
+                : alertConfig.type === "error"
+                ? "✕"
+                : "ℹ"}
             </div>
 
             <h3
               style={{
                 ...styles.modalTitle,
                 color:
-                  alertConfig.type === "success"
+                  alertConfig.type ===
+                  "success"
                     ? "#1B5E20"
-                    : alertConfig.type === "error"
+                    : alertConfig.type ===
+                      "error"
                     ? "#C62828"
                     : "#E65100",
               }}
@@ -669,11 +1116,15 @@ function ScanQR() {
               {alertConfig.title}
             </h3>
 
-            <p style={styles.modalText}>{alertConfig.message}</p>
+            <p style={styles.modalText}>
+              {alertConfig.message}
+            </p>
 
             <button
               type="button"
-              style={styles.alertBtn(alertConfig.type)}
+              style={styles.alertBtn(
+                alertConfig.type
+              )}
               onClick={handleCloseAlert}
             >
               Mengerti
