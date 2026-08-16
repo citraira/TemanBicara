@@ -1,227 +1,699 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue, set, query, orderByChild, equalTo } from "firebase/database";
+import {
+  ref,
+  onValue,
+  set,
+  query,
+  orderByChild,
+  equalTo,
+} from "firebase/database";
 import { getToken } from "firebase/messaging";
 import { db, messaging } from "../firebase";
 
 function DashboardSiswa() {
   const navigate = useNavigate();
 
-  // Ambil identitas siswa dari localStorage
-  const savedNama = (localStorage.getItem("namaSiswa") || "Siswa").trim();
-  const savedNis = (localStorage.getItem("nisSiswa") || "").trim();
+  // =========================================================
+  // IDENTITAS SISWA
+  // =========================================================
 
-  const [namaSiswa, setNamaSiswa] = useState(savedNama);
-  const [notifList, setNotifList] = useState([]);
-  const [showNotifModal, setShowNotifModal] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const savedNama = (
+    localStorage.getItem("namaSiswa") || "Siswa"
+  ).trim();
 
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [toastStatus, setToastStatus] = useState(null);
+  const savedNis = (
+    localStorage.getItem("nisSiswa") || ""
+  ).trim();
+
+  const [namaSiswa, setNamaSiswa] =
+    useState(savedNama);
+
+  const [notifList, setNotifList] =
+    useState([]);
+
+  const [showNotifModal, setShowNotifModal] =
+    useState(false);
+
+  const [unreadCount, setUnreadCount] =
+    useState(0);
+
+  const [showLogoutModal, setShowLogoutModal] =
+    useState(false);
+
+  const [toastStatus, setToastStatus] =
+    useState(null);
+
+  // =========================================================
+  // FCM
+  // =========================================================
 
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
-  // Pastikan nama tersinkronisasi saat halaman dibuka
+  // =========================================================
+  // SINKRONISASI NAMA
+  // =========================================================
+
   useEffect(() => {
-    const activeNama = localStorage.getItem("namaSiswa");
+    const activeNama =
+      localStorage.getItem("namaSiswa");
+
     if (activeNama) {
       setNamaSiswa(activeNama.trim());
     }
   }, []);
 
-  // Registrasi Push Notification FCM
+  // =========================================================
+  // HELPER NOTIFIKASI
+  // =========================================================
+
+  /*
+   * Membuat signature unik untuk sebuah notifikasi.
+   *
+   * Jika:
+   * - status berubah
+   * - updatedAt berubah
+   * - laporan baru dibuat
+   *
+   * maka signature ikut berubah dan dianggap sebagai
+   * notifikasi baru.
+   */
+  const getNotifSignature = (item) => {
+    const updatedAt =
+      item?.updatedAt ||
+      item?.createdAt ||
+      "";
+
+    const status =
+      item?.status ||
+      "";
+
+    return `${updatedAt}__${status}`;
+  };
+
+  /*
+   * Key penyimpanan status baca.
+   *
+   * Contoh:
+   * readNotifState_12345
+   *
+   * Data ini tersimpan di localStorage sehingga tidak
+   * hilang ketika Dashboard di-unmount atau siswa
+   * keluar lalu login kembali.
+   */
+  const getReadStorageKey = () => {
+    return `readNotifState_${
+      savedNis || savedNama || "guest"
+    }`;
+  };
+
+  /*
+   * Ambil status baca dari localStorage.
+   */
+  const getReadNotifState = () => {
+    const storageKey =
+      getReadStorageKey();
+
+    try {
+      const saved =
+        localStorage.getItem(storageKey);
+
+      if (!saved) {
+        return {};
+      }
+
+      const parsed = JSON.parse(saved);
+
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        !Array.isArray(parsed)
+      ) {
+        return parsed;
+      }
+
+      return {};
+    } catch (error) {
+      console.warn(
+        "Gagal membaca status notifikasi:",
+        error
+      );
+
+      return {};
+    }
+  };
+
+  /*
+   * Simpan status baca ke localStorage.
+   */
+  const saveReadNotifState = (state) => {
+    const storageKey =
+      getReadStorageKey();
+
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(state)
+      );
+    } catch (error) {
+      console.warn(
+        "Gagal menyimpan status notifikasi:",
+        error
+      );
+    }
+  };
+
+  // =========================================================
+  // REGISTRASI PUSH NOTIFICATION FCM
+  // =========================================================
+
   useEffect(() => {
     if (!savedNis) return;
 
     const setupFCM = async () => {
       try {
         const msg = await messaging();
+
         if (!msg) return;
 
-        let permission = Notification.permission;
+        let permission =
+          Notification.permission;
+
         if (permission === "default") {
-          permission = await Notification.requestPermission();
+          permission =
+            await Notification.requestPermission();
         }
 
         if (permission === "granted") {
-          const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
-          if (currentToken) {
-            const cleanKey = savedNis.replace(/[.#$[\]]/g, "_");
-            await set(ref(db, `fcmTokens/siswa/${cleanKey}`), {
-              nama: savedNama,
-              nis: savedNis,
-              token: currentToken,
-              updatedAt: new Date().toISOString(),
+          const currentToken =
+            await getToken(msg, {
+              vapidKey: VAPID_KEY,
             });
+
+          if (currentToken) {
+            const cleanKey =
+              savedNis.replace(
+                /[.#$[\]]/g,
+                "_"
+              );
+
+            await set(
+              ref(
+                db,
+                `fcmTokens/siswa/${cleanKey}`
+              ),
+              {
+                nama: savedNama,
+                nis: savedNis,
+                token: currentToken,
+                updatedAt:
+                  new Date().toISOString(),
+              }
+            );
           }
         }
       } catch (err) {
-        console.warn("FCM Notifikasi belum aktif:", err);
+        console.warn(
+          "FCM Notifikasi belum aktif:",
+          err
+        );
       }
     };
 
     setupFCM();
   }, [savedNis, savedNama]);
 
-  // Listener Realtime Pengaduan Milik Siswa Ini (Berdasarkan NIS & Nama)
+  // =========================================================
+  // LISTENER REALTIME PENGADUAN SISWA
+  // =========================================================
+
   useEffect(() => {
     if (!savedNis && !savedNama) {
       setNotifList([]);
       setUnreadCount(0);
+
       return undefined;
     }
 
-    const pengaduanRef = ref(db, "pengaduan");
+    const pengaduanRef =
+      ref(db, "pengaduan");
+
+    /*
+     * Penting:
+     *
+     * initialLoad hanya true pada saat listener pertama
+     * kali aktif.
+     *
+     * Tujuannya supaya saat dashboard pertama kali dibuka,
+     * sistem TIDAK mengeluarkan toast "status berubah"
+     * untuk data lama.
+     */
     let initialLoad = true;
 
     const unsubscribe = onValue(
       pengaduanRef,
       (snapshot) => {
+        // ===================================================
+        // TIDAK ADA DATA
+        // ===================================================
+
         if (!snapshot.exists()) {
           setNotifList([]);
           setUnreadCount(0);
+
           initialLoad = false;
+
           return;
         }
 
-        const data = snapshot.val();
-        
-        // Filter laporan milik siswa (Cek NIS terlebih dahulu, lalu nama)
-        const aduanSaya = Object.keys(data)
-          .map((key) => ({
-            id: key,
-            ...data[key],
-          }))
-          .filter((item) => {
-            const matchNis = savedNis && String(item.nis || "").trim() === savedNis;
-            const matchNama =
-              savedNama &&
-              String(item.nama || "").trim().toLowerCase() === savedNama.toLowerCase();
-            return matchNis || matchNama;
-          });
+        const data =
+          snapshot.val();
+
+        // ===================================================
+        // FILTER LAPORAN MILIK SISWA
+        // ===================================================
+
+        const aduanSaya =
+          Object.keys(data)
+            .map((key) => ({
+              id: key,
+              ...data[key],
+            }))
+            .filter((item) => {
+              const matchNis =
+                savedNis &&
+                String(item.nis || "").trim() ===
+                  savedNis;
+
+              const matchNama =
+                savedNama &&
+                String(item.nama || "")
+                  .trim()
+                  .toLowerCase() ===
+                  savedNama.toLowerCase();
+
+              return (
+                matchNis ||
+                matchNama
+              );
+            });
+
+        // ===================================================
+        // URUTKAN DARI YANG TERBARU
+        // ===================================================
 
         aduanSaya.sort(
           (a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0) -
-            new Date(a.updatedAt || a.createdAt || 0)
+            new Date(
+              b.updatedAt ||
+                b.createdAt ||
+                0
+            ) -
+            new Date(
+              a.updatedAt ||
+                a.createdAt ||
+                0
+            )
         );
 
-        // Hitung unread notifikasi
-        const storageKey = `lastReadNotif_${savedNis || savedNama}`;
-        const lastReadTime = localStorage.getItem(storageKey);
-        const lastReadDate = lastReadTime ? new Date(lastReadTime) : null;
+        // ===================================================
+        // HITUNG NOTIFIKASI BELUM DIBACA
+        // ===================================================
 
-        if (lastReadDate) {
-          const unread = aduanSaya.filter((item) => {
-            const waktu = new Date(item.updatedAt || item.createdAt || 0);
-            return waktu > lastReadDate;
-          }).length;
-          setUnreadCount(unread);
-        } else {
-          setUnreadCount(aduanSaya.length);
-        }
+        const readState =
+          getReadNotifState();
 
-        setNotifList(aduanSaya.slice(0, 50));
+        let unread = 0;
 
-        // Pemicu Notifikasi Realtime saat Status Laporan Berubah
-        if (!initialLoad && aduanSaya.length > 0) {
-          const aduanTerbaru = aduanSaya[0];
-          const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
-          const lastSavedStatus = localStorage.getItem(lastStatusKey);
-
-          if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
-            setToastStatus({
-              jenis: aduanTerbaru.jenis || "Pengaduan",
-              status: aduanTerbaru.status,
-            });
-
-            if (Notification.permission === "granted" && "serviceWorker" in navigator) {
-              navigator.serviceWorker.ready.then((reg) => {
-                reg.showNotification("Pembaruan Laporan - Teman Bicara", {
-                  body: `Laporan ${aduanTerbaru.jenis || ""} kamu diubah statusnya menjadi: "${aduanTerbaru.status}"`,
-                  icon: "/pwa-192x192.png",
-                  badge: "/pwa-192x192.png",
-                  vibrate: [200, 100, 200],
-                });
-              }).catch(() => {});
+        aduanSaya.forEach(
+          (item) => {
+            if (!item?.id) {
+              return;
             }
 
+            const signature =
+              getNotifSignature(item);
+
+            const savedRead =
+              readState[item.id];
+
+            /*
+             * Belum pernah dilihat
+             */
+            if (!savedRead) {
+              unread++;
+              return;
+            }
+
+            /*
+             * Signature berbeda berarti:
+             *
+             * - status berubah
+             * - updatedAt berubah
+             * - laporan mengalami pembaruan
+             */
+            if (
+              savedRead.signature !==
+              signature
+            ) {
+              unread++;
+            }
+          }
+        );
+
+        setUnreadCount(unread);
+
+        // ===================================================
+        // SIMPAN DAFTAR NOTIFIKASI
+        //
+        // Jangan menghapus item setelah dibaca.
+        // Semua notifikasi tetap muncul di panel.
+        // ===================================================
+
+        setNotifList(
+          aduanSaya.slice(0, 50)
+        );
+
+        // ===================================================
+        // NOTIFIKASI REALTIME SAAT STATUS BERUBAH
+        // ===================================================
+
+        if (
+          !initialLoad &&
+          aduanSaya.length > 0
+        ) {
+          /*
+           * Karena data sudah diurutkan dari terbaru,
+           * item pertama adalah laporan yang terakhir
+           * diperbarui.
+           */
+          const aduanTerbaru =
+            aduanSaya[0];
+
+          const statusKey =
+            `currentStatus_${aduanTerbaru.id}`;
+
+          const statusSebelumnya =
+            localStorage.getItem(
+              statusKey
+            );
+
+          const statusSekarang =
+            aduanTerbaru.status || "";
+
+          /*
+           * Jangan tampilkan toast jika:
+           *
+           * - belum ada status sebelumnya
+           *
+           * karena itu biasanya merupakan data yang
+           * baru pertama kali dikenali oleh browser.
+           */
+          if (
+            statusSebelumnya !== null &&
+            statusSebelumnya !==
+              statusSekarang
+          ) {
+            // =============================================
+            // TOAST DI DALAM WEBSITE
+            // =============================================
+
+            setToastStatus({
+              jenis:
+                aduanTerbaru.jenis ||
+                "Pengaduan",
+
+              status:
+                statusSekarang,
+            });
+
+            // =============================================
+            // NOTIFIKASI BROWSER
+            // =============================================
+
+            if (
+              typeof Notification !==
+                "undefined" &&
+              Notification.permission ===
+                "granted" &&
+              "serviceWorker" in
+                navigator
+            ) {
+              navigator.serviceWorker.ready
+                .then((reg) => {
+                  return reg.showNotification(
+                    "Pembaruan Laporan - Teman Bicara",
+                    {
+                      body:
+                        `Laporan ${
+                          aduanTerbaru.jenis ||
+                          ""
+                        } kamu diubah statusnya menjadi: "${statusSekarang}"`,
+
+                      icon:
+                        "/pwa-192x192.png",
+
+                      badge:
+                        "/pwa-192x192.png",
+
+                      vibrate: [
+                        200,
+                        100,
+                        200,
+                      ],
+
+                      data: {
+                        url:
+                          "/dashboard-siswa",
+                      },
+                    }
+                  );
+                })
+                .catch(() => {});
+            }
+
+            // =============================================
+            // SUARA NOTIFIKASI
+            // =============================================
+
             try {
-              const audio = new Audio(
-                "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
-              );
-              audio.play().catch(() => {});
-            } catch (err) {}
+              const audio =
+                new Audio(
+                  "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+                );
+
+              audio
+                .play()
+                .catch(() => {});
+            } catch (err) {
+              // Browser dapat memblokir autoplay.
+              // Tidak perlu menampilkan error.
+            }
           }
 
-          localStorage.setItem(lastStatusKey, aduanTerbaru.status || "");
-        } else if (initialLoad && aduanSaya.length > 0) {
-          aduanSaya.forEach((item) => {
-            localStorage.setItem(`lastSeenStatus_${item.id}`, item.status || "");
-          });
+          // =============================================
+          // SIMPAN STATUS TERBARU
+          // =============================================
+
+          localStorage.setItem(
+            statusKey,
+            statusSekarang
+          );
         }
 
+        // ===================================================
+        // LOAD PERTAMA
+        // ===================================================
+
+        if (
+          initialLoad &&
+          aduanSaya.length > 0
+        ) {
+          /*
+           * Pada pertama kali membuka dashboard,
+           * kita hanya menyimpan status sebagai baseline.
+           *
+           * Tidak menampilkan toast.
+           */
+          aduanSaya.forEach(
+            (item) => {
+              if (!item?.id) return;
+
+              localStorage.setItem(
+                `currentStatus_${item.id}`,
+                item.status || ""
+              );
+            }
+          );
+        }
+
+        // Setelah callback pertama selesai,
+        // listener berikutnya dianggap update realtime.
         initialLoad = false;
       },
       (error) => {
-        console.error("Gagal mendengarkan pengaduan siswa:", error);
+        console.error(
+          "Gagal mendengarkan pengaduan siswa:",
+          error
+        );
       }
     );
 
+    // Cleanup listener Firebase
     return () => unsubscribe();
-  }, [savedNis, savedNama]);
+  }, [
+    savedNis,
+    savedNama,
+  ]);
+
+  // =========================================================
+  // TANDAI NOTIFIKASI SEBAGAI SUDAH DILIHAT
+  // =========================================================
 
   const markNotifAsRead = () => {
-    const key = `lastReadNotif_${savedNis || savedNama || "guest"}`;
-    localStorage.setItem(key, new Date().toISOString());
+    const readState =
+      getReadNotifState();
+
+    /*
+     * Semua notifikasi yang sedang tampil
+     * ditandai sebagai sudah dilihat.
+     *
+     * Kita menyimpan signature, bukan hanya timestamp.
+     *
+     * Dengan demikian:
+     *
+     * Laporan A dibaca
+     * ↓
+     * keluar dashboard
+     * ↓
+     * login lagi
+     * ↓
+     * Laporan A tetap sudah dibaca.
+     */
+    notifList.forEach(
+      (item) => {
+        if (!item?.id) {
+          return;
+        }
+
+        readState[item.id] = {
+          signature:
+            getNotifSignature(item),
+
+          readAt:
+            new Date().toISOString(),
+        };
+      }
+    );
+
+    saveReadNotifState(
+      readState
+    );
+
+    // Hilangkan badge langsung
     setUnreadCount(0);
   };
 
+  // =========================================================
+  // BUKA PANEL NOTIFIKASI
+  // =========================================================
+
   const handleOpenNotif = () => {
     setShowNotifModal(true);
+
+    /*
+     * Begitu panel dibuka, semua notifikasi
+     * yang sedang tampil dianggap sudah dilihat.
+     */
     markNotifAsRead();
   };
+
+  // =========================================================
+  // BUKA RIWAYAT
+  // =========================================================
 
   const handleBukaDetailRiwayat = () => {
     setShowNotifModal(false);
+
     markNotifAsRead();
+
     navigate("/riwayat");
   };
 
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
   const handleConfirmLogout = () => {
-    localStorage.removeItem("namaSiswa");
-    localStorage.removeItem("nisSiswa");
-    localStorage.removeItem("kelasSiswa");
+    /*
+     * PENTING:
+     *
+     * Jangan menghapus:
+     *
+     * readNotifState_NIS
+     *
+     * karena itu adalah histori notifikasi yang sudah
+     * dilihat siswa.
+     *
+     * Jadi siswa bisa logout dan login kembali tanpa
+     * notifikasi lama muncul lagi sebagai unread.
+     */
+
+    localStorage.removeItem(
+      "namaSiswa"
+    );
+
+    localStorage.removeItem(
+      "nisSiswa"
+    );
+
+    localStorage.removeItem(
+      "kelasSiswa"
+    );
+
     navigate("/");
   };
+
+  // =========================================================
+  // STYLES
+  // =========================================================
 
   const styles = {
     page: {
       minHeight: "100vh",
       background: "#F4FBEE",
-      fontFamily: "'Segoe UI', Roboto, sans-serif",
+      fontFamily:
+        "'Segoe UI', Roboto, sans-serif",
       paddingBottom: "85px",
       boxSizing: "border-box",
     },
+
     header: {
       background: "#2E7D32",
       color: "#fff",
-      padding: "20px 20px 24px 20px",
+      padding:
+        "20px 20px 24px 20px",
       borderBottomLeftRadius: "26px",
-      borderBottomRightRadius: "26px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+      borderBottomRightRadius:
+        "26px",
+      boxShadow:
+        "0 4px 12px rgba(0,0,0,0.08)",
     },
+
     topRow: {
       display: "flex",
-      justifyContent: "space-between",
+      justifyContent:
+        "space-between",
       alignItems: "center",
     },
+
     profile: {
       display: "flex",
       alignItems: "center",
       gap: "12px",
     },
+
     avatar: {
       width: "52px",
       height: "52px",
@@ -233,20 +705,33 @@ function DashboardSiswa() {
       alignItems: "center",
       fontSize: "22px",
       fontWeight: "800",
-      boxShadow: "0 3px 6px rgba(0,0,0,0.12)",
+      boxShadow:
+        "0 3px 6px rgba(0,0,0,0.12)",
     },
-    hello: { fontSize: "13px", opacity: 0.9, fontWeight: "600" },
-    name: { fontSize: "19px", fontWeight: "800" },
+
+    hello: {
+      fontSize: "13px",
+      opacity: 0.9,
+      fontWeight: "600",
+    },
+
+    name: {
+      fontSize: "19px",
+      fontWeight: "800",
+    },
+
     headerActions: {
       display: "flex",
       alignItems: "center",
       gap: "10px",
     },
+
     notifBtn: {
       position: "relative",
       fontSize: "22px",
       cursor: "pointer",
-      background: "rgba(255, 255, 255, 0.25)",
+      background:
+        "rgba(255, 255, 255, 0.25)",
       border: "none",
       color: "#fff",
       borderRadius: "50%",
@@ -256,6 +741,7 @@ function DashboardSiswa() {
       width: "44px",
       height: "44px",
     },
+
     badgeCount: {
       position: "absolute",
       top: "-2px",
@@ -267,6 +753,7 @@ function DashboardSiswa() {
       padding: "2px 6px",
       fontWeight: "bold",
     },
+
     logoutBtn: {
       background: "#FFEB3B",
       color: "#1B5E20",
@@ -276,8 +763,10 @@ function DashboardSiswa() {
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      boxShadow: "0 2px 0 #FBC02D",
+      boxShadow:
+        "0 2px 0 #FBC02D",
     },
+
     toast: {
       position: "fixed",
       top: "16px",
@@ -289,59 +778,83 @@ function DashboardSiswa() {
       color: "#fff",
       padding: "14px 16px",
       borderRadius: "18px",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+      boxShadow:
+        "0 8px 24px rgba(0,0,0,0.2)",
       zIndex: 2000,
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
-      border: "2px solid #FFEB3B",
+      justifyContent:
+        "space-between",
+      border:
+        "2px solid #FFEB3B",
     },
+
     bannerCard: {
-      background: "linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%)",
-      margin: "18px 15px 15px",
+      background:
+        "linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%)",
+      margin:
+        "18px 15px 15px",
       borderRadius: "22px",
       padding: "18px 20px",
-      border: "2px solid #FFF59D",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+      border:
+        "2px solid #FFF59D",
+      boxShadow:
+        "0 4px 12px rgba(0,0,0,0.03)",
       display: "flex",
       alignItems: "center",
       gap: "14px",
     },
-    bannerIcon: { fontSize: "36px", lineHeight: "1" },
+
+    bannerIcon: {
+      fontSize: "36px",
+      lineHeight: "1",
+    },
+
     bannerTitle: {
       fontSize: "18px",
       fontWeight: "800",
       color: "#1B5E20",
       marginBottom: "2px",
     },
+
     bannerText: {
       fontSize: "13px",
       color: "#556B4D",
       margin: 0,
       fontWeight: "600",
     },
+
     menuGrid: {
       display: "grid",
-      gridTemplateColumns: "1fr 1fr",
+      gridTemplateColumns:
+        "1fr 1fr",
       gap: "14px",
       padding: "0 15px",
       marginTop: "10px",
     },
-    actionCard: (bgColor, borderColor) => ({
+
+    actionCard: (
+      bgColor,
+      borderColor
+    ) => ({
       background: bgColor,
       borderRadius: "22px",
       padding: "24px 12px",
       textAlign: "center",
       cursor: "pointer",
       border: `2.5px solid ${borderColor}`,
-      boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+      boxShadow:
+        "0 4px 12px rgba(0,0,0,0.04)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       gap: "10px",
     }),
-    cardIconCircle: (circleBg) => ({
+
+    cardIconCircle: (
+      circleBg
+    ) => ({
       width: "65px",
       height: "65px",
       borderRadius: "50%",
@@ -350,33 +863,41 @@ function DashboardSiswa() {
       alignItems: "center",
       justifyContent: "center",
       fontSize: "30px",
-      boxShadow: "0 4px 8px rgba(0,0,0,0.06)",
+      boxShadow:
+        "0 4px 8px rgba(0,0,0,0.06)",
     }),
+
     cardLabel: {
       fontSize: "16px",
       fontWeight: "800",
       color: "#1B5E20",
       margin: 0,
     },
+
     cardTag: {
       fontSize: "11px",
       fontWeight: "700",
       color: "#4E6647",
-      background: "rgba(255,255,255,0.7)",
+      background:
+        "rgba(255,255,255,0.7)",
       padding: "3px 8px",
       borderRadius: "10px",
     },
+
     modalOverlay: {
       position: "fixed",
       top: 0,
       left: 0,
       width: "100vw",
       height: "100vh",
-      background: "rgba(0,0,0,0.45)",
+      background:
+        "rgba(0,0,0,0.45)",
       zIndex: 1000,
       display: "flex",
-      justifyContent: "flex-end",
+      justifyContent:
+        "flex-end",
     },
+
     sidePanel: {
       width: "100%",
       maxWidth: "380px",
@@ -388,20 +909,25 @@ function DashboardSiswa() {
       boxSizing: "border-box",
       overflowY: "auto",
     },
+
     panelHeader: {
       display: "flex",
-      justifyContent: "space-between",
+      justifyContent:
+        "space-between",
       alignItems: "center",
       marginBottom: "16px",
-      borderBottom: "1.5px solid #E8F5E9",
+      borderBottom:
+        "1.5px solid #E8F5E9",
       paddingBottom: "12px",
     },
+
     panelTitle: {
       fontSize: "19px",
       fontWeight: "800",
       color: "#1B5E20",
       margin: 0,
     },
+
     closeBtn: {
       background: "none",
       border: "none",
@@ -410,16 +936,20 @@ function DashboardSiswa() {
       color: "#555",
       fontWeight: "800",
     },
+
     notifItemCard: {
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      justifyContent:
+        "space-between",
       padding: "12px",
       background: "#F9FCF7",
       borderRadius: "14px",
-      border: "1.5px solid #E8F5E9",
+      border:
+        "1.5px solid #E8F5E9",
       marginBottom: "10px",
     },
+
     actionBtn: {
       padding: "8px 14px",
       background: "#2E7D32",
@@ -430,21 +960,26 @@ function DashboardSiswa() {
       fontSize: "12px",
       cursor: "pointer",
     },
+
     centerModalOverlay: {
       position: "fixed",
       top: 0,
       left: 0,
       width: "100vw",
       height: "100vh",
-      background: "rgba(0,0,0,0.5)",
-      backdropFilter: "blur(2px)",
+      background:
+        "rgba(0,0,0,0.5)",
+      backdropFilter:
+        "blur(2px)",
       zIndex: 2000,
       display: "flex",
-      justifyContent: "center",
+      justifyContent:
+        "center",
       alignItems: "center",
       padding: "20px",
       boxSizing: "border-box",
     },
+
     modalCard: {
       background: "#fff",
       borderRadius: "22px",
@@ -452,23 +987,35 @@ function DashboardSiswa() {
       maxWidth: "360px",
       width: "100%",
       textAlign: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      boxShadow:
+        "0 10px 30px rgba(0,0,0,0.15)",
+      border:
+        "2px solid #C8E6C9",
       boxSizing: "border-box",
     },
+
     logoutIconBox: {
       width: "65px",
       height: "65px",
       borderRadius: "50%",
-      margin: "0 auto 12px auto",
+      margin:
+        "0 auto 12px auto",
       display: "flex",
-      justifyContent: "center",
+      justifyContent:
+        "center",
       alignItems: "center",
       fontSize: "30px",
       background: "#FFFDE7",
-      border: "2px solid #FBC02D",
+      border:
+        "2px solid #FBC02D",
     },
-    modalBtnGroup: { display: "flex", gap: "10px", marginTop: "18px" },
+
+    modalBtnGroup: {
+      display: "flex",
+      gap: "10px",
+      marginTop: "18px",
+    },
+
     yesBtn: {
       flex: 1,
       background: "#D32F2F",
@@ -479,9 +1026,12 @@ function DashboardSiswa() {
       fontWeight: "800",
       fontSize: "13px",
       cursor: "pointer",
-      boxShadow: "0 3px 0 #9A0007",
-      textTransform: "uppercase",
+      boxShadow:
+        "0 3px 0 #9A0007",
+      textTransform:
+        "uppercase",
     },
+
     cancelBtn: {
       flex: 1,
       background: "#FFEB3B",
@@ -492,9 +1042,12 @@ function DashboardSiswa() {
       fontWeight: "800",
       fontSize: "13px",
       cursor: "pointer",
-      boxShadow: "0 3px 0 #FBC02D",
-      textTransform: "uppercase",
+      boxShadow:
+        "0 3px 0 #FBC02D",
+      textTransform:
+        "uppercase",
     },
+
     bottomNav: {
       position: "fixed",
       bottom: 0,
@@ -503,40 +1056,75 @@ function DashboardSiswa() {
       height: "65px",
       background: "#fff",
       display: "flex",
-      justifyContent: "space-around",
+      justifyContent:
+        "space-around",
       alignItems: "center",
-      boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
-      borderTop: "1.5px solid #E8F5E9",
+      boxShadow:
+        "0 -2px 12px rgba(0,0,0,0.06)",
+      borderTop:
+        "1.5px solid #E8F5E9",
     },
+
     navItem: {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
+      justifyContent:
+        "center",
       cursor: "pointer",
       color: "#2E7D32",
       fontWeight: "800",
       fontSize: "11px",
       gap: "2px",
     },
-    navIcon: { fontSize: "22px", lineHeight: "1" },
+
+    navIcon: {
+      fontSize: "22px",
+      lineHeight: "1",
+    },
   };
+
+  // =========================================================
+  // RENDER
+  // =========================================================
 
   return (
     <div style={styles.page}>
-      {/* TOAST UPDATE STATUS */}
+      {/* ===================================================
+          TOAST UPDATE STATUS
+      =================================================== */}
+
       {toastStatus && (
         <div style={styles.toast}>
           <div>
-            <div style={{ fontSize: "14px", fontWeight: "800", color: "#FFEB3B" }}>
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: "800",
+                color: "#FFEB3B",
+              }}
+            >
               Pemberitahuan Guru
             </div>
-            <div style={{ fontSize: "13px", marginTop: "2px" }}>
-              Laporanmu: <strong>"{toastStatus.status}"</strong>
+
+            <div
+              style={{
+                fontSize: "13px",
+                marginTop: "2px",
+              }}
+            >
+              Laporanmu:{" "}
+              <strong>
+                "{toastStatus.status}"
+              </strong>
             </div>
           </div>
+
           <button
-            onClick={() => setToastStatus(null)}
+            type="button"
+            onClick={() =>
+              setToastStatus(null)
+            }
             style={{
               background: "transparent",
               border: "none",
@@ -551,149 +1139,478 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* HEADER ATAS */}
+      {/* ===================================================
+          HEADER ATAS
+      =================================================== */}
+
       <div style={styles.header}>
         <div style={styles.topRow}>
           <div style={styles.profile}>
             <div style={styles.avatar}>
-              {namaSiswa ? namaSiswa.charAt(0).toUpperCase() : "S"}
+              {namaSiswa
+                ? namaSiswa
+                    .charAt(0)
+                    .toUpperCase()
+                : "S"}
             </div>
+
             <div>
-              <div style={styles.hello}>Hai Teman!</div>
-              <div style={styles.name}>{namaSiswa}</div>
+              <div style={styles.hello}>
+                Hai Teman!
+              </div>
+
+              <div style={styles.name}>
+                {namaSiswa}
+              </div>
             </div>
           </div>
 
-          <div style={styles.headerActions}>
+          <div
+            style={
+              styles.headerActions
+            }
+          >
+            {/* =========================================
+                TOMBOL NOTIFIKASI
+            ========================================= */}
+
             <button
+              type="button"
               style={styles.notifBtn}
               onClick={handleOpenNotif}
               title="Notifikasi"
             >
               🔔
+
               {unreadCount > 0 && (
-                <span style={styles.badgeCount}>{unreadCount}</span>
+                <span
+                  style={
+                    styles.badgeCount
+                  }
+                >
+                  {unreadCount}
+                </span>
               )}
             </button>
 
-            <button style={styles.logoutBtn} onClick={() => setShowLogoutModal(true)}>
+            {/* =========================================
+                TOMBOL LOGOUT
+            ========================================= */}
+
+            <button
+              type="button"
+              style={styles.logoutBtn}
+              onClick={() =>
+                setShowLogoutModal(
+                  true
+                )
+              }
+            >
               Keluar
             </button>
           </div>
         </div>
       </div>
 
-      {/* BANNER VISUAL */}
+      {/* ===================================================
+          BANNER
+      =================================================== */}
+
       <div style={styles.bannerCard}>
-        <div style={styles.bannerIcon}>🛡️</div>
+        <div style={styles.bannerIcon}>
+          🛡️
+        </div>
+
         <div>
-          <div style={styles.bannerTitle}>Jangan Takut Melapor!</div>
-          <p style={styles.bannerText}>
-            Guru BK siap membantu menjaga keamananmu di sekolah.
+          <div
+            style={
+              styles.bannerTitle
+            }
+          >
+            Jangan Takut Melapor!
+          </div>
+
+          <p
+            style={
+              styles.bannerText
+            }
+          >
+            Guru BK siap membantu
+            menjaga keamananmu di
+            sekolah.
           </p>
         </div>
       </div>
 
-      {/* MENU UTAMA VISUAL */}
+      {/* ===================================================
+          MENU UTAMA
+      =================================================== */}
+
       <div style={styles.menuGrid}>
         <div
-          style={styles.actionCard("#E8F5E9", "#A5D6A7")}
-          onClick={() => navigate("/pengaduan")}
+          style={styles.actionCard(
+            "#E8F5E9",
+            "#A5D6A7"
+          )}
+          onClick={() =>
+            navigate("/pengaduan")
+          }
         >
-          <div style={styles.cardIconCircle("#C8E6C9")}>✏️</div>
-          <h3 style={styles.cardLabel}>Buat Laporan</h3>
-          <span style={styles.cardTag}>Ceritakan Masalahmu</span>
+          <div
+            style={
+              styles.cardIconCircle(
+                "#C8E6C9"
+              )
+            }
+          >
+            ✏️
+          </div>
+
+          <h3
+            style={styles.cardLabel}
+          >
+            Buat Laporan
+          </h3>
+
+          <span
+            style={styles.cardTag}
+          >
+            Ceritakan Masalahmu
+          </span>
         </div>
 
         <div
-          style={styles.actionCard("#FFFDE7", "#FFE082")}
-          onClick={() => navigate("/riwayat")}
+          style={styles.actionCard(
+            "#FFFDE7",
+            "#FFE082"
+          )}
+          onClick={() =>
+            navigate("/riwayat")
+          }
         >
-          <div style={styles.cardIconCircle("#FFF59D")}>📋</div>
-          <h3 style={styles.cardLabel}>Riwayat Saya</h3>
-          <span style={styles.cardTag}>Cek Status Laporan</span>
+          <div
+            style={
+              styles.cardIconCircle(
+                "#FFF59D"
+              )
+            }
+          >
+            📋
+          </div>
+
+          <h3
+            style={styles.cardLabel}
+          >
+            Riwayat Saya
+          </h3>
+
+          <span
+            style={styles.cardTag}
+          >
+            Cek Status Laporan
+          </span>
         </div>
 
         <div
-          style={styles.actionCard("#E1F5FE", "#90CAF9")}
-          onClick={() => navigate("/edukasi")}
+          style={styles.actionCard(
+            "#E1F5FE",
+            "#90CAF9"
+          )}
+          onClick={() =>
+            navigate("/edukasi")
+          }
         >
-          <div style={styles.cardIconCircle("#BBDEFB")}>📖</div>
-          <h3 style={styles.cardLabel}>Materi Edukasi</h3>
-          <span style={styles.cardTag}>Bacaan & Panduan</span>
+          <div
+            style={
+              styles.cardIconCircle(
+                "#BBDEFB"
+              )
+            }
+          >
+            📖
+          </div>
+
+          <h3
+            style={styles.cardLabel}
+          >
+            Materi Edukasi
+          </h3>
+
+          <span
+            style={styles.cardTag}
+          >
+            Bacaan & Panduan
+          </span>
         </div>
 
         <div
-          style={styles.actionCard("#F3E5F5", "#CE93D8")}
-          onClick={() => navigate("/hubungi-guru")}
+          style={styles.actionCard(
+            "#F3E5F5",
+            "#CE93D8"
+          )}
+          onClick={() =>
+            navigate("/hubungi-guru")
+          }
         >
-          <div style={styles.cardIconCircle("#E1BEE7")}>👨‍🏫</div>
-          <h3 style={styles.cardLabel}>Hubungi Guru</h3>
-          <span style={styles.cardTag}>Chat WhatsApp BK</span>
+          <div
+            style={
+              styles.cardIconCircle(
+                "#E1BEE7"
+              )
+            }
+          >
+            👨‍🏫
+          </div>
+
+          <h3
+            style={styles.cardLabel}
+          >
+            Hubungi Guru
+          </h3>
+
+          <span
+            style={styles.cardTag}
+          >
+            Chat WhatsApp BK
+          </span>
         </div>
       </div>
 
-      {/* SIDE PANEL NOTIFIKASI */}
+      {/* ===================================================
+          SIDE PANEL NOTIFIKASI
+      =================================================== */}
+
       {showNotifModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowNotifModal(false)}>
-          <div style={styles.sidePanel} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.panelHeader}>
-              <h2 style={styles.panelTitle}>Notifikasi Laporan</h2>
-              <button style={styles.closeBtn} onClick={() => setShowNotifModal(false)}>
+        <div
+          style={
+            styles.modalOverlay
+          }
+          onClick={() =>
+            setShowNotifModal(
+              false
+            )
+          }
+        >
+          <div
+            style={
+              styles.sidePanel
+            }
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div
+              style={
+                styles.panelHeader
+              }
+            >
+              <h2
+                style={
+                  styles.panelTitle
+                }
+              >
+                Notifikasi Laporan
+              </h2>
+
+              <button
+                type="button"
+                style={
+                  styles.closeBtn
+                }
+                onClick={() =>
+                  setShowNotifModal(
+                    false
+                  )
+                }
+              >
                 ✕
               </button>
             </div>
 
             {notifList.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 10px", color: "#667C5E" }}>
-                <div style={{ fontSize: "40px", marginBottom: "10px" }}>📭</div>
-                <div style={{ fontWeight: "700", fontSize: "15px", color: "#1B5E20" }}>
+              <div
+                style={{
+                  textAlign:
+                    "center",
+                  padding:
+                    "40px 10px",
+                  color:
+                    "#667C5E",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize:
+                      "40px",
+                    marginBottom:
+                      "10px",
+                  }}
+                >
+                  📭
+                </div>
+
+                <div
+                  style={{
+                    fontWeight:
+                      "700",
+                    fontSize:
+                      "15px",
+                    color:
+                      "#1B5E20",
+                  }}
+                >
                   Belum Ada Laporan
                 </div>
               </div>
             ) : (
               <div>
-                {notifList.map((item) => (
-                  <div key={item.id} style={styles.notifItemCard}>
-                    <div>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#1B5E20" }}>
-                        {item.jenis || "Pengaduan"}
-                      </div>
-                      <div style={{ fontSize: "12px", color: "#556B4D", marginTop: "3px" }}>
-                        Status: <strong>{item.status || "Diproses"}</strong>
-                      </div>
-                    </div>
-                    <button
-                      style={styles.actionBtn}
-                      onClick={handleBukaDetailRiwayat}
+                {notifList.map(
+                  (item) => (
+                    <div
+                      key={item.id}
+                      style={
+                        styles.notifItemCard
+                      }
                     >
-                      Buka
-                    </button>
-                  </div>
-                ))}
+                      <div>
+                        <div
+                          style={{
+                            fontSize:
+                              "14px",
+                            fontWeight:
+                              "800",
+                            color:
+                              "#1B5E20",
+                          }}
+                        >
+                          {item.jenis ||
+                            "Pengaduan"}
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize:
+                              "12px",
+                            color:
+                              "#556B4D",
+                            marginTop:
+                              "3px",
+                          }}
+                        >
+                          Status:{" "}
+                          <strong>
+                            {item.status ||
+                              "Diproses"}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        style={
+                          styles.actionBtn
+                        }
+                        onClick={
+                          handleBukaDetailRiwayat
+                        }
+                      >
+                        Buka
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* POP-UP MODAL KONFIRMASI KELUAR */}
+      {/* ===================================================
+          MODAL KONFIRMASI KELUAR
+      =================================================== */}
+
       {showLogoutModal && (
-        <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.logoutIconBox}>🚪</div>
-            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#1B5E20", margin: "0 0 6px 0" }}>
+        <div
+          style={
+            styles.centerModalOverlay
+          }
+          onClick={() =>
+            setShowLogoutModal(
+              false
+            )
+          }
+        >
+          <div
+            style={
+              styles.modalCard
+            }
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div
+              style={
+                styles.logoutIconBox
+              }
+            >
+              🚪
+            </div>
+
+            <h3
+              style={{
+                fontSize: "19px",
+                fontWeight: "800",
+                color: "#1B5E20",
+                margin:
+                  "0 0 6px 0",
+              }}
+            >
               Ingin Keluar?
             </h3>
-            <p style={{ fontSize: "13px", color: "#556B4D", margin: "0 0 8px 0", lineHeight: "1.5" }}>
-              Apakah kamu yakin ingin keluar dari akun <strong>{namaSiswa}</strong>?
+
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#556B4D",
+                margin:
+                  "0 0 8px 0",
+                lineHeight: "1.5",
+              }}
+            >
+              Apakah kamu yakin ingin
+              keluar dari akun{" "}
+              <strong>
+                {namaSiswa}
+              </strong>
+              ?
             </p>
 
-            <div style={styles.modalBtnGroup}>
-              <button style={styles.yesBtn} onClick={handleConfirmLogout}>
+            <div
+              style={
+                styles.modalBtnGroup
+              }
+            >
+              <button
+                type="button"
+                style={styles.yesBtn}
+                onClick={
+                  handleConfirmLogout
+                }
+              >
                 Ya, Keluar
               </button>
-              <button style={styles.cancelBtn} onClick={() => setShowLogoutModal(false)}>
+
+              <button
+                type="button"
+                style={
+                  styles.cancelBtn
+                }
+                onClick={() =>
+                  setShowLogoutModal(
+                    false
+                  )
+                }
+              >
                 Batal
               </button>
             </div>
@@ -701,23 +1618,83 @@ function DashboardSiswa() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION */}
-      <div style={styles.bottomNav}>
-        <div style={styles.navItem} onClick={() => navigate("/dashboard-siswa")}>
-          <span style={styles.navIcon}>🏠</span>
-          <span>Beranda</span>
+      {/* ===================================================
+          BOTTOM NAVIGATION
+      =================================================== */}
+
+      <div
+        style={
+          styles.bottomNav
+        }
+      >
+        <div
+          style={styles.navItem}
+          onClick={() =>
+            navigate(
+              "/dashboard-siswa"
+            )
+          }
+        >
+          <span
+            style={styles.navIcon}
+          >
+            🏠
+          </span>
+
+          <span>
+            Beranda
+          </span>
         </div>
-        <div style={styles.navItem} onClick={() => navigate("/pengaduan")}>
-          <span style={styles.navIcon}>✏️</span>
-          <span>Lapor</span>
+
+        <div
+          style={styles.navItem}
+          onClick={() =>
+            navigate("/pengaduan")
+          }
+        >
+          <span
+            style={styles.navIcon}
+          >
+            ✏️
+          </span>
+
+          <span>
+            Lapor
+          </span>
         </div>
-        <div style={styles.navItem} onClick={() => navigate("/edukasi")}>
-          <span style={styles.navIcon}>📖</span>
-          <span>Edukasi</span>
+
+        <div
+          style={styles.navItem}
+          onClick={() =>
+            navigate("/edukasi")
+          }
+        >
+          <span
+            style={styles.navIcon}
+          >
+            📖
+          </span>
+
+          <span>
+            Edukasi
+          </span>
         </div>
-        <div style={styles.navItem} onClick={() => navigate("/hubungi-guru")}>
-          <span style={styles.navIcon}>👨‍🏫</span>
-          <span>Guru</span>
+
+        <div
+          style={styles.navItem}
+          onClick={() =>
+            navigate("/hubungi-guru")
+          }
+        >
+          <span
+            style={styles.navIcon}
+          >
+            👨‍🏫
+          </span>
+
+          <span>
+            Guru
+          </span>
         </div>
       </div>
     </div>
