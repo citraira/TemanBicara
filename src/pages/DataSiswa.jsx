@@ -207,69 +207,122 @@ function DataSiswa() {
   // CONFIRM DELETE
   // ====================================================
 
-  const confirmDelete = (
-    id
-  ) => {
-    if (!id) {
+  const confirmDelete = (student) => {
+    if (!student?.id) {
       return;
     }
 
-    setDeleteTarget(id);
+    setDeleteTarget(student);
   };
 
   // ====================================================
   // EXECUTE DELETE
   // ====================================================
 
-  const executeDelete =
-    async () => {
-      const id =
-        deleteTarget;
+  const executeDelete = async (hapusLaporan = false) => {
+    const student = deleteTarget;
 
-      if (!id) {
-        return;
-      }
+    if (!student?.id) {
+      return;
+    }
 
-      setDeleteTarget(null);
+    setDeleteTarget(null);
 
-      try {
-        await remove(
-          ref(
-            db,
-            `siswa/${id}`
-          )
+    try {
+      const nisSiswa = String(
+        student.nis || student.id || ""
+      ).trim();
+
+      const namaSiswa = String(
+        student.nama || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      if (hapusLaporan) {
+        const pengaduanSnapshot = await get(
+          ref(db, "pengaduan")
         );
 
-        // Optimistic update.
-        // Tidak perlu mengambil seluruh
-        // data siswa lagi setelah delete.
-        setDataSiswa(
-          (prev) =>
-            prev.filter(
-              (item) =>
-                item.id !== id
+        if (pengaduanSnapshot.exists()) {
+          const dataPengaduan =
+            pengaduanSnapshot.val();
+
+          const laporanMilikSiswa =
+            Object.entries(dataPengaduan).filter(
+              ([, laporan]) => {
+                const nisLaporan = String(
+                  laporan?.nis || ""
+                ).trim();
+
+                const namaLaporan = String(
+                  laporan?.nama || ""
+                )
+                  .trim()
+                  .toLowerCase();
+
+                if (nisSiswa && nisLaporan) {
+                  return nisLaporan === nisSiswa;
+                }
+
+                return (
+                  !nisLaporan &&
+                  namaSiswa &&
+                  namaLaporan === namaSiswa
+                );
+              }
+            );
+
+          await Promise.all(
+            laporanMilikSiswa.map(
+              ([laporanId]) =>
+                remove(
+                  ref(
+                    db,
+                    `pengaduan/${laporanId}`
+                  )
+                )
             )
-        );
-
-        showAlert(
-          "success",
-          "Berhasil Dihapus",
-          "Data siswa berhasil dihapus dari sistem."
-        );
-      } catch (error) {
-        console.error(
-          "Gagal menghapus siswa:",
-          error
-        );
-
-        showAlert(
-          "error",
-          "Gagal Menghapus",
-          error?.message ||
-            "Terjadi kesalahan saat menghapus data siswa."
-        );
+          );
+        }
       }
-    };
+
+      await remove(
+        ref(
+          db,
+          `siswa/${student.id}`
+        )
+      );
+
+      setDataSiswa(
+        (prev) =>
+          prev.filter(
+            (item) =>
+              item.id !== student.id
+          )
+      );
+
+      showAlert(
+        "success",
+        "Berhasil Dihapus",
+        hapusLaporan
+          ? "Data siswa dan semua laporan milik siswa tersebut berhasil dihapus."
+          : "Data siswa berhasil dihapus. Laporan siswa tetap disimpan."
+      );
+    } catch (error) {
+      console.error(
+        "Gagal menghapus siswa:",
+        error
+      );
+
+      showAlert(
+        "error",
+        "Gagal Menghapus",
+        error?.message ||
+          "Terjadi kesalahan saat menghapus data siswa."
+      );
+    }
+  };
 
   // ====================================================
   // DOWNLOAD QR CODE
@@ -1211,9 +1264,7 @@ function DataSiswa() {
                             styles.deleteButton
                           }
                           onClick={() =>
-                            confirmDelete(
-                              item.id
-                            )
+                            confirmDelete(item)
                           }
                         >
                           Hapus
@@ -1423,9 +1474,7 @@ function DataSiswa() {
             styles.modalOverlay
           }
           onClick={() =>
-            setDeleteTarget(
-              null
-            )
+            setDeleteTarget(null)
           }
         >
           <div
@@ -1436,7 +1485,6 @@ function DataSiswa() {
               e.stopPropagation()
             }
           >
-
             <div
               style={
                 styles.alertIconWrapper(
@@ -1449,69 +1497,109 @@ function DataSiswa() {
 
             <h3
               style={{
-                color:
-                  "#C62828",
-                fontSize:
-                  "18px",
-                fontWeight:
-                  "800",
-                marginBottom:
-                  "8px",
+                color: "#C62828",
+                fontSize: "18px",
+                fontWeight: "800",
+                marginBottom: "8px",
               }}
             >
-              Konfirmasi Hapus
+              Hapus Data Siswa?
             </h3>
 
             <p
               style={{
-                color:
-                  "#556B4D",
-                fontSize:
-                  "13px",
-                marginBottom:
-                  "15px",
-                lineHeight:
-                  "1.5",
+                color: "#556B4D",
+                fontSize: "13px",
+                marginBottom: "10px",
+                lineHeight: "1.5",
               }}
             >
-              Apakah Anda yakin
-              ingin menghapus
-              data siswa ini
-              dari sistem?
+              Hapus data siswa{" "}
+              <strong>
+                {deleteTarget.nama || "Siswa"}
+              </strong>
+              {deleteTarget.nis
+                ? ` (NIS ${deleteTarget.nis})`
+                : ""}?
+            </p>
+
+            <p
+              style={{
+                color: "#556B4D",
+                fontSize: "13px",
+                marginBottom: "6px",
+                lineHeight: "1.5",
+                fontWeight: "700",
+              }}
+            >
+              Pilih tindakan:
+            </p>
+
+            <p
+              style={{
+                color: "#7A7A7A",
+                fontSize: "12px",
+                margin: "0",
+                lineHeight: "1.5",
+              }}
+            >
+              Jika laporan ikut dihapus, semua laporan milik
+              siswa ini akan ikut terhapus.
             </p>
 
             <div
-              style={
-                styles.modalBtnGroup
-              }
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                marginTop: "20px",
+              }}
             >
-
               <button
                 type="button"
-                style={
-                  styles.confirmYesBtn
-                }
-                onClick={
-                  executeDelete
-                }
-              >
-                Ya, Hapus
-              </button>
-
-              <button
-                type="button"
-                style={
-                  styles.confirmNoBtn
-                }
+                style={{
+                  ...styles.confirmYesBtn,
+                  width: "100%",
+                }}
                 onClick={() =>
-                  setDeleteTarget(
-                    null
-                  )
+                  executeDelete(true)
                 }
               >
-                Batal
+                HAPUS SISWA + LAPORAN
               </button>
 
+              <button
+                type="button"
+                style={{
+                  ...styles.confirmNoBtn,
+                  width: "100%",
+                }}
+                onClick={() =>
+                  executeDelete(false)
+                }
+              >
+                HAPUS SISWA SAJA
+              </button>
+
+              <button
+                type="button"
+                style={{
+                  width: "100%",
+                  background: "#F1F8E9",
+                  color: "#1B5E20",
+                  border: "1px solid #A5D6A7",
+                  padding: "11px",
+                  borderRadius: "10px",
+                  fontWeight: "800",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+                onClick={() =>
+                  setDeleteTarget(null)
+                }
+              >
+                BATAL
+              </button>
             </div>
           </div>
         </div>
