@@ -6,7 +6,12 @@ import { db, messaging } from "../firebase";
 
 function DashboardSiswa() {
   const navigate = useNavigate();
-  const [namaSiswa, setNamaSiswa] = useState("Siswa");
+
+  // Ambil identitas siswa dari localStorage
+  const savedNama = (localStorage.getItem("namaSiswa") || "Siswa").trim();
+  const savedNis = (localStorage.getItem("nisSiswa") || "").trim();
+
+  const [namaSiswa, setNamaSiswa] = useState(savedNama);
   const [notifList, setNotifList] = useState([]);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -17,32 +22,35 @@ function DashboardSiswa() {
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
-  // Ambil identitas siswa sekali saat dashboard dibuka.
-  const savedNama = localStorage.getItem("namaSiswa") || "";
-  const savedNis = localStorage.getItem("nisSiswa") || "anonim";
-
+  // Pastikan nama tersinkronisasi saat halaman dibuka
   useEffect(() => {
+    const activeNama = localStorage.getItem("namaSiswa");
+    if (activeNama) {
+      setNamaSiswa(activeNama.trim());
+    }
+  }, []);
+
+  // Registrasi Push Notification FCM
+  useEffect(() => {
+    if (!savedNis) return;
+
     const setupFCM = async () => {
       try {
         const msg = await messaging();
         if (!msg) return;
 
-        // Jangan meminta permission berulang kali jika browser
-        // sudah mempunyai keputusan permission.
         let permission = Notification.permission;
-
         if (permission === "default") {
           permission = await Notification.requestPermission();
         }
 
         if (permission === "granted") {
           const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
-
           if (currentToken) {
             const cleanKey = savedNis.replace(/[.#$[\]]/g, "_");
-
             await set(ref(db, `fcmTokens/siswa/${cleanKey}`), {
-              nama: savedNama || "Siswa",
+              nama: savedNama,
+              nis: savedNis,
               token: currentToken,
               updatedAt: new Date().toISOString(),
             });
@@ -56,168 +64,117 @@ function DashboardSiswa() {
     setupFCM();
   }, [savedNis, savedNama]);
 
+  // Listener Realtime Pengaduan Milik Siswa Ini (Berdasarkan NIS & Nama)
   useEffect(() => {
-    // Jika identitas siswa belum tersedia, jangan membaca seluruh
-    // node "pengaduan". Ini mencegah query besar yang tidak perlu.
-    if (!savedNama) {
+    if (!savedNis && !savedNama) {
       setNotifList([]);
       setUnreadCount(0);
       return undefined;
     }
 
-    // SEBELUMNYA halaman mengambil seluruh /pengaduan lalu melakukan
-    // .filter() di browser. Sekarang Firebase langsung mengirim
-    // pengaduan yang nama siswanya sesuai.
-    const pengaduanQuery = query(
-      ref(db, "pengaduan"),
-      orderByChild("nama"),
-      equalTo(savedNama)
-    );
-
+    const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
     const unsubscribe = onValue(
-      pengaduanQuery,
+      pengaduanRef,
       (snapshot) => {
-        const data = snapshot.val();
-
-        if (!data) {
+        if (!snapshot.exists()) {
           setNotifList([]);
           setUnreadCount(0);
           initialLoad = false;
           return;
         }
 
-        const formatted = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
+        const data = snapshot.val();
+        
+        // Filter laporan milik siswa (Cek NIS terlebih dahulu, lalu nama)
+        const aduanSaya = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .filter((item) => {
+            const matchNis = savedNis && String(item.nis || "").trim() === savedNis;
+            const matchNama =
+              savedNama &&
+              String(item.nama || "").trim().toLowerCase() === savedNama.toLowerCase();
+            return matchNis || matchNama;
+          });
 
-        // Urutkan berdasarkan update terakhir.
-        formatted.sort(
+        aduanSaya.sort(
           (a, b) =>
             new Date(b.updatedAt || b.createdAt || 0) -
             new Date(a.updatedAt || a.createdAt || 0)
         );
 
-        // Statistik unread tetap dihitung dari seluruh data hasil query,
-        // tetapi UI hanya menyimpan 50 terbaru agar render tetap ringan.
-        const storageKey = `lastReadNotif_${savedNama}`;
+        // Hitung unread notifikasi
+        const storageKey = `lastReadNotif_${savedNis || savedNama}`;
         const lastReadTime = localStorage.getItem(storageKey);
         const lastReadDate = lastReadTime ? new Date(lastReadTime) : null;
 
         if (lastReadDate) {
-          let unread = 0;
-
-          for (const item of formatted) {
+          const unread = aduanSaya.filter((item) => {
             const waktu = new Date(item.updatedAt || item.createdAt || 0);
-
-            if (waktu > lastReadDate) {
-              unread++;
-            }
-          }
-
+            return waktu > lastReadDate;
+          }).length;
           setUnreadCount(unread);
         } else {
-          setUnreadCount(formatted.length);
+          setUnreadCount(aduanSaya.length);
         }
 
-        // Hanya render 50 notifikasi terbaru di panel.
-        setNotifList(formatted.slice(0, 50));
+        setNotifList(aduanSaya.slice(0, 50));
 
-        // Pemicu notifikasi realtime saat status laporan berubah.
-        if (!initialLoad && formatted.length > 0) {
-          const aduanTerbaru = formatted[0];
+        // Pemicu Notifikasi Realtime saat Status Laporan Berubah
+        if (!initialLoad && aduanSaya.length > 0) {
+          const aduanTerbaru = aduanSaya[0];
           const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
           const lastSavedStatus = localStorage.getItem(lastStatusKey);
 
-          if (
-            lastSavedStatus &&
-            lastSavedStatus !== aduanTerbaru.status
-          ) {
+          if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
             setToastStatus({
               jenis: aduanTerbaru.jenis || "Pengaduan",
               status: aduanTerbaru.status,
             });
 
-            if (Notification.permission === "granted") {
-              if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.ready
-                  .then((reg) => {
-                    return reg.showNotification(
-                      "Pembaruan Laporan - Teman Bicara",
-                      {
-                        body: `Laporan ${
-                          aduanTerbaru.jenis || ""
-                        } kamu diubah statusnya menjadi: "${
-                          aduanTerbaru.status
-                        }"`,
-                        icon: "/pwa-192x192.png",
-                        badge: "/pwa-192x192.png",
-                        vibrate: [200, 100, 200],
-                      }
-                    );
-                  })
-                  .catch((err) => {
-                    console.warn(
-                      "Gagal menampilkan notifikasi:",
-                      err
-                    );
-                  });
-              }
+            if (Notification.permission === "granted" && "serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then((reg) => {
+                reg.showNotification("Pembaruan Laporan - Teman Bicara", {
+                  body: `Laporan ${aduanTerbaru.jenis || ""} kamu diubah statusnya menjadi: "${aduanTerbaru.status}"`,
+                  icon: "/pwa-192x192.png",
+                  badge: "/pwa-192x192.png",
+                  vibrate: [200, 100, 200],
+                });
+              }).catch(() => {});
             }
 
             try {
               const audio = new Audio(
                 "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
               );
-
-              const playPromise = audio.play();
-
-              if (playPromise && typeof playPromise.catch === "function") {
-                playPromise.catch((err) => {
-                  console.log(
-                    "Audio diblokir browser:",
-                    err
-                  );
-                });
-              }
-            } catch (err) {
-              console.log("Audio diblokir browser:", err);
-            }
+              audio.play().catch(() => {});
+            } catch (err) {}
           }
 
-          localStorage.setItem(
-            lastStatusKey,
-            aduanTerbaru.status || ""
-          );
-        } else if (initialLoad && formatted.length > 0) {
-          // Hanya inisialisasi status terakhir tanpa memicu notifikasi.
-          formatted.forEach((item) => {
-            localStorage.setItem(
-              `lastSeenStatus_${item.id}`,
-              item.status || ""
-            );
+          localStorage.setItem(lastStatusKey, aduanTerbaru.status || "");
+        } else if (initialLoad && aduanSaya.length > 0) {
+          aduanSaya.forEach((item) => {
+            localStorage.setItem(`lastSeenStatus_${item.id}`, item.status || "");
           });
         }
 
         initialLoad = false;
       },
       (error) => {
-        console.error(
-          "Gagal mendengarkan pengaduan siswa:",
-          error
-        );
+        console.error("Gagal mendengarkan pengaduan siswa:", error);
       }
     );
 
     return () => unsubscribe();
-  }, [savedNama]);
+  }, [savedNis, savedNama]);
 
   const markNotifAsRead = () => {
-    const savedNama = localStorage.getItem("namaSiswa") || "guest";
-    const nowIso = new Date().toISOString();
-    localStorage.setItem(`lastReadNotif_${savedNama}`, nowIso);
+    const key = `lastReadNotif_${savedNis || savedNama || "guest"}`;
+    localStorage.setItem(key, new Date().toISOString());
     setUnreadCount(0);
   };
 
