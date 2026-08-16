@@ -1468,33 +1468,19 @@ function DataSiswa() {
           MODAL KONFIRMASI HAPUS
       =============================================== */}
 
-      {deleteTarget && (
-        <div
-          style={
-            styles.modalOverlay
-          }
-          onClick={() =>
-            setDeleteTarget(null)
-          }
-        >
-          <div
-            style={
-              styles.modalCard
-            }
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <div
-              style={
-                styles.alertIconWrapper(
-                  "warning"
-                )
-              }
+      {deleteTargetId && (
+        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.alertIconWrapper("warning")}></div>
+              <div
+                style={
+                  styles.alertIconWrapper(
+                    "warning"
+                  )
+                }
             >
-              ⚠️
+                ⚠️
             </div>
-
             <h3
               style={{
                 color: "#C62828",
