@@ -995,6 +995,15 @@ function DaftarPengaduan() {
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper("warning")}></div>
+              <div
+                style={
+                  styles.alertIconWrapper(
+                    "warning"
+                  )
+                }
+              >
+                ⚠️
+              </div>
             <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
               Konfirmasi Hapus Laporan
             </h3>
