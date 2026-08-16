@@ -991,7 +991,7 @@ function DaftarPengaduan() {
         </div>
       )}
 
-      {deleteTargetId && (
+      {deleteTarget && (
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper("warning")}></div>
