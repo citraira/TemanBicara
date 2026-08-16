@@ -183,6 +183,41 @@ const styles = {
     alignItems: "center",
     minHeight: "20px",
   },
+  filterBox: {
+    background: "#fff",
+    border: "1px solid #C8E6C9",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    marginBottom: "20px",
+    boxShadow: "0 3px 10px rgba(46,125,50,0.05)",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  filterLabel: {
+    color: "#1B5E20",
+    fontSize: "13px",
+    fontWeight: "800",
+    whiteSpace: "nowrap",
+  },
+  filterSelect: {
+    flex: "1 1 240px",
+    minWidth: "220px",
+    maxWidth: "360px",
+    height: "42px",
+    padding: "0 12px",
+    borderRadius: "10px",
+    border: "1.5px solid #A5D6A7",
+    background: "#F8FFF6",
+    color: "#263238",
+    fontSize: "14px",
+    fontWeight: "600",
+    fontFamily: "inherit",
+    outline: "none",
+    cursor: "pointer",
+    boxSizing: "border-box",
+  },
   reportedAt: {
     fontSize: "12px",
     color: "#556B4D",
@@ -547,6 +582,9 @@ function DaftarPengaduan() {
   const [selectedFoto, setSelectedFoto] = useState(null);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
+  // Filter status untuk memudahkan guru melihat laporan berdasarkan status.
+  const [statusFilter, setStatusFilter] = useState("Semua");
+
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "success",
@@ -692,6 +730,14 @@ function DaftarPengaduan() {
     }
   }, [loadPengaduan]);
 
+  const filteredLaporanList =
+    statusFilter === "Semua"
+      ? laporanList
+      : laporanList.filter(
+          (item) =>
+            (item.status || "Diproses (Guru/BK)") === statusFilter
+        );
+
   return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -741,6 +787,43 @@ function DaftarPengaduan() {
         </div>
       </div>
 
+      {!loading && laporanList.length > 0 && (
+        <div style={styles.filterBox}>
+          <div style={styles.filterLabel}>Filter Status Pengaduan:</div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={styles.filterSelect}
+          >
+            <option value="Semua">Semua Status ({laporanList.length})</option>
+
+            {statusOptions.map((opt) => {
+              const jumlah = laporanList.filter(
+                (item) =>
+                  (item.status || "Diproses (Guru/BK)") === opt.label
+              ).length;
+
+              return (
+                <option key={opt.label} value={opt.label}>
+                  {opt.label} ({jumlah})
+                </option>
+              );
+            })}
+          </select>
+
+          <div
+            style={{
+              color: "#556B4D",
+              fontSize: "12px",
+              fontWeight: "600",
+            }}
+          >
+            Menampilkan {filteredLaporanList.length} dari {laporanList.length} laporan
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#1B5E20", fontWeight: "700" }}>
           Memuat data laporan...
@@ -759,8 +842,22 @@ function DaftarPengaduan() {
         >
           Belum ada laporan pengaduan yang masuk.
         </div>
+      ) : filteredLaporanList.length === 0 ? (
+        <div
+          style={{
+            background: "#fff",
+            padding: "35px 20px",
+            borderRadius: "18px",
+            textAlign: "center",
+            color: "#556B4D",
+            border: "2px solid #C8E6C9",
+            fontWeight: "600",
+          }}
+        >
+          Tidak ada laporan dengan status "{statusFilter}".
+        </div>
       ) : (
-        laporanList.slice(0, 100).map((item) => (
+        filteredLaporanList.slice(0, 100).map((item) => (
           <ItemPengaduanCard
             key={item.id}
             item={item}
@@ -772,7 +869,7 @@ function DaftarPengaduan() {
         ))
       )}
 
-      {!loading && laporanList.length > 100 && (
+      {!loading && statusFilter === "Semua" && laporanList.length > 100 && (
         <div
           style={{
             textAlign: "center",
@@ -784,7 +881,7 @@ function DaftarPengaduan() {
           }}
         >
           Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
-          Gunakan pencarian/paginasi pada tahap berikutnya jika datanya semakin banyak.
+          Gunakan filter status untuk mempersempit daftar laporan.
         </div>
       )}
 
