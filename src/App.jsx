@@ -1,25 +1,50 @@
 import { Routes, Route } from "react-router-dom";
 
+// ================================
+// HALAMAN UTAMA & LOGIN
+// ================================
+
 import LandingPage from "./pages/LandingPage";
 import LoginSiswa from "./pages/LoginSiswa";
 import LoginAdmin from "./pages/LoginAdmin";
+import LupaPassword from "./pages/LupaPassword";
+
+// ================================
+// DASHBOARD
+// ================================
 
 import DashboardSiswa from "./pages/DashboardSiswa";
 import DashboardAdmin from "./pages/DashboardAdmin";
 
+// ================================
+// HALAMAN SISWA
+// ================================
+
 import FormPengaduan from "./pages/FormPengaduan";
 import Riwayat from "./pages/Riwayat";
 import Edukasi from "./pages/Edukasi";
-import KelolaEdukasi from "./pages/KelolaEdukasi";
-import ScanQR from "./pages/ScanQR";
 import HubungiGuru from "./pages/HubungiGuru";
+import ScanQR from "./pages/ScanQR";
+
+// ================================
+// HALAMAN ADMIN
+// ================================
+
+import KelolaEdukasi from "./pages/KelolaEdukasi";
+import DaftarPengaduan from "./pages/DaftarPengaduan";
+import PengaturanAdmin from "./pages/PengaturanAdmin";
+
+// ================================
+// DATA SISWA
+// ================================
 
 import DataSiswa from "./pages/DataSiswa";
 import TambahSiswa from "./pages/TambahSiswa";
 import EditSiswa from "./pages/EditSiswa";
-import DaftarPengaduan from "./pages/DaftarPengaduan";
-import PengaturanAdmin from "./pages/PengaturanAdmin";
-import LupaPassword from "./pages/LupaPassword";
+
+// ================================
+// COMPONENT GLOBAL
+// ================================
 
 import InstallPWA from "./components/InstallPWA";
 
@@ -27,13 +52,19 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Halaman utama */}
+        {/* =========================
+            HALAMAN UTAMA
+        ========================== */}
+
         <Route
           path="/"
           element={<LandingPage />}
         />
 
-        {/* Login */}
+        {/* =========================
+            LOGIN
+        ========================== */}
+
         <Route
           path="/login-siswa"
           element={<LoginSiswa />}
@@ -49,7 +80,10 @@ function App() {
           element={<LupaPassword />}
         />
 
-        {/* Dashboard */}
+        {/* =========================
+            DASHBOARD
+        ========================== */}
+
         <Route
           path="/dashboard-siswa"
           element={<DashboardSiswa />}
@@ -60,7 +94,10 @@ function App() {
           element={<DashboardAdmin />}
         />
 
-        {/* Siswa */}
+        {/* =========================
+            SISWA
+        ========================== */}
+
         <Route
           path="/pengaduan"
           element={<FormPengaduan />}
@@ -86,7 +123,10 @@ function App() {
           element={<ScanQR />}
         />
 
-        {/* Admin */}
+        {/* =========================
+            ADMIN
+        ========================== */}
+
         <Route
           path="/kelola-edukasi"
           element={<KelolaEdukasi />}
@@ -102,7 +142,10 @@ function App() {
           element={<PengaturanAdmin />}
         />
 
-        {/* Data Siswa */}
+        {/* =========================
+            DATA SISWA
+        ========================== */}
+
         <Route
           path="/data-siswa"
           element={<DataSiswa />}
@@ -119,7 +162,11 @@ function App() {
         />
       </Routes>
 
-      {/* PWA install prompt global */}
+      {/* =========================
+          PWA INSTALL PROMPT
+          GLOBAL
+      ========================== */}
+
       <InstallPWA />
     </>
   );
