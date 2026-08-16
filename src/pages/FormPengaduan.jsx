@@ -447,6 +447,9 @@ function FormPengaduan() {
   const [peran, setPeran] =
     useState("Korban");
 
+  const [hariKejadian, setHariKejadian] =
+    useState("");
+
   const [tanggal, setTanggal] =
     useState("");
 
@@ -552,6 +555,16 @@ function FormPengaduan() {
     "4",
     "5",
     "6",
+  ];
+
+  const listHari = [
+    "Senin",
+    "Selasa",
+    "Rabu",
+    "Kamis",
+    "Jumat",
+    "Sabtu",
+    "Minggu",
   ];
 
   const listPeran = [
@@ -723,11 +736,10 @@ function FormPengaduan() {
       savedKelas.trim()
     );
 
-    setTanggal(
-      new Date()
-        .toISOString()
-        .split("T")[0]
-    );
+    // Hari kejadian wajib dipilih dari dropdown.
+    // Tanggal kalender sengaja dibiarkan kosong karena bersifat opsional.
+    setHariKejadian("");
+    setTanggal("");
   }, []);
 
   // ====================================================
@@ -1320,7 +1332,7 @@ function FormPengaduan() {
       }
 
       if (
-        !tanggal ||
+        !hariKejadian ||
         !lokasiFinal ||
         !jenisFinal ||
         !ceritaFinal
@@ -1331,7 +1343,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Form Belum Lengkap",
-          "Yuk cek kembali tempat kejadian, jenis kejadian, dan ceritamu."
+          "Yuk pilih hari kejadian, tempat kejadian, jenis kejadian, dan ceritamu."
         );
 
         return;
@@ -1387,7 +1399,11 @@ function FormPengaduan() {
 
           peran,
 
-          tanggal,
+          hariKejadian,
+
+          // Tanggal tetap disimpan agar data lama tetap kompatibel.
+          // Jika kalender tidak dipilih, nilainya "-".
+          tanggal: tanggal || "-",
 
           lokasi:
             lokasiFinal,
@@ -1789,7 +1805,7 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* TANGGAL */}
+          {/* HARI & TANGGAL KEJADIAN */}
 
           <div style={styles.group}>
             <div
@@ -1797,11 +1813,21 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <label
-                style={styles.label}
-              >
-                📅 Kapan kejadiannya?
-              </label>
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  📅 Kapan kejadiannya?
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Pilih hari kejadiannya. Tanggal kalender boleh diisi kalau kamu ingat.
+                </div>
+              </div>
 
               <button
                 type="button"
@@ -1810,7 +1836,7 @@ function FormPengaduan() {
                 }
                 onClick={() =>
                   speakText(
-                    "Kapan kejadiannya? Pilih tanggal kejadian."
+                    "Kapan kejadiannya? Pilih hari dari Senin sampai Minggu. Kalau kamu ingat tanggal tepatnya, kamu boleh memilih tanggal di kalender."
                   )
                 }
               >
@@ -1818,17 +1844,88 @@ function FormPengaduan() {
               </button>
             </div>
 
-            <input
-              type="date"
-              value={tanggal}
-              onChange={(e) =>
-                setTanggal(
-                  e.target.value
-                )
+            <div
+              style={
+                styles.selectWrapper
               }
-              style={styles.input}
-              disabled={loading}
-            />
+            >
+              <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                📅
+              </span>
+
+              <select
+                value={hariKejadian}
+                onChange={(e) =>
+                  setHariKejadian(
+                    e.target.value
+                  )
+                }
+                style={
+                  styles.childSelect
+                }
+                disabled={loading}
+              >
+                <option value="">
+                  Pilih hari kejadian
+                </option>
+
+                {listHari.map(
+                  (hari) => (
+                    <option
+                      key={hari}
+                      value={hari}
+                    >
+                      {hari}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div
+              style={{
+                marginTop: "10px",
+                padding: "10px 12px",
+                borderRadius: "12px",
+                background: "#F8FFF6",
+                border: "1.5px solid #E0EEDB",
+              }}
+            >
+              <label
+                style={{
+                  ...styles.label,
+                  fontSize: "13px",
+                  marginBottom: "6px",
+                }}
+              >
+                Tanggal tepat (opsional)
+              </label>
+
+              <input
+                type="date"
+                value={tanggal}
+                onChange={(e) =>
+                  setTanggal(
+                    e.target.value
+                  )
+                }
+                style={styles.input}
+                disabled={loading}
+              />
+
+              <div
+                style={{
+                  ...styles.helperText,
+                  marginTop: "6px",
+                }}
+              >
+                Boleh dikosongkan kalau kamu tidak ingat tanggal pastinya.
+              </div>
+            </div>
           </div>
 
           {/* LOKASI */}
