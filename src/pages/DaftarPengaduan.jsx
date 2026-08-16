@@ -254,6 +254,11 @@ const statusOptions = [
 const metodePenanganan = [
   { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
   { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
+  { id: "Pembinaan Terpisah", label: "Pembinaan Terpisah" },
+  { id: "Pendampingan Korban", label: "Pendampingan Korban" },
+  { id: "Konseling", label: "Konseling" },
+  { id: "Pemanggilan Orang Tua", label: "Pemanggilan Orang Tua" },
+  { id: "Lainnya", label: "Ketik sendiri" },
 ];
 
 const getStatusBadgeStyle = (status) => {
@@ -274,6 +279,9 @@ const getStatusBadgeStyle = (status) => {
 // SUB-KOMPONEN KARTU TERISOLASI AGAR MENGETIK TIDAK MACET
 const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDelete, onFotoClick }) => {
   const [penanganan, setPenanganan] = useState(item.penanganan || "Dipisahkan");
+  const [penangananLainnya, setPenangananLainnya] = useState(
+    item.penangananLainnya || ""
+  );
   const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
   const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
 
@@ -354,36 +362,66 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           Modul Penanganan & Intervensi Kasus
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "14px",
+          }}
+        >
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Penanganan Pelaku & Korban:
             </label>
-            <div style={styles.chipButtonGroup}>
+
+            <select
+              value={penanganan}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPenanganan(value);
+                if (value !== "Lainnya") {
+                  setPenangananLainnya("");
+                }
+              }}
+              style={styles.inputSmall}
+            >
               {metodePenanganan.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  style={styles.chipItem(penanganan === m.id, {
-                    bg: "#2E7D32",
-                    color: "#fff",
-                    border: "#1B5E20",
-                  })}
-                  onClick={() => setPenanganan(m.id)}
-                >
+                <option key={m.id} value={m.id}>
                   {m.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
+
+            {penanganan === "Lainnya" && (
+              <input
+                type="text"
+                placeholder="Ketik penanganan lainnya..."
+                value={penangananLainnya}
+                onChange={(e) => setPenangananLainnya(e.target.value)}
+                style={styles.inputSmall}
+              />
+            )}
           </div>
 
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Konfirmasi & Respon Orang Tua:
             </label>
             <input
               type="text"
-              placeholder="Catatan respon ortu..."
+              placeholder="Catatan respon orang tua..."
               value={responOrangTua}
               onChange={(e) => setResponOrangTua(e.target.value)}
               style={styles.inputSmall}
@@ -391,7 +429,13 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </div>
 
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Tahapan Hukuman / Ganti Rugi:
             </label>
             <input
@@ -404,44 +448,91 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </div>
         </div>
 
-        <button
-          style={styles.saveBtn}
-          onClick={() => onSavePenanganan(item.id, { penanganan, responOrangTua, tindakanSanksi })}
-        >
-          Simpan Catatan Penanganan
-        </button>
       </div>
 
       <div style={styles.actionArea}>
-        <div style={{ width: "100%" }}>
-          <label style={{ fontSize: "13px", fontWeight: "800", color: "#1B5E20", display: "block", marginBottom: "6px" }}>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <label
+            style={{
+              fontSize: "13px",
+              fontWeight: "800",
+              color: "#1B5E20",
+            }}
+          >
             Ubah Status Kasus:
           </label>
-          <div style={styles.chipButtonGroup}>
-            {statusOptions.map((opt) => {
-              const isSelected = (item.status || "Diproses (Guru/BK)") === opt.label;
-              return (
-                <button
-                  key={opt.label}
-                  type="button"
-                  style={styles.chipItem(isSelected, opt)}
-                  onClick={() => onStatusChange(item.id, opt.label)}
-                >
-                  {isSelected ? "✓ " : ""}{opt.label}
-                </button>
-              );
-            })}
-          </div>
+
+          <select
+            value={item.status || "Diproses (Guru/BK)"}
+            onChange={(e) => onStatusChange(item.id, e.target.value)}
+            style={styles.inputSmall}
+          >
+            {statusOptions.map((opt) => (
+              <option key={opt.label} value={opt.label}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginTop: "10px" }}>
-          <div style={{ fontSize: "12px", color: "#556B4D" }}>
-            Dilaporkan pada: {item.createdAt ? new Date(item.createdAt).toLocaleString("id-ID") : "-"}
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#556B4D",
+            }}
+          >
+            Dilaporkan pada:{" "}
+            {item.createdAt
+              ? new Date(item.createdAt).toLocaleString("id-ID")
+              : "-"}
           </div>
 
-          <button style={styles.deleteBtn} onClick={() => onDelete(item.id)}>
-            Hapus
-          </button>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              style={styles.saveBtn}
+              onClick={() =>
+                onSavePenanganan(item.id, {
+                  penanganan,
+                  penangananLainnya,
+                  responOrangTua,
+                  tindakanSanksi,
+                })
+              }
+            >
+              Simpan Catatan Penanganan
+            </button>
+
+            <button
+              style={styles.deleteBtn}
+              onClick={() => onDelete(item.id)}
+            >
+              Hapus
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -559,6 +650,10 @@ function DaftarPengaduan() {
     try {
       await update(ref(db, `pengaduan/${id}`), {
         penanganan: formData.penanganan,
+        penangananLainnya:
+          formData.penanganan === "Lainnya"
+            ? formData.penangananLainnya
+            : "",
         responOrangTua: formData.responOrangTua,
         tindakanSanksi: formData.tindakanSanksi,
         updatedAt: new Date().toISOString(),
@@ -631,7 +726,7 @@ function DaftarPengaduan() {
               cursor: refreshing ? "not-allowed" : "pointer",
             }}
           >
-            {refreshing ? "Memuat..." : "↻ Refresh"}
+            {refreshing ? "Memuat..." : " Refresh"}
           </button>
 
           <button
@@ -709,7 +804,7 @@ function DaftarPengaduan() {
       {deleteTargetId && (
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper("warning")}>⚠️</div>
+            <div style={styles.alertIconWrapper("warning")}></div>
             <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
               Konfirmasi Hapus Laporan
             </h3>
@@ -732,7 +827,7 @@ function DaftarPengaduan() {
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "✕" : "ℹ"}
+              {alertConfig.type === "success" ? "" : alertConfig.type === "error" ? "" : ""}
             </div>
 
             <h3
