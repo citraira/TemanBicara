@@ -3,1517 +3,531 @@ import {
   useEffect,
   useState,
 } from "react";
-
 import { useNavigate } from "react-router-dom";
-
-import {
-  ref,
-  get,
-  query,
-  orderByChild,
-  equalTo,
-} from "firebase/database";
-
+import { ref, get } from "firebase/database";
 import { db } from "../firebase";
-
-// ======================================================
-// RIWAYAT LAPORAN SISWA
-// ======================================================
 
 function Riwayat() {
   const navigate = useNavigate();
 
-  // ====================================================
-  // DATA
-  // ====================================================
+  const [riwayatList, setRiwayatList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [
-    riwayatList,
-    setRiwayatList,
-  ] = useState([]);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-  const [
-    refreshing,
-    setRefreshing,
-  ] = useState(false);
-
-  // ====================================================
-  // IDENTITAS SISWA
-  // ====================================================
-
-  const [
-    namaSiswa,
-    setNamaSiswa,
-  ] = useState("");
-
-  const [
-    nisSiswa,
-    setNisSiswa,
-  ] = useState("");
-
-  const [
-    kelasSiswa,
-    setKelasSiswa,
-  ] = useState("");
-
-  // ====================================================
-  // FOTO
-  // ====================================================
-
-  const [
-    selectedFoto,
-    setSelectedFoto,
-  ] = useState(null);
-
-  // ====================================================
-  // LOAD IDENTITAS DARI LOCAL STORAGE
-  //
-  // Hanya dilakukan sekali saat halaman dibuka.
-  // ====================================================
+  const [namaSiswa, setNamaSiswa] = useState("");
+  const [nisSiswa, setNisSiswa] = useState("");
+  const [kelasSiswa, setKelasSiswa] = useState("");
+  const [selectedFoto, setSelectedFoto] = useState(null);
 
   useEffect(() => {
-    const savedNama =
-      localStorage.getItem(
-        "namaSiswa"
-      ) || "";
+    const savedNama = localStorage.getItem("namaSiswa") || "";
+    const savedNis = localStorage.getItem("nisSiswa") || "";
+    const savedKelas = localStorage.getItem("kelasSiswa") || "";
 
-    const savedNis =
-      localStorage.getItem(
-        "nisSiswa"
-      ) || "";
-
-    const savedKelas =
-      localStorage.getItem(
-        "kelasSiswa"
-      ) || "";
-
-    setNamaSiswa(
-      savedNama.trim()
-    );
-
-    setNisSiswa(
-      savedNis.trim()
-    );
-
-    setKelasSiswa(
-      savedKelas.trim()
-    );
+    setNamaSiswa(savedNama.trim());
+    setNisSiswa(savedNis.trim());
+    setKelasSiswa(savedKelas.trim());
   }, []);
 
-  // ====================================================
-  // LOAD RIWAYAT
-  // ====================================================
-
-  const loadRiwayat =
-    useCallback(
-      async (
-        showInitialLoading = false
-      ) => {
-        try {
-          if (
-            showInitialLoading
-          ) {
-            setLoading(true);
-          }
-
-          // ==========================================
-          // AMBIL IDENTITAS TERBARU
-          // ==========================================
-
-          const savedNama =
-            (
-              localStorage.getItem(
-                "namaSiswa"
-              ) || ""
-            ).trim();
-
-          const savedNis =
-            (
-              localStorage.getItem(
-                "nisSiswa"
-              ) || ""
-            ).trim();
-
-          const savedKelas =
-            (
-              localStorage.getItem(
-                "kelasSiswa"
-              ) || ""
-            ).trim();
-
-          // ==========================================
-          // SINKRONKAN STATE
-          // ==========================================
-
-          setNamaSiswa(
-            savedNama
-          );
-
-          setNisSiswa(
-            savedNis
-          );
-
-          setKelasSiswa(
-            savedKelas
-          );
-
-          // ==========================================
-          // JIKA NIS TIDAK ADA
-          // ==========================================
-
-          if (!savedNis) {
-            console.warn(
-              "nisSiswa tidak ditemukan di localStorage."
-            );
-
-            setRiwayatList(
-              []
-            );
-
-            return;
-          }
-
-          // ==========================================
-          // QUERY FIREBASE BERDASARKAN NIS
-          //
-          // HANYA mengambil laporan siswa tersebut.
-          // ==========================================
-
-          const riwayatQuery =
-            query(
-              ref(
-                db,
-                "pengaduan"
-              ),
-              orderByChild(
-                "nis"
-              ),
-              equalTo(
-                savedNis
-              )
-            );
-
-          const snapshot =
-            await get(
-              riwayatQuery
-            );
-
-          // ==========================================
-          // TIDAK ADA DATA
-          // ==========================================
-
-          if (
-            !snapshot.exists()
-          ) {
-            setRiwayatList(
-              []
-            );
-
-            return;
-          }
-
-          // ==========================================
-          // UBAH OBJECT FIREBASE MENJADI ARRAY
-          // ==========================================
-
-          const data =
-            snapshot.val();
-
-          const formattedList =
-            Object.entries(
-              data
-            )
-              .map(
-                ([
-                  key,
-                  value,
-                ]) => ({
-                  id: key,
-                  ...value,
-                })
-              )
-
-              // ======================================
-              // FILTER TAMBAHAN DI CLIENT
-              //
-              // Walaupun Firebase sudah query NIS,
-              // kita pastikan lagi.
-              // ======================================
-
-              .filter(
-                (item) =>
-                  String(
-                    item.nis ||
-                      ""
-                  ).trim() ===
-                  savedNis
-              )
-
-              // ======================================
-              // URUTKAN TERBARU
-              // ======================================
-
-              .sort(
-                (a, b) => {
-                  const timeA =
-                    Number(
-                      a.createdAtMs ||
-                        0
-                    ) ||
-                    new Date(
-                      a.updatedAt ||
-                        a.createdAt ||
-                        0
-                    ).getTime();
-
-                  const timeB =
-                    Number(
-                      b.createdAtMs ||
-                        0
-                    ) ||
-                    new Date(
-                      b.updatedAt ||
-                        b.createdAt ||
-                        0
-                    ).getTime();
-
-                  return (
-                    timeB -
-                    timeA
-                  );
-                }
-              );
-
-          setRiwayatList(
-            formattedList
-          );
-        } catch (error) {
-          console.error(
-            "Gagal mengambil data riwayat:",
-            error
-          );
-
-          setRiwayatList([]);
-        } finally {
-          if (
-            showInitialLoading
-          ) {
-            setLoading(false);
-          }
+  const loadRiwayat = useCallback(
+    async (showInitialLoading = false) => {
+      try {
+        if (showInitialLoading) {
+          setLoading(true);
         }
-      },
-      []
-    );
 
-  // ====================================================
-  // LOAD PERTAMA KALI
-  // ====================================================
+        const savedNama = (localStorage.getItem("namaSiswa") || "").trim();
+        const savedNis = (localStorage.getItem("nisSiswa") || "").trim();
+        const savedKelas = (localStorage.getItem("kelasSiswa") || "").trim();
+
+        setNamaSiswa(savedNama);
+        setNisSiswa(savedNis);
+        setKelasSiswa(savedKelas);
+
+        if (!savedNis && !savedNama) {
+          setRiwayatList([]);
+          return;
+        }
+
+        // Ambil data seluruh pengaduan dari Firebase
+        const snapshot = await get(ref(db, "pengaduan"));
+
+        if (!snapshot.exists()) {
+          setRiwayatList([]);
+          return;
+        }
+
+        const data = snapshot.val();
+
+        // Filter fleksibel: Mencocokkan NIS ATAU Nama Siswa
+        const formattedList = Object.entries(data)
+          .map(([key, value]) => ({
+            id: key,
+            ...value,
+          }))
+          .filter((item) => {
+            const itemNis = String(item.nis || "").trim();
+            const itemNama = String(item.nama || "").trim().toLowerCase();
+
+            const matchNis = savedNis && itemNis === savedNis;
+            const matchNama = savedNama && itemNama === savedNama.toLowerCase();
+
+            return matchNis || matchNama;
+          })
+          .sort((a, b) => {
+            const timeA =
+              Number(a.createdAtMs || 0) ||
+              new Date(a.updatedAt || a.createdAt || 0).getTime();
+            const timeB =
+              Number(b.createdAtMs || 0) ||
+              new Date(b.updatedAt || b.createdAt || 0).getTime();
+            return timeB - timeA;
+          });
+
+        setRiwayatList(formattedList);
+      } catch (error) {
+        console.error("Gagal mengambil data riwayat:", error);
+        setRiwayatList([]);
+      } finally {
+        if (showInitialLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     loadRiwayat(true);
   }, [loadRiwayat]);
 
-  // ====================================================
-  // REFRESH MANUAL
-  //
-  // Tidak menggunakan realtime listener.
-  // Jadi refresh hanya membaca Firebase satu kali.
-  // ====================================================
+  const refreshRiwayat = useCallback(async () => {
+    if (refreshing) return;
+    try {
+      setRefreshing(true);
+      await loadRiwayat(false);
+    } catch (error) {
+      console.error("Gagal refresh riwayat:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadRiwayat, refreshing]);
 
-  const refreshRiwayat =
-    useCallback(
-      async () => {
-        if (refreshing) {
-          return;
-        }
-
-        try {
-          setRefreshing(true);
-
-          await loadRiwayat(
-            false
-          );
-        } catch (error) {
-          console.error(
-            "Gagal refresh riwayat:",
-            error
-          );
-        } finally {
-          setRefreshing(false);
-        }
-      },
-      [
-        loadRiwayat,
-        refreshing,
-      ]
-    );
-
-  // ====================================================
-  // STATUS BADGE
-  // ====================================================
-
-  const getStatusBadge =
-    (status) => {
-      switch (status) {
-        case "Selesai":
-          return {
-            label:
-              "Selesai Penanganan",
-
-            style: {
-              background:
-                "#E8F5E9",
-
-              color:
-                "#2E7D32",
-
-              border:
-                "1px solid #A5D6A7",
-            },
-          };
-
-        case "Ditolak (Fitnah / Tidak Valid)":
-
-        case "Ditolak":
-          return {
-            label:
-              "Ditolak / Tidak Valid",
-
-            style: {
-              background:
-                "#FFEBEE",
-
-              color:
-                "#C62828",
-
-              border:
-                "1px solid #EF9A9A",
-            },
-          };
-
-        case "Eskalasi: Kepala Sekolah":
-          return {
-            label:
-              "Ditangani Kepala Sekolah",
-
-            style: {
-              background:
-                "#EDE7F6",
-
-              color:
-                "#512DA8",
-
-              border:
-                "1px solid #B39DDB",
-            },
-          };
-
-        case "Eskalasi: Dinas/Pengawas":
-          return {
-            label:
-              "Ditangani Dinas / Pengawas",
-
-            style: {
-              background:
-                "#F3E5F5",
-
-              color:
-                "#8E24AA",
-
-              border:
-                "1px solid #CE93D8",
-            },
-          };
-
-        default:
-          return {
-            label:
-              "Sedang Diproses Guru BK",
-
-            style: {
-              background:
-                "#FFFDE7",
-
-              color:
-                "#F57F17",
-
-              border:
-                "1px solid #FFF59D",
-            },
-          };
-      }
-    };
-
-  // ====================================================
-  // STYLE
-  // ====================================================
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Selesai":
+        return {
+          label: "Selesai Penanganan",
+          style: {
+            background: "#E8F5E9",
+            color: "#2E7D32",
+            border: "1px solid #A5D6A7",
+          },
+        };
+      case "Ditolak (Fitnah / Tidak Valid)":
+      case "Ditolak":
+        return {
+          label: "Ditolak / Tidak Valid",
+          style: {
+            background: "#FFEBEE",
+            color: "#C62828",
+            border: "1px solid #EF9A9A",
+          },
+        };
+      case "Eskalasi: Kepala Sekolah":
+        return {
+          label: "Ditangani Kepala Sekolah",
+          style: {
+            background: "#EDE7F6",
+            color: "#512DA8",
+            border: "1px solid #B39DDB",
+          },
+        };
+      case "Eskalasi: Dinas/Pengawas":
+        return {
+          label: "Ditangani Dinas / Pengawas",
+          style: {
+            background: "#F3E5F5",
+            color: "#8E24AA",
+            border: "1px solid #CE93D8",
+          },
+        };
+      default:
+        return {
+          label: "Sedang Diproses Guru BK",
+          style: {
+            background: "#FFFDE7",
+            color: "#F57F17",
+            border: "1px solid #FFF59D",
+          },
+        };
+    }
+  };
 
   const styles = {
     page: {
-      minHeight:
-        "100vh",
-
-      background:
-        "#F4FBEE",
-
-      padding:
-        "20px 15px",
-
-      fontFamily:
-        "'Segoe UI', Roboto, sans-serif",
-
-      boxSizing:
-        "border-box",
+      minHeight: "100vh",
+      background: "#F4FBEE",
+      padding: "20px 15px 40px",
+      fontFamily: "'Segoe UI', Roboto, sans-serif",
+      boxSizing: "border-box",
     },
-
     container: {
-      maxWidth:
-        "800px",
-
-      margin:
-        "0 auto",
+      maxWidth: "800px",
+      margin: "0 auto",
     },
-
     header: {
-      background:
-        "#2E7D32",
-
-      color:
-        "#fff",
-
-      padding:
-        "20px",
-
-      borderRadius:
-        "20px",
-
-      marginBottom:
-        "20px",
-
-      display:
-        "flex",
-
-      justifyContent:
-        "space-between",
-
-      alignItems:
-        "center",
-
-      boxShadow:
-        "0 4px 12px rgba(0,0,0,0.06)",
-
-      flexWrap:
-        "wrap",
-
-      gap:
-        "12px",
+      background: "#2E7D32",
+      color: "#fff",
+      padding: "20px",
+      borderRadius: "20px",
+      marginBottom: "20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+      flexWrap: "wrap",
+      gap: "12px",
     },
-
     title: {
-      fontSize:
-        "22px",
-
-      fontWeight:
-        "800",
+      fontSize: "22px",
+      fontWeight: "800",
     },
-
     backButton: {
-      padding:
-        "10px 16px",
-
-      background:
-        "#FFEB3B",
-
-      color:
-        "#1B5E20",
-
-      border:
-        "none",
-
-      borderRadius:
-        "12px",
-
-      cursor:
-        "pointer",
-
-      fontWeight:
-        "800",
-
-      fontSize:
-        "13px",
-
-      boxShadow:
-        "0 3px 0 #FBC02D",
+      padding: "10px 16px",
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: "800",
+      fontSize: "13px",
+      boxShadow: "0 3px 0 #FBC02D",
     },
-
     card: {
-      background:
-        "#fff",
-
-      borderRadius:
-        "18px",
-
-      padding:
-        "20px 18px",
-
-      marginBottom:
-        "18px",
-
-      boxShadow:
-        "0 4px 12px rgba(0,0,0,0.04)",
-
-      borderLeft:
-        "6px solid #2E7D32",
-
-      borderTop:
-        "1px solid #E8F5E9",
-
-      borderRight:
-        "1px solid #E8F5E9",
-
-      borderBottom:
-        "1px solid #E8F5E9",
+      background: "#fff",
+      borderRadius: "18px",
+      padding: "20px 18px",
+      marginBottom: "18px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+      borderLeft: "6px solid #2E7D32",
+      borderTop: "1px solid #E8F5E9",
+      borderRight: "1px solid #E8F5E9",
+      borderBottom: "1px solid #E8F5E9",
     },
-
     cardHeader: {
-      display:
-        "flex",
-
-      justifyContent:
-        "space-between",
-
-      alignItems:
-        "center",
-
-      borderBottom:
-        "1px solid #E8F5E9",
-
-      paddingBottom:
-        "10px",
-
-      marginBottom:
-        "12px",
-
-      flexWrap:
-        "wrap",
-
-      gap:
-        "8px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderBottom: "1px solid #E8F5E9",
+      paddingBottom: "10px",
+      marginBottom: "12px",
+      flexWrap: "wrap",
+      gap: "8px",
     },
-
     badge: {
-      padding:
-        "6px 12px",
-
-      borderRadius:
-        "15px",
-
-      fontSize:
-        "12px",
-
-      fontWeight:
-        "800",
+      padding: "6px 12px",
+      borderRadius: "15px",
+      fontSize: "12px",
+      fontWeight: "800",
     },
-
     grid: {
-      display:
-        "grid",
-
-      gridTemplateColumns:
-        "repeat(auto-fit, minmax(180px, 1fr))",
-
-      gap:
-        "10px",
-
-      marginBottom:
-        "12px",
-
-      fontSize:
-        "13px",
-
-      color:
-        "#556B4D",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: "10px",
+      marginBottom: "12px",
+      fontSize: "13px",
+      color: "#556B4D",
     },
-
     ceritaBox: {
-      background:
-        "#FAFAFA",
-
-      padding:
-        "12px",
-
-      borderRadius:
-        "10px",
-
-      border:
-        "1px dashed #C8E6C9",
-
-      fontSize:
-        "13px",
-
-      lineHeight:
-        "1.5",
-
-      color:
-        "#2E3D29",
-
-      marginTop:
-        "5px",
-
-      whiteSpace:
-        "pre-wrap",
-
-      overflowWrap:
-        "break-word",
+      background: "#FAFAFA",
+      padding: "12px",
+      borderRadius: "10px",
+      border: "1px dashed #C8E6C9",
+      fontSize: "13px",
+      lineHeight: "1.5",
+      color: "#2E3D29",
+      marginTop: "5px",
+      whiteSpace: "pre-wrap",
+      overflowWrap: "break-word",
     },
-
     followUpBox: {
-      background:
-        "#E8F5E9",
-
-      border:
-        "1px solid #C8E6C9",
-
-      borderRadius:
-        "12px",
-
-      padding:
-        "12px",
-
-      marginTop:
-        "12px",
-
-      fontSize:
-        "13px",
-
-      color:
-        "#1B5E20",
+      background: "#E8F5E9",
+      border: "1px solid #C8E6C9",
+      borderRadius: "12px",
+      padding: "12px",
+      marginTop: "12px",
+      fontSize: "13px",
+      color: "#1B5E20",
     },
-
     thumbFoto: {
-      width:
-        "75px",
-
-      height:
-        "75px",
-
-      objectFit:
-        "cover",
-
-      borderRadius:
-        "10px",
-
-      cursor:
-        "pointer",
-
-      border:
-        "2px solid #2E7D32",
-
-      marginTop:
-        "6px",
+      width: "75px",
+      height: "75px",
+      objectFit: "cover",
+      borderRadius: "10px",
+      cursor: "pointer",
+      border: "2px solid #2E7D32",
+      marginTop: "6px",
     },
-
     modalOverlay: {
-      position:
-        "fixed",
-
+      position: "fixed",
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-
-      background:
-        "rgba(0,0,0,0.8)",
-
-      display:
-        "flex",
-
-      justifyContent:
-        "center",
-
-      alignItems:
-        "center",
-
-      zIndex:
-        1000,
-
-      padding:
-        "20px",
-
-      boxSizing:
-        "border-box",
+      background: "rgba(0,0,0,0.8)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "20px",
+      boxSizing: "border-box",
     },
   };
 
-  // ====================================================
-  // RENDER
-  // ====================================================
-
   return (
-    <div
-      style={
-        styles.page
-      }
-    >
-      <div
-        style={
-          styles.container
-        }
-      >
-
-        {/* ==========================================
-            HEADER
-        =========================================== */}
-
-        <div
-          style={
-            styles.header
-          }
-        >
+    <div style={styles.page}>
+      <div style={styles.container}>
+        {/* HEADER */}
+        <div style={styles.header}>
           <div>
-            <div
-              style={
-                styles.title
-              }
-            >
-              Riwayat Laporan
-              Pengaduan
-            </div>
-
-            <p
-              style={{
-                margin:
-                  "4px 0 0 0",
-                fontSize:
-                  "13px",
-                opacity:
-                  0.95,
-              }}
-            >
+            <div style={styles.title}>Riwayat Laporan Pengaduan</div>
+            <p style={{ margin: "4px 0 0 0", fontSize: "13px", opacity: 0.95 }}>
               {namaSiswa
                 ? `Laporan atas nama: ${namaSiswa}`
                 : "Pantau status pengaduanmu di sini"}
-
-              {nisSiswa
-                ? ` • NIS: ${nisSiswa}`
-                : ""}
-
-              {kelasSiswa
-                ? ` • Kelas: ${kelasSiswa}`
-                : ""}
+              {nisSiswa ? ` • NIS: ${nisSiswa}` : ""}
+              {kelasSiswa ? ` • Kelas: ${kelasSiswa}` : ""}
             </p>
           </div>
 
-          <div
-            style={{
-              display:
-                "flex",
-
-              gap:
-                "8px",
-
-              flexWrap:
-                "wrap",
-            }}
-          >
-
-            {/* REFRESH */}
-
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
               type="button"
               style={{
                 ...styles.backButton,
-
-                opacity:
-                  refreshing
-                    ? 0.6
-                    : 1,
-
-                cursor:
-                  refreshing
-                    ? "not-allowed"
-                    : "pointer",
+                opacity: refreshing ? 0.6 : 1,
+                cursor: refreshing ? "not-allowed" : "pointer",
               }}
-              onClick={
-                refreshRiwayat
-              }
-              disabled={
-                refreshing
-              }
+              onClick={refreshRiwayat}
+              disabled={refreshing}
             >
-              {refreshing
-                ? "Memuat..."
-                : "↻ Refresh"}
+              {refreshing ? "Memuat..." : "↻ Refresh"}
             </button>
-
-            {/* KEMBALI */}
 
             <button
               type="button"
-              style={
-                styles.backButton
-              }
-              onClick={() =>
-                navigate(
-                  "/dashboard-siswa"
-                )
-              }
+              style={styles.backButton}
+              onClick={() => navigate("/dashboard-siswa")}
             >
               Kembali
             </button>
           </div>
         </div>
 
-        {/* ==========================================
-            IDENTITAS TIDAK ADA
-        =========================================== */}
-
-        {!loading &&
-          !nisSiswa && (
-            <div
-              style={{
-                background:
-                  "#FFFDE7",
-
-                padding:
-                  "25px 20px",
-
-                borderRadius:
-                  "18px",
-
-                textAlign:
-                  "center",
-
-                color:
-                  "#8D6E00",
-
-                border:
-                  "2px solid #FFF59D",
-
-                fontWeight:
-                  "600",
-
-                marginBottom:
-                  "18px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize:
-                    "30px",
-
-                  marginBottom:
-                    "10px",
-                }}
-              >
-                ⚠️
-              </div>
-
-              <div
-                style={{
-                  marginBottom:
-                    "8px",
-                }}
-              >
-                Identitas siswa
-                tidak ditemukan.
-              </div>
-
-              <div
-                style={{
-                  fontSize:
-                    "12px",
-
-                  fontWeight:
-                    "500",
-
-                  lineHeight:
-                    "1.5",
-                }}
-              >
-                Silakan login ulang
-                menggunakan akun siswa
-                agar NIS dapat dikenali
-                untuk menampilkan
-                riwayat laporan.
-              </div>
-
-              <button
-                type="button"
-                style={{
-                  ...styles.backButton,
-                  marginTop:
-                    "15px",
-                }}
-                onClick={() =>
-                  navigate(
-                    "/login-siswa"
-                  )
-                }
-              >
-                Login Ulang
-              </button>
-            </div>
-          )}
-
-        {/* ==========================================
-            LOADING
-        =========================================== */}
-
+        {/* LOADING */}
         {loading ? (
           <div
             style={{
-              textAlign:
-                "center",
-
-              padding:
-                "40px",
-
-              color:
-                "#1B5E20",
-
-              fontWeight:
-                "600",
+              textAlign: "center",
+              padding: "40px",
+              color: "#1B5E20",
+              fontWeight: "600",
             }}
           >
-            Memuat riwayat
-            laporan...
+            Memuat riwayat laporan...
           </div>
-        ) : !nisSiswa ? null : riwayatList.length === 0 ? (
-
-          /* ========================================
-             KOSONG
-          ========================================= */
-
+        ) : riwayatList.length === 0 ? (
+          /* KOSONG */
           <div
             style={{
-              background:
-                "#fff",
-
-              padding:
-                "35px 20px",
-
-              borderRadius:
-                "18px",
-
-              textAlign:
-                "center",
-
-              color:
-                "#556B4D",
-
-              border:
-                "2px solid #C8E6C9",
-
-              fontWeight:
-                "600",
+              background: "#fff",
+              padding: "35px 20px",
+              borderRadius: "18px",
+              textAlign: "center",
+              color: "#556B4D",
+              border: "2px solid #C8E6C9",
+              fontWeight: "600",
             }}
           >
-            <div
-              style={{
-                fontSize:
-                  "32px",
-
-                marginBottom:
-                  "10px",
-              }}
-            >
-              📋
-            </div>
-
-            Kamu belum memiliki
-            laporan pengaduan
-            dengan NIS{" "}
-            <strong>
-              {nisSiswa}
-            </strong>
-            .
+            <div style={{ fontSize: "32px", marginBottom: "10px" }}>📋</div>
+            Kamu belum memiliki laporan pengaduan atas nama{" "}
+            <strong>{namaSiswa || "siswa ini"}</strong>.
           </div>
-
         ) : (
+          /* LIST RIWAYAT */
+          riwayatList.slice(0, 100).map((item) => {
+            const statusInfo = getStatusBadge(item.status);
 
-          /* ========================================
-             LIST RIWAYAT
-          ========================================= */
-
-          riwayatList
-            .slice(0, 100)
-            .map(
-              (item) => {
-                const statusInfo =
-                  getStatusBadge(
-                    item.status
-                  );
-
-                return (
+            return (
+              <div key={item.id} style={styles.card}>
+                <div style={styles.cardHeader}>
                   <div
-                    key={
-                      item.id
-                    }
-                    style={
-                      styles.card
-                    }
+                    style={{
+                      fontWeight: "800",
+                      fontSize: "15px",
+                      color: "#1B5E20",
+                    }}
                   >
+                    Laporan Tanggal: {item.tanggal || "-"}
+                  </div>
 
-                    {/* ==================================
-                        HEADER CARD
-                    =================================== */}
+                  <div style={{ ...styles.badge, ...statusInfo.style }}>
+                    {statusInfo.label}
+                  </div>
+                </div>
 
-                    <div
-                      style={
-                        styles.cardHeader
-                      }
-                    >
-                      <div
-                        style={{
-                          fontWeight:
-                            "800",
+                <div style={styles.grid}>
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Nama:</strong>
+                    <br />
+                    {item.nama || namaSiswa || "-"}
+                  </div>
 
-                          fontSize:
-                            "15px",
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>NIS:</strong>
+                    <br />
+                    {item.nis || nisSiswa || "-"}
+                  </div>
 
-                          color:
-                            "#1B5E20",
-                        }}
-                      >
-                        Laporan Tanggal:{" "}
-                        {item.tanggal ||
-                          "-"}
-                      </div>
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Kelas:</strong>
+                    <br />
+                    {item.kelas || kelasSiswa || "-"}
+                  </div>
 
-                      <div
-                        style={{
-                          ...styles.badge,
-                          ...statusInfo.style,
-                        }}
-                      >
-                        {
-                          statusInfo.label
-                        }
-                      </div>
-                    </div>
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Lokasi:</strong>
+                    <br />
+                    {item.lokasi || "-"}
+                  </div>
 
-                    {/* ==================================
-                        IDENTITAS LAPORAN
-                    =================================== */}
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Jenis Tindakan:</strong>
+                    <br />
+                    {item.jenis || "-"}
+                  </div>
 
-                    <div
-                      style={
-                        styles.grid
-                      }
-                    >
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Peran:</strong>
+                    <br />
+                    {item.peran || "Korban"}
+                  </div>
 
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Nama:
-                        </strong>
-                        <br />
-                        {item.nama ||
-                          namaSiswa ||
-                          "-"}
-                      </div>
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Terduga Pelaku:</strong>
+                    <br />
+                    {item.pelaku || "Tidak disebutkan"}
+                  </div>
 
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          NIS:
-                        </strong>
-                        <br />
-                        {item.nis ||
-                          nisSiswa ||
-                          "-"}
-                      </div>
+                  <div>
+                    <strong style={{ color: "#1B5E20" }}>Saksi Mata:</strong>
+                    <br />
+                    {item.saksi === "Ya"
+                      ? `${item.namaSaksi || "Ada Saksi"} (${item.kelasSaksi || "Kelas -"})`
+                      : "Tidak Ada"}
+                  </div>
+                </div>
 
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Kelas:
-                        </strong>
-                        <br />
-                        {item.kelas ||
-                          kelasSiswa ||
-                          "-"}
-                      </div>
+                <div style={{ marginBottom: "10px" }}>
+                  <strong style={{ color: "#1B5E20", fontSize: "13px" }}>
+                    Cerita Kejadian:
+                  </strong>
+                  <div style={styles.ceritaBox}>{item.cerita}</div>
+                </div>
 
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Lokasi:
-                        </strong>
-                        <br />
-                        {item.lokasi ||
-                          "-"}
-                      </div>
+                {item.fotoUrl && item.fotoUrl !== "-" && (
+                  <div style={{ marginBottom: "10px" }}>
+                    <strong style={{ color: "#1B5E20", fontSize: "13px" }}>
+                      Bukti Foto:
+                    </strong>
+                    <br />
+                    <img
+                      src={item.fotoUrl}
+                      alt="Bukti Foto"
+                      style={styles.thumbFoto}
+                      onClick={() => setSelectedFoto(item.fotoUrl)}
+                    />
+                  </div>
+                )}
 
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Jenis Bullying:
-                        </strong>
-                        <br />
-                        {item.jenis ||
-                          "-"}
-                      </div>
-
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Peran Pelapor:
-                        </strong>
-                        <br />
-                        {item.peran ||
-                          "Korban"}
-                      </div>
-
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Terduga Pelaku:
-                        </strong>
-                        <br />
-                        {item.pelaku ||
-                          "Tidak disebutkan"}
-                      </div>
-
-                      <div>
-                        <strong
-                          style={{
-                            color:
-                              "#1B5E20",
-                          }}
-                        >
-                          Saksi Mata:
-                        </strong>
-                        <br />
-
-                        {item.saksi ===
-                        "Ya"
-                          ? `${
-                              item.namaSaksi ||
-                              "Ada Saksi"
-                            } (${
-                              item.kelasSaksi ||
-                              "Kelas -"
-                            })`
-                          : "Tidak Ada"}
-                      </div>
-                    </div>
-
-                    {/* ==================================
-                        CERITA
-                    =================================== */}
-
-                    <div
+                {(item.penanganan || item.responOrangTua || item.tindakanSanksi) && (
+                  <div style={styles.followUpBox}>
+                    <strong style={{ fontSize: "13px" }}>
+                      Update Penanganan Guru:
+                    </strong>
+                    <ul
                       style={{
-                        marginBottom:
-                          "10px",
+                        margin: "6px 0 0 0",
+                        paddingLeft: "18px",
+                        lineHeight: "1.5",
                       }}
                     >
-                      <strong
-                        style={{
-                          color:
-                            "#1B5E20",
-
-                          fontSize:
-                            "13px",
-                        }}
-                      >
-                        Cerita Kejadian:
-                      </strong>
-
-                      <div
-                        style={
-                          styles.ceritaBox
-                        }
-                      >
-                        {
-                          item.cerita
-                        }
-                      </div>
-                    </div>
-
-                    {/* ==================================
-                        FOTO
-                    =================================== */}
-
-                    {item.fotoUrl &&
-                      item.fotoUrl !==
-                        "-" && (
-                        <div
-                          style={{
-                            marginBottom:
-                              "10px",
-                          }}
-                        >
-                          <strong
-                            style={{
-                              color:
-                                "#1B5E20",
-
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            Bukti Foto:
-                          </strong>
-
-                          <br />
-
-                          <img
-                            src={
-                              item.fotoUrl
-                            }
-                            alt="Bukti Foto"
-                            style={
-                              styles.thumbFoto
-                            }
-                            onClick={() =>
-                              setSelectedFoto(
-                                item.fotoUrl
-                              )
-                            }
-                          />
-                        </div>
+                      {item.penanganan && (
+                        <li>
+                          <strong>Metode Penanganan:</strong> {item.penanganan}
+                        </li>
                       )}
-
-                    {/* ==================================
-                        UPDATE PENANGANAN
-                    =================================== */}
-
-                    {(item.penanganan ||
-                      item.responOrangTua ||
-                      item.tindakanSanksi) && (
-                      <div
-                        style={
-                          styles.followUpBox
-                        }
-                      >
-                        <strong
-                          style={{
-                            fontSize:
-                              "13px",
-                          }}
-                        >
-                          Update Penanganan
-                          Guru:
-                        </strong>
-
-                        <ul
-                          style={{
-                            margin:
-                              "6px 0 0 0",
-
-                            paddingLeft:
-                              "18px",
-
-                            lineHeight:
-                              "1.5",
-                          }}
-                        >
-                          {item.penanganan && (
-                            <li>
-                              <strong>
-                                Metode
-                                Penanganan:
-                              </strong>{" "}
-                              {
-                                item.penanganan
-                              }
-                            </li>
-                          )}
-
-                          {item.responOrangTua && (
-                            <li>
-                              <strong>
-                                Status
-                                Orang Tua:
-                              </strong>{" "}
-                              {
-                                item.responOrangTua
-                              }
-                            </li>
-                          )}
-
-                          {item.tindakanSanksi && (
-                            <li>
-                              <strong>
-                                Tindakan /
-                                Sanksi:
-                              </strong>{" "}
-                              {
-                                item.tindakanSanksi
-                              }
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* ==================================
-                        WAKTU DIBUAT
-                    =================================== */}
-
-                    {item.createdAt && (
-                      <div
-                        style={{
-                          marginTop:
-                            "12px",
-
-                          fontSize:
-                            "11px",
-
-                          color:
-                            "#78909C",
-                        }}
-                      >
-                        Dikirim:{" "}
-                        {new Date(
-                          item.createdAt
-                        ).toLocaleString(
-                          "id-ID"
-                        )}
-                      </div>
-                    )}
+                      {item.responOrangTua && (
+                        <li>
+                          <strong>Status Orang Tua:</strong> {item.responOrangTua}
+                        </li>
+                      )}
+                      {item.tindakanSanksi && (
+                        <li>
+                          <strong>Tindakan / Sanksi:</strong> {item.tindakanSanksi}
+                        </li>
+                      )}
+                    </ul>
                   </div>
-                );
-              }
-            )
+                )}
+
+                {item.createdAt && (
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      fontSize: "11px",
+                      color: "#78909C",
+                    }}
+                  >
+                    Dikirim: {new Date(item.createdAt).toLocaleString("id-ID")}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
-
-        {/* ==========================================
-            JUMLAH DATA
-        =========================================== */}
-
-        {!loading &&
-          riwayatList.length >
-            100 && (
-            <div
-              style={{
-                textAlign:
-                  "center",
-
-                padding:
-                  "12px",
-
-                color:
-                  "#556B4D",
-
-                fontSize:
-                  "12px",
-
-                fontWeight:
-                  "700",
-              }}
-            >
-              Menampilkan 100
-              laporan terbaru
-              dari{" "}
-              {
-                riwayatList.length
-              }{" "}
-              laporan.
-            </div>
-          )}
       </div>
 
-      {/* ==============================================
-          MODAL FOTO
-      =============================================== */}
-
+      {/* MODAL FOTO */}
       {selectedFoto && (
-        <div
-          style={
-            styles.modalOverlay
-          }
-          onClick={() =>
-            setSelectedFoto(
-              null
-            )
-          }
-        >
+        <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
           <div
             style={{
-              position:
-                "relative",
-
-              maxWidth:
-                "90%",
-
-              maxHeight:
-                "90%",
+              position: "relative",
+              maxWidth: "90%",
+              maxHeight: "90%",
             }}
           >
             <img
-              src={
-                selectedFoto
-              }
+              src={selectedFoto}
               alt="Bukti Foto Besar"
               style={{
-                width:
-                  "100%",
-
-                maxHeight:
-                  "80vh",
-
-                objectFit:
-                  "contain",
-
-                borderRadius:
-                  "12px",
+                width: "100%",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                borderRadius: "12px",
               }}
             />
-
             <div
               style={{
-                color:
-                  "#fff",
-
-                textAlign:
-                  "center",
-
-                marginTop:
-                  "10px",
-
-                fontSize:
-                  "13px",
+                color: "#fff",
+                textAlign: "center",
+                marginTop: "10px",
+                fontSize: "13px",
               }}
             >
-              Klik di mana saja
-              untuk menutup
+              Klik di mana saja untuk menutup
             </div>
           </div>
         </div>
