@@ -645,15 +645,6 @@ function DashboardAdmin() {
         </div>
 
         <div style={styles.card}>
-          <div style={styles.iconBadge}>PR</div>
-          <div style={styles.cardTitle}>Pengaduan Diproses</div>
-          <div style={styles.desc}>Kelola laporan yang sedang diproses.</div>
-          <button style={styles.button} onClick={() => navigate("/daftar-pengaduan")}>
-            Buka
-          </button>
-        </div>
-
-        <div style={styles.card}>
           <div style={styles.iconBadge}>ED</div>
           <div style={styles.cardTitle}>Kelola Edukasi</div>
           <div style={styles.desc}>Tambah dan edit artikel edukasi siswa.</div>
