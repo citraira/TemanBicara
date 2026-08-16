@@ -97,89 +97,56 @@ const styles = {
     outline: "none",
     background: "#fff",
   },
-
-  // Desain Tombol Pilihan (Pills/Chips) yang Simpel & Elegan
-  statusSectionTitle: {
-    fontSize: "13px",
-    fontWeight: "800",
-    color: "#1B5E20",
-    display: "block",
-    marginBottom: "8px",
-  },
-  chipContainer: {
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-  },
-  statusChip: (selected, opt) => ({
-    padding: "8px 14px",
-    borderRadius: "20px",
-    border: `1.5px solid ${selected ? opt.border : "#E0E0E0"}`,
-    background: selected ? opt.bg : "#FAFAFA",
-    color: selected ? opt.color : "#555",
-    fontWeight: selected ? "800" : "600",
-    fontSize: "12.5px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    transition: "all 0.15s ease",
-    boxShadow: selected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
-  }),
-
-  // Penanganan Pelaku & Korban Chips
-  methodChip: (selected) => ({
-    padding: "8px 14px",
-    borderRadius: "10px",
-    border: `1.5px solid ${selected ? "#2E7D32" : "#C8E6C9"}`,
-    background: selected ? "#2E7D32" : "#fff",
-    color: selected ? "#fff" : "#1B5E20",
-    fontWeight: "700",
-    fontSize: "12.5px",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  }),
-
-  // Container Tombol Simpan & Hapus yang Simetris & Rapi
-  bottomActionsContainer: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "16px",
-    paddingTop: "14px",
-    borderTop: "1px solid #E8F5E9",
-    flexWrap: "wrap",
-  },
   saveBtn: {
-    padding: "11px 20px",
+    padding: "10px 16px",
     background: "#2E7D32",
     color: "#fff",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "800",
     fontSize: "13px",
+    marginTop: "14px",
     boxShadow: "0 3px 0 #1B5E20",
     textTransform: "uppercase",
-    display: "inline-flex",
-    alignItems: "center",
+  },
+  chipButtonGroup: {
+    display: "flex",
     gap: "6px",
+    flexWrap: "wrap",
+    marginTop: "6px",
+  },
+  chipItem: (selected, opt) => ({
+    padding: "7px 12px",
+    borderRadius: "8px",
+    border: `1.5px solid ${selected ? opt.border || "#2E7D32" : "#E0E0E0"}`,
+    background: selected ? opt.bg || "#E8F5E9" : "#fff",
+    color: selected ? opt.color || "#1B5E20" : "#444",
+    fontWeight: selected ? "800" : "600",
+    fontSize: "12px",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  }),
+  actionArea: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    flexDirection: "column",
+    gap: "12px",
+    marginTop: "15px",
+    paddingTop: "14px",
+    borderTop: "1px solid #E8F5E9",
   },
   deleteBtn: {
-    padding: "11px 18px",
+    padding: "8px 14px",
     background: "#D32F2F",
     color: "#fff",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "800",
-    fontSize: "13px",
-    boxShadow: "0 3px 0 #9A0007",
-    textTransform: "uppercase",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
+    fontSize: "12px",
+    boxShadow: "0 2px 0 #9A0007",
   },
   thumbFoto: {
     width: "80px",
@@ -277,11 +244,21 @@ const styles = {
 };
 
 const statusOptions = [
-  { label: "Diproses (Guru/BK)", color: "#E65100", bg: "#FFF8E1", border: "#FFE082" },
+  { label: "Diproses (Guru/BK)", color: "#F57F17", bg: "#FFFDE7", border: "#FFF59D" },
   { label: "Eskalasi: Kepala Sekolah", color: "#512DA8", bg: "#EDE7F6", border: "#B39DDB" },
   { label: "Eskalasi: Dinas/Pengawas", color: "#8E24AA", bg: "#F3E5F5", border: "#CE93D8" },
   { label: "Selesai", color: "#2E7D32", bg: "#E8F5E9", border: "#A5D6A7" },
   { label: "Ditolak (Fitnah / Tidak Valid)", color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A" },
+];
+
+const metodePenanganan = [
+  { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
+  { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
+  { id: "Pembinaan Terpisah", label: "Pembinaan Terpisah" },
+  { id: "Pendampingan Korban", label: "Pendampingan Korban" },
+  { id: "Konseling", label: "Konseling" },
+  { id: "Pemanggilan Orang Tua", label: "Pemanggilan Orang Tua" },
+  { id: "Lainnya", label: "Ketik sendiri" },
 ];
 
 const getStatusBadgeStyle = (status) => {
@@ -299,12 +276,18 @@ const getStatusBadgeStyle = (status) => {
   }
 };
 
-// Sub-Komponen Kartu Laporan Terisolasi
+// SUB-KOMPONEN KARTU TERISOLASI AGAR MENGETIK TIDAK MACET
 const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDelete, onFotoClick }) => {
   const [penanganan, setPenanganan] = useState(item.penanganan || "Dipisahkan");
+  const [penangananLainnya, setPenangananLainnya] = useState(
+    item.penangananLainnya || ""
+  );
   const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
   const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
 
+  // State form sengaja hanya diinisialisasi saat kartu dibuat.
+  // Jangan sinkronkan ulang setiap kali props berubah, karena itu dapat
+  // membuat cursor/input terasa macet atau teks ter-reset saat mengetik.
   return (
     <div style={styles.card}>
       <div style={styles.cardHeader}>
@@ -339,7 +322,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           {item.lokasi || "-"}
         </div>
         <div>
-          <strong style={{ color: "#1B5E20" }}>Jenis Tindakan:</strong> <br />
+          <strong style={{ color: "#1B5E20" }}>Jenis Bullying:</strong> <br />
           {item.jenis || "-"}
         </div>
         <div>
@@ -374,42 +357,71 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
         </div>
       )}
 
-      {/* MODUL INTERVENSI GURU */}
       <div style={styles.interventionBox}>
         <div style={{ fontWeight: "800", fontSize: "14px", color: "#1B5E20", marginBottom: "12px" }}>
           Modul Penanganan & Intervensi Kasus
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "14px",
+          }}
+        >
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20", display: "block", marginBottom: "6px" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Penanganan Pelaku & Korban:
             </label>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                style={styles.methodChip(penanganan === "Dipisahkan")}
-                onClick={() => setPenanganan("Dipisahkan")}
-              >
-                {penanganan === "Dipisahkan" ? "✓ " : ""}Dipisahkan
-              </button>
-              <button
-                type="button"
-                style={styles.methodChip(penanganan === "Dipertemukan")}
-                onClick={() => setPenanganan("Dipertemukan")}
-              >
-                {penanganan === "Dipertemukan" ? "✓ " : ""}Dipertemukan
-              </button>
-            </div>
+
+            <select
+              value={penanganan}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPenanganan(value);
+                if (value !== "Lainnya") {
+                  setPenangananLainnya("");
+                }
+              }}
+              style={styles.inputSmall}
+            >
+              {metodePenanganan.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+
+            {penanganan === "Lainnya" && (
+              <input
+                type="text"
+                placeholder="Ketik penanganan lainnya..."
+                value={penangananLainnya}
+                onChange={(e) => setPenangananLainnya(e.target.value)}
+                style={styles.inputSmall}
+              />
+            )}
           </div>
 
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Konfirmasi & Respon Orang Tua:
             </label>
             <input
               type="text"
-              placeholder="Catatan respon ortu..."
+              placeholder="Catatan respon orang tua..."
               value={responOrangTua}
               onChange={(e) => setResponOrangTua(e.target.value)}
               style={styles.inputSmall}
@@ -417,7 +429,13 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </div>
 
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#1B5E20" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: "#1B5E20",
+              }}
+            >
               Tahapan Hukuman / Ganti Rugi:
             </label>
             <input
@@ -430,51 +448,92 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </div>
         </div>
 
-        <div style={{ marginTop: "14px" }}>
-          <button
-            type="button"
-            style={styles.saveBtn}
-            onClick={() => onSavePenanganan(item.id, { penanganan, responOrangTua, tindakanSanksi })}
-          >
-            💾 Simpan Catatan Penanganan
-          </button>
-        </div>
       </div>
 
-      {/* STATUS KASUS DENGAN DESAIN SIMPEL (PILLS/CHIPS) */}
-      <div style={{ marginTop: "16px" }}>
-        <span style={styles.statusSectionTitle}>Ubah Status Kasus:</span>
-        <div style={styles.chipContainer}>
-          {statusOptions.map((opt) => {
-            const isSelected = (item.status || "Diproses (Guru/BK)") === opt.label;
-            return (
-              <button
-                key={opt.label}
-                type="button"
-                style={styles.statusChip(isSelected, opt)}
-                onClick={() => onStatusChange(item.id, opt.label)}
-              >
-                <span>{isSelected ? "●" : "○"}</span>
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* FOOTER & TOMBOL HAPUS */}
-      <div style={styles.bottomActionsContainer}>
-        <div style={{ fontSize: "12px", color: "#556B4D" }}>
-          Dilaporkan pada: {item.createdAt ? new Date(item.createdAt).toLocaleString("id-ID") : "-"}
-        </div>
-
-        <button
-          type="button"
-          style={styles.deleteBtn}
-          onClick={() => onDelete(item.id)}
+      <div style={styles.actionArea}>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
         >
-          🗑️ Hapus Laporan
-        </button>
+          <label
+            style={{
+              fontSize: "13px",
+              fontWeight: "800",
+              color: "#1B5E20",
+            }}
+          >
+            Ubah Status Kasus:
+          </label>
+
+          <select
+            value={item.status || "Diproses (Guru/BK)"}
+            onChange={(e) => onStatusChange(item.id, e.target.value)}
+            style={styles.inputSmall}
+          >
+            {statusOptions.map((opt) => (
+              <option key={opt.label} value={opt.label}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#556B4D",
+            }}
+          >
+            Dilaporkan pada:{" "}
+            {item.createdAt
+              ? new Date(item.createdAt).toLocaleString("id-ID")
+              : "-"}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              style={styles.saveBtn}
+              onClick={() =>
+                onSavePenanganan(item.id, {
+                  penanganan,
+                  penangananLainnya,
+                  responOrangTua,
+                  tindakanSanksi,
+                })
+              }
+            >
+              Simpan Catatan Penanganan
+            </button>
+
+            <button
+              style={styles.deleteBtn}
+              onClick={() => onDelete(item.id)}
+            >
+              Hapus
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -507,6 +566,9 @@ function DaftarPengaduan() {
     });
   }, []);
 
+  // Memuat pengaduan hanya saat halaman dibuka.
+  // Tidak memakai onValue() agar halaman daftar tidak terus menerima
+  // seluruh data pengaduan setiap ada perubahan di Firebase.
   const loadPengaduan = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
@@ -534,6 +596,7 @@ function DaftarPengaduan() {
       setLaporanList(formattedList);
     } catch (error) {
       console.error("Gagal mengambil data pengaduan:", error);
+
       showAlert(
         "error",
         "Gagal Memuat Data",
@@ -546,17 +609,20 @@ function DaftarPengaduan() {
 
   useEffect(() => {
     let mounted = true;
+
     const loadInitialData = async () => {
       if (!mounted) return;
       await loadPengaduan(true);
     };
+
     loadInitialData();
+
     return () => {
       mounted = false;
     };
   }, [loadPengaduan]);
 
-  // Update Status Kasus (Optimistic)
+  // Update Status Instan (Optimistic)
   const handleStatusChange = useCallback(async (id, statusBaru) => {
     const updatedAt = new Date().toISOString();
 
@@ -573,7 +639,7 @@ function DaftarPengaduan() {
         status: statusBaru,
         updatedAt,
       });
-      showAlert("success", "Status Diperbarui", `Status kasus diubah menjadi: "${statusBaru}".`);
+      showAlert("success", "Status Diperbarui", `Status kasus berhasil diubah menjadi "${statusBaru}".`);
     } catch (error) {
       showAlert("error", "Gagal Mengubah Status", error.message || "Terjadi kendala saat memperbarui status.");
     }
@@ -584,6 +650,10 @@ function DaftarPengaduan() {
     try {
       await update(ref(db, `pengaduan/${id}`), {
         penanganan: formData.penanganan,
+        penangananLainnya:
+          formData.penanganan === "Lainnya"
+            ? formData.penangananLainnya
+            : "",
         responOrangTua: formData.responOrangTua,
         tindakanSanksi: formData.tindakanSanksi,
         updatedAt: new Date().toISOString(),
@@ -610,6 +680,7 @@ function DaftarPengaduan() {
     }
   }, [deleteTargetId, showAlert]);
 
+
   const refreshPengaduan = useCallback(async () => {
     try {
       setRefreshing(true);
@@ -624,6 +695,7 @@ function DaftarPengaduan() {
       <div style={styles.header}>
         <div>
           <div style={styles.title}>Daftar Laporan Pengaduan</div>
+
           <p
             style={{
               color: "#fff",
@@ -632,11 +704,18 @@ function DaftarPengaduan() {
               opacity: 0.95,
             }}
           >
-            Total Laporan Masuk: <strong>{laporanList.length}</strong>
+            Total Laporan Masuk:{" "}
+            <strong>{laporanList.length}</strong>
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
           <button
             type="button"
             onClick={refreshPengaduan}
@@ -647,7 +726,7 @@ function DaftarPengaduan() {
               cursor: refreshing ? "not-allowed" : "pointer",
             }}
           >
-            {refreshing ? "Memuat..." : "↻ Refresh"}
+            {refreshing ? "Memuat..." : " Refresh"}
           </button>
 
           <button
@@ -679,7 +758,7 @@ function DaftarPengaduan() {
           Belum ada laporan pengaduan yang masuk.
         </div>
       ) : (
-        laporanList.map((item) => (
+        laporanList.slice(0, 100).map((item) => (
           <ItemPengaduanCard
             key={item.id}
             item={item}
@@ -691,7 +770,22 @@ function DaftarPengaduan() {
         ))
       )}
 
-      {/* MODAL FOTO BESAR */}
+      {!loading && laporanList.length > 100 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "12px",
+            marginBottom: "16px",
+            color: "#556B4D",
+            fontSize: "12px",
+            fontWeight: "700",
+          }}
+        >
+          Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
+          Gunakan pencarian/paginasi pada tahap berikutnya jika datanya semakin banyak.
+        </div>
+      )}
+
       {selectedFoto && (
         <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
           <div style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }}>
@@ -707,11 +801,10 @@ function DaftarPengaduan() {
         </div>
       )}
 
-      {/* MODAL KONFIRMASI HAPUS */}
       {deleteTargetId && (
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper("warning")}>⚠️</div>
+            <div style={styles.alertIconWrapper("warning")}></div>
             <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
               Konfirmasi Hapus Laporan
             </h3>
@@ -730,12 +823,11 @@ function DaftarPengaduan() {
         </div>
       )}
 
-      {/* ALERT MODAL */}
       {alertConfig.isOpen && (
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "✕" : "ℹ"}
+              {alertConfig.type === "success" ? "" : alertConfig.type === "error" ? "" : ""}
             </div>
 
             <h3
