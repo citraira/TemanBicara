@@ -88,25 +88,48 @@ const styles = {
   },
   inputSmall: {
     width: "100%",
-    padding: "10px 12px",
-    borderRadius: "10px",
-    border: "1.5px solid #C8E6C9",
+    padding: "11px 14px",
+    borderRadius: "11px",
+    border: "1.5px solid #B7DDBB",
     fontSize: "14px",
     marginTop: "6px",
     boxSizing: "border-box",
     outline: "none",
     background: "#fff",
+    color: "#263A2A",
+    minHeight: "42px",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
+  },
+  selectInput: {
+    width: "100%",
+    padding: "11px 38px 11px 14px",
+    borderRadius: "12px",
+    border: "1.5px solid #A8D2AE",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "linear-gradient(180deg, #FFFFFF 0%, #F8FCF8 100%)",
+    color: "#263A2A",
+    minHeight: "44px",
+    cursor: "pointer",
+    boxShadow: "0 2px 5px rgba(46,125,50,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
+    appearance: "auto",
   },
   saveBtn: {
-    padding: "10px 16px",
+    flex: "1 1 0",
+    width: "100%",
+    minWidth: "0",
+    minHeight: "46px",
+    padding: "11px 18px",
     background: "#2E7D32",
     color: "#fff",
     border: "none",
-    borderRadius: "10px",
+    borderRadius: "11px",
     cursor: "pointer",
     fontWeight: "800",
     fontSize: "13px",
-    marginTop: "14px",
+    marginTop: "0",
     boxShadow: "0 3px 0 #1B5E20",
     textTransform: "uppercase",
   },
@@ -130,7 +153,7 @@ const styles = {
   actionArea: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "stretch",
     flexDirection: "column",
     gap: "12px",
     marginTop: "15px",
@@ -138,15 +161,19 @@ const styles = {
     borderTop: "1px solid #E8F5E9",
   },
   deleteBtn: {
-    padding: "8px 14px",
+    flex: "1 1 0",
+    width: "100%",
+    minWidth: "0",
+    minHeight: "46px",
+    padding: "11px 18px",
     background: "#D32F2F",
     color: "#fff",
     border: "none",
-    borderRadius: "10px",
+    borderRadius: "11px",
     cursor: "pointer",
     fontWeight: "800",
-    fontSize: "12px",
-    boxShadow: "0 2px 0 #9A0007",
+    fontSize: "13px",
+    boxShadow: "0 3px 0 #9A0007",
   },
   thumbFoto: {
     width: "80px",
@@ -389,7 +416,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
                   setPenangananLainnya("");
                 }
               }}
-              style={styles.inputSmall}
+              style={styles.selectInput}
             >
               {metodePenanganan.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -472,7 +499,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           <select
             value={item.status || "Diproses (Guru/BK)"}
             onChange={(e) => onStatusChange(item.id, e.target.value)}
-            style={styles.inputSmall}
+            style={styles.selectInput}
           >
             {statusOptions.map((opt) => (
               <option key={opt.label} value={opt.label}>
@@ -507,12 +534,14 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           <div
             style={{
               display: "flex",
-              gap: "8px",
-              alignItems: "center",
-              flexWrap: "wrap",
+              gap: "10px",
+              alignItems: "stretch",
+              width: "100%",
+              flexWrap: "nowrap",
             }}
           >
             <button
+              type="button"
               style={styles.saveBtn}
               onClick={() =>
                 onSavePenanganan(item.id, {
@@ -523,7 +552,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
                 })
               }
             >
-              Simpan Catatan Penanganan
+              Simpan
             </button>
 
             <button
