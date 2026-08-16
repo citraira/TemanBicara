@@ -218,6 +218,22 @@ const styles = {
     cursor: "pointer",
     boxSizing: "border-box",
   },
+  studentSearch: {
+    flex: "1 1 280px",
+    minWidth: "240px",
+    maxWidth: "420px",
+    height: "42px",
+    padding: "0 14px",
+    borderRadius: "10px",
+    border: "1.5px solid #A5D6A7",
+    background: "#F8FFF6",
+    color: "#263238",
+    fontSize: "14px",
+    fontWeight: "600",
+    fontFamily: "inherit",
+    outline: "none",
+    boxSizing: "border-box",
+  },
   reportedAt: {
     fontSize: "12px",
     color: "#556B4D",
@@ -582,8 +598,9 @@ function DaftarPengaduan() {
   const [selectedFoto, setSelectedFoto] = useState(null);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  // Filter status untuk memudahkan guru melihat laporan berdasarkan status.
+  // Filter status dan pencarian siswa/NIS untuk memudahkan guru menemukan riwayat laporan siswa.
   const [statusFilter, setStatusFilter] = useState("Semua");
+  const [studentSearch, setStudentSearch] = useState("");
 
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -730,13 +747,23 @@ function DaftarPengaduan() {
     }
   }, [loadPengaduan]);
 
-  const filteredLaporanList =
-    statusFilter === "Semua"
-      ? laporanList
-      : laporanList.filter(
-          (item) =>
-            (item.status || "Diproses (Guru/BK)") === statusFilter
-        );
+  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
+
+  const filteredLaporanList = laporanList.filter((item) => {
+    const matchesStatus =
+      statusFilter === "Semua" ||
+      (item.status || "Diproses (Guru/BK)") === statusFilter;
+
+    const namaSiswa = String(item.nama || "").toLowerCase();
+    const nisSiswa = String(item.nis || item.NIS || "").toLowerCase();
+
+    const matchesStudent =
+      !normalizedStudentSearch ||
+      namaSiswa.includes(normalizedStudentSearch) ||
+      nisSiswa.includes(normalizedStudentSearch);
+
+    return matchesStatus && matchesStudent;
+  });
 
   return (
     <div style={styles.page}>
@@ -789,12 +816,13 @@ function DaftarPengaduan() {
 
       {!loading && laporanList.length > 0 && (
         <div style={styles.filterBox}>
-          <div style={styles.filterLabel}>Filter Status Pengaduan:</div>
+          <div style={styles.filterLabel}>Status:</div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={styles.filterSelect}
+            aria-label="Filter status pengaduan"
           >
             <option value="Semua">Semua Status ({laporanList.length})</option>
 
@@ -812,14 +840,54 @@ function DaftarPengaduan() {
             })}
           </select>
 
+          <div style={styles.filterLabel}>Cari Siswa:</div>
+
+          <input
+            type="text"
+            value={studentSearch}
+            onChange={(e) => setStudentSearch(e.target.value)}
+            placeholder="Ketik nama siswa atau NIS..."
+            style={styles.studentSearch}
+            aria-label="Cari siswa berdasarkan nama atau NIS"
+          />
+
+          {(studentSearch || statusFilter !== "Semua") && (
+            <button
+              type="button"
+              onClick={() => {
+                setStudentSearch("");
+                setStatusFilter("Semua");
+              }}
+              style={{
+                height: "42px",
+                padding: "0 14px",
+                borderRadius: "10px",
+                border: "1px solid #C8E6C9",
+                background: "#fff",
+                color: "#2E7D32",
+                fontWeight: "800",
+                fontSize: "12px",
+                cursor: "pointer",
+                boxSizing: "border-box",
+              }}
+            >
+              Reset Filter
+            </button>
+          )}
+
           <div
             style={{
+              width: "100%",
               color: "#556B4D",
               fontSize: "12px",
               fontWeight: "600",
+              marginTop: "2px",
             }}
           >
             Menampilkan {filteredLaporanList.length} dari {laporanList.length} laporan
+            {studentSearch.trim()
+              ? ` untuk "${studentSearch.trim()}"`
+              : ""}
           </div>
         </div>
       )}
@@ -869,7 +937,10 @@ function DaftarPengaduan() {
         ))
       )}
 
-      {!loading && statusFilter === "Semua" && laporanList.length > 100 && (
+      {!loading &&
+        statusFilter === "Semua" &&
+        !studentSearch.trim() &&
+        laporanList.length > 100 && (
         <div
           style={{
             textAlign: "center",
@@ -881,7 +952,7 @@ function DaftarPengaduan() {
           }}
         >
           Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
-          Gunakan filter status untuk mempersempit daftar laporan.
+          Gunakan filter status atau pencarian siswa untuk mempersempit daftar.
         </div>
       )}
 
