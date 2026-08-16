@@ -385,13 +385,14 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
               onChange={(e) => {
                 const value = e.target.value;
                 setPenanganan(value);
+
                 if (value !== "Lainnya") {
                   setPenangananLainnya("");
                 }
               }}
               style={{
                 ...styles.inputSmall,
-                marginTop: "14px",
+                marginTop: "0px",
               }}
             >
               {metodePenanganan.map((m) => (
