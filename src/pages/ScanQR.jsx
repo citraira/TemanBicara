@@ -279,7 +279,6 @@ function ScanQR() {
   });
 
   const scannerRef = useRef(null);
-  const mountedRef = useRef(false);
   const isHandlingScan = useRef(false);
 
   const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
@@ -304,12 +303,11 @@ function ScanQR() {
 
   const normalizeNis = (value) => String(value || "").trim();
 
-  // Pencarian Siswa di Firebase Realtime Database
+  // Pencarian Data Siswa
   const findStudent = useCallback(async (nis) => {
     const cleanNis = normalizeNis(nis);
     const siswaRef = ref(db, "siswa");
 
-    // 1. Cek query field NIS
     try {
       const q = query(siswaRef, orderByChild("nis"), equalTo(cleanNis));
       const snapshot = await get(q);
@@ -321,7 +319,6 @@ function ScanQR() {
       console.warn("Query NIS:", err);
     }
 
-    // 2. Cek fallback semua data siswa
     try {
       const allSnapshot = await get(siswaRef);
       if (allSnapshot.exists()) {
@@ -355,9 +352,7 @@ function ScanQR() {
       const studentEntry = await findStudent(cleanNis);
 
       if (!studentEntry) {
-        if (mountedRef.current) {
-          setErrorMsg("QR Code / NIS (" + cleanNis + ") tidak terdaftar di database sekolah.");
-        }
+        setErrorMsg("QR Code / NIS (" + cleanNis + ") tidak terdaftar di sistem sekolah.");
         isHandlingScan.current = false;
         return;
       }
@@ -376,9 +371,7 @@ function ScanQR() {
       localStorage.setItem("nisSiswa", nisFinal);
       localStorage.setItem("kelasSiswa", kelas);
 
-      if (mountedRef.current) {
-        setScanResult(nisFinal);
-      }
+      setScanResult(nisFinal);
 
       showAlert(
         "success",
@@ -390,14 +383,10 @@ function ScanQR() {
       );
     } catch (err) {
       console.error("Verifikasi error:", err);
-      if (mountedRef.current) {
-        setErrorMsg("Kendala koneksi saat verifikasi data siswa.");
-      }
+      setErrorMsg("Kendala koneksi saat verifikasi data siswa.");
       isHandlingScan.current = false;
     } finally {
-      if (mountedRef.current) {
-        setLoadingManual(false);
-      }
+      setLoadingManual(false);
     }
   }, [findStudent, navigate, showAlert]);
 
@@ -412,19 +401,20 @@ function ScanQR() {
     setScanResult(cleanData);
     setErrorMsg("");
 
-    // Hentikan kamera agar hemat baterai & RAM
-    if (scannerRef.current && scannerRef.current.isScanning) {
+    // Langsung hentikan kamera agar RAM HP langsung plong
+    if (scannerRef.current) {
       try {
-        await scannerRef.current.stop();
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
       } catch (e) {}
     }
 
     await verifyStudentData(cleanData);
   }, [verifyStudentData]);
 
-  // Inisialisasi & Menjalankan Scanner Kamera
+  // Start Scanner Ringan (FPS Rendah = Ringan di HP)
   const startCamera = useCallback(async (mode) => {
-    if (!mountedRef.current) return;
     setCameraLoading(true);
     setErrorMsg("");
 
@@ -438,12 +428,12 @@ function ScanQR() {
         await scanner.stop();
       }
 
-      // Jalankan langsung tanpa menunggu getCameras() yang lambat
+      // FPS disetel ke 5 agar GPU/CPU HP sangat dingin dan tidak lag
       await scanner.start(
         { facingMode: mode },
         {
-          fps: 15,
-          qrbox: { width: 220, height: 220 },
+          fps: 5,
+          qrbox: { width: 200, height: 200 },
           aspectRatio: 1.0,
         },
         (decodedText) => {
@@ -452,32 +442,24 @@ function ScanQR() {
         () => {}
       );
 
-      if (mountedRef.current) {
-        setCameraLoading(false);
-        setErrorMsg("");
-      }
+      setCameraLoading(false);
+      setErrorMsg("");
     } catch (err) {
       console.error("Gagal start kamera:", err);
-      if (mountedRef.current) {
-        setCameraLoading(false);
-        setErrorMsg("Kamera tidak dapat diakses. Pastikan izin kamera aktif pada browser.");
-      }
+      setCameraLoading(false);
+      setErrorMsg("Kamera tidak dapat dibuka. Pastikan izin kamera telah diizinkan.");
     }
   }, [handleSuccessScan]);
 
-  // Buka kamera saat halaman dimuat
   useEffect(() => {
-    mountedRef.current = true;
     isHandlingScan.current = false;
 
-    // Beri sedikit jeda mikro (100ms) agar elemen DOM #reader-canvas selesai dirender
     const timer = setTimeout(() => {
       startCamera("environment");
-    }, 100);
+    }, 150);
 
     return () => {
       clearTimeout(timer);
-      mountedRef.current = false;
       if (scannerRef.current) {
         try {
           if (scannerRef.current.isScanning) {
@@ -492,7 +474,6 @@ function ScanQR() {
     };
   }, [startCamera]);
 
-  // Tombol Putar Kamera (Depan / Belakang)
   const handleFlipCamera = async () => {
     if (cameraLoading || isHandlingScan.current) return;
     const nextMode = facingMode === "environment" ? "user" : "environment";
@@ -500,7 +481,6 @@ function ScanQR() {
     await startCamera(nextMode);
   };
 
-  // Upload Gambar QR dari Galeri
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -522,13 +502,12 @@ function ScanQR() {
       await verifyStudentData(cleanData);
     } catch (err) {
       console.error("Gagal baca file:", err);
-      setErrorMsg("Tidak dapat mendeteksi QR Code dari gambar. Pastikan gambar jelas dan tidak buram.");
+      setErrorMsg("Tidak dapat mendeteksi QR Code dari gambar.");
       setCameraLoading(false);
       startCamera(facingMode);
     }
   };
 
-  // Submit NIS Manual
   const handleManualSubmit = async (e) => {
     e.preventDefault();
     if (loadingManual || isHandlingScan.current) return;
@@ -555,7 +534,7 @@ function ScanQR() {
         <h2 style={styles.title}>Scan QR Code Siswa</h2>
         <p style={styles.desc}>Arahkan QR Code Kartu Siswa ke dalam kotak kamera.</p>
 
-        {/* KOTAK KAMERA INSTAN */}
+        {/* KOTAK KAMERA */}
         <div style={styles.scannerWrapper}>
           <div id="reader-canvas" style={styles.scannerContainer} />
 
@@ -574,7 +553,6 @@ function ScanQR() {
           </button>
         </div>
 
-        {/* UPLOAD GAMBAR QR */}
         <label htmlFor="qr-file-input" style={styles.uploadBtnLabel}>
           🖼️ UNGGAH GAMBAR QR CODE
         </label>
@@ -595,7 +573,6 @@ function ScanQR() {
 
         {errorMsg && <div style={styles.errorBox}>{errorMsg}</div>}
 
-        {/* NIS MANUAL */}
         <div style={styles.divider}>
           <div style={styles.dividerLine} />
           <span style={{ padding: "0 10px" }}>ATAU MASUKKAN NIS</span>
@@ -633,7 +610,6 @@ function ScanQR() {
         </button>
       </div>
 
-      {/* POPUP ALERT */}
       {alertConfig.isOpen && (
         <div style={styles.modalOverlay} role="presentation">
           <div style={styles.modalCard} role="dialog" aria-modal="true">
