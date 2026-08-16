@@ -978,14 +978,24 @@ function DaftarPengaduan() {
       )}
 
       {selectedFoto && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
+        <div
+          style={{
+            ...styles.modalOverlay,
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
+          onClick={() => setSelectedFoto(null)}
+        >
           <div
             style={{
               position: "relative",
-              maxWidth: "90%",
-              maxHeight: "90vh",
-              width: "100%",
+              width: "fit-content",
+              maxWidth: "92vw",
+              maxHeight: "92vh",
               textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -993,11 +1003,14 @@ function DaftarPengaduan() {
               src={selectedFoto}
               alt="Bukti Besar"
               style={{
-                width: "100%",
+                display: "block",
+                width: "auto",
+                height: "auto",
+                maxWidth: "92vw",
                 maxHeight: "75vh",
                 objectFit: "contain",
                 borderRadius: "12px",
-                background: "#fff",
+                background: "transparent",
               }}
             />
 
