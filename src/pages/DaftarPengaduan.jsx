@@ -356,6 +356,22 @@ const statusOptions = [
   { label: "Ditolak (Fitnah / Tidak Valid)", color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A" },
 ];
 
+// Menyamakan status lama "Diproses" dengan status tampilan "Diproses (Guru/BK)".
+// Ini membuat data lama dan data baru tetap terbaca oleh filter dan dropdown.
+const normalizeStatus = (status) => {
+  const value = String(status || "").trim();
+
+  if (
+    value === "" ||
+    value === "Diproses" ||
+    value === "Diproses (Guru/BK)"
+  ) {
+    return "Diproses (Guru/BK)";
+  }
+
+  return value;
+};
+
 const metodePenanganan = [
   { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
   { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
@@ -542,7 +558,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </label>
 
           <select
-            value={item.status || "Diproses (Guru/BK)"}
+            value={normalizeStatus(item.status)}
             onChange={(e) => onStatusChange(item.id, e.target.value)}
             style={{ ...styles.inputSmall, ...styles.fieldControl }}
           >
@@ -620,18 +636,6 @@ function DaftarPengaduan() {
       return { ...prev, isOpen: false };
     });
   }, []);
-
-  // Semua popup notifikasi tertutup otomatis tanpa perlu menekan tombol.
-  // Popup konfirmasi hapus dan preview foto tetap membutuhkan tindakan pengguna.
-  useEffect(() => {
-    if (!alertConfig.isOpen) return;
-
-    const timer = setTimeout(() => {
-      handleCloseAlert();
-    }, 1600);
-
-    return () => clearTimeout(timer);
-  }, [alertConfig.isOpen, handleCloseAlert]);
 
   // Memuat pengaduan hanya saat halaman dibuka.
   // Tidak memakai onValue() agar halaman daftar tidak terus menerima
@@ -726,6 +730,7 @@ function DaftarPengaduan() {
         updatedAt: new Date().toISOString(),
       });
       showAlert("success", "Catatan Tersimpan", "Catatan penanganan kasus berhasil diperbarui!");
+      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
     }
@@ -742,6 +747,7 @@ function DaftarPengaduan() {
     try {
       await remove(ref(db, `pengaduan/${id}`));
       showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus.");
+      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
     }
@@ -759,21 +765,10 @@ function DaftarPengaduan() {
 
   const normalizedStudentSearch = studentSearch.trim().toLowerCase();
 
-  const getFotoDownloadUrl = (url) => {
-    if (!url) return "";
-
-    // Cloudinary: gunakan fl_attachment agar browser benar-benar mengunduh file.
-    if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
-      return url.replace("/upload/", "/upload/fl_attachment/");
-    }
-
-    return url;
-  };
-
   const filteredLaporanList = laporanList.filter((item) => {
     const matchesStatus =
       statusFilter === "Semua" ||
-      (item.status || "Diproses (Guru/BK)") === statusFilter;
+      normalizeStatus(item.status) === statusFilter;
 
     const namaSiswa = String(item.nama || "").toLowerCase();
     const nisSiswa = String(item.nis || item.NIS || "").toLowerCase();
@@ -850,7 +845,7 @@ function DaftarPengaduan() {
             {statusOptions.map((opt) => {
               const jumlah = laporanList.filter(
                 (item) =>
-                  (item.status || "Diproses (Guru/BK)") === opt.label
+                  normalizeStatus(item.status) === opt.label
               ).length;
 
               return (
@@ -943,7 +938,11 @@ function DaftarPengaduan() {
             fontWeight: "600",
           }}
         >
-          Tidak ada laporan dengan status "{statusFilter}".
+          {statusFilter !== "Semua" && studentSearch.trim()
+            ? `Tidak ada laporan dengan status "${statusFilter}" untuk "${studentSearch.trim()}".`
+            : statusFilter !== "Semua"
+            ? `Tidak ada laporan dengan status "${statusFilter}".`
+            : `Tidak ada laporan untuk "${studentSearch.trim()}".`}
         </div>
       ) : (
         filteredLaporanList.slice(0, 100).map((item) => (
@@ -978,106 +977,15 @@ function DaftarPengaduan() {
       )}
 
       {selectedFoto && (
-        <div
-          style={{
-            ...styles.modalOverlay,
-            padding: "20px",
-            boxSizing: "border-box",
-          }}
-          onClick={() => setSelectedFoto(null)}
-        >
-          <div
-            style={{
-              position: "relative",
-              width: "fit-content",
-              maxWidth: "92vw",
-              maxHeight: "92vh",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
+          <div style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }}>
             <img
               src={selectedFoto}
               alt="Bukti Besar"
-              style={{
-                display: "block",
-                width: "auto",
-                height: "auto",
-                maxWidth: "92vw",
-                maxHeight: "75vh",
-                objectFit: "contain",
-                borderRadius: "12px",
-                background: "transparent",
-              }}
+              style={{ width: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "12px" }}
             />
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "10px",
-                marginTop: "12px",
-                flexWrap: "wrap",
-              }}
-            >
-              <a
-                href={getFotoDownloadUrl(selectedFoto)}
-                download={`bukti-pengaduan-${Date.now()}.jpg`}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: "150px",
-                  height: "42px",
-                  padding: "0 16px",
-                  boxSizing: "border-box",
-                  borderRadius: "10px",
-                  background: "#2E7D32",
-                  color: "#fff",
-                  textDecoration: "none",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  boxShadow: "0 3px 0 #1B5E20",
-                }}
-              >
-                Download Foto
-              </a>
-
-              <button
-                type="button"
-                onClick={() => setSelectedFoto(null)}
-                style={{
-                  minWidth: "150px",
-                  height: "42px",
-                  padding: "0 16px",
-                  boxSizing: "border-box",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: "#FFEB3B",
-                  color: "#1B5E20",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  boxShadow: "0 3px 0 #FBC02D",
-                }}
-              >
-                Tutup
-              </button>
-            </div>
-
-            <div
-              style={{
-                color: "#fff",
-                textAlign: "center",
-                marginTop: "10px",
-                fontSize: "12px",
-              }}
-            >
-              Klik di luar gambar untuk menutup
+            <div style={{ color: "#fff", textAlign: "center", marginTop: "10px", fontSize: "13px" }}>
+              Klik di mana saja untuk menutup gambar
             </div>
           </div>
         </div>
@@ -1140,6 +1048,9 @@ function DaftarPengaduan() {
               {alertConfig.message}
             </p>
 
+            <button style={styles.alertBtn(alertConfig.type)} onClick={handleCloseAlert}>
+              Mengerti
+            </button>
           </div>
         </div>
       )}

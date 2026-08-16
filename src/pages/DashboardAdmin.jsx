@@ -1,1056 +1,877 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get, update, remove } from "firebase/database";
-import { db } from "../firebase";
+import { ref, onValue, set } from "firebase/database";
+import { getToken } from "firebase/messaging";
+import { db, messaging } from "../firebase";
 
-const styles = {
-  page: {
-    minHeight: "100dvh",
-    background: "#F4FBEE",
-    padding: "20px 15px 40px",
-    fontFamily: "'Segoe UI', Roboto, sans-serif",
-    boxSizing: "border-box",
-  },
-  header: {
-    background: "#2E7D32",
-    color: "#fff",
-    padding: "20px",
-    borderRadius: "20px",
-    marginBottom: "20px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  title: { fontSize: "22px", fontWeight: "800", margin: 0 },
-  backButton: {
-    padding: "10px 16px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
-    border: "none",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "800",
-    fontSize: "13px",
-    boxShadow: "0 3px 0 #FBC02D",
-  },
-  card: {
-    background: "#fff",
-    borderRadius: "18px",
-    padding: "20px 18px",
-    marginBottom: "20px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-    borderLeft: "6px solid #2E7D32",
-    borderTop: "1px solid #E8F5E9",
-    borderRight: "1px solid #E8F5E9",
-    borderBottom: "1px solid #E8F5E9",
-  },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #E8F5E9",
-    paddingBottom: "10px",
-    marginBottom: "14px",
-    flexWrap: "wrap",
-    gap: "8px",
-  },
-  pelaporInfo: { fontSize: "16px", fontWeight: "800", color: "#1B5E20" },
-  badge: { padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: "800" },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: "10px",
-    marginBottom: "12px",
-    fontSize: "13px",
-    color: "#556B4D",
-  },
-  ceritaBox: {
-    background: "#FAFAFA",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "1px dashed #C8E6C9",
-    fontSize: "13px",
-    lineHeight: "1.5",
-    color: "#2E3D29",
-    marginTop: "6px",
-    marginBottom: "14px",
-  },
-  interventionBox: {
-    background: "#FFFDE7",
-    border: "2px solid #FFF59D",
-    borderRadius: "14px",
-    padding: "18px",
-    marginTop: "16px",
-    marginBottom: "16px",
-  },
-  interventionGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "16px",
-    alignItems: "start",
-  },
-  interventionField: {
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-  },
-  fieldLabel: {
-    display: "block",
-    minHeight: "30px",
-    fontSize: "12px",
-    fontWeight: "700",
-    lineHeight: "1.3",
-    color: "#1B5E20",
-    marginBottom: "6px",
-  },
-  fieldControl: {
-    width: "100%",
-    minHeight: "42px",
-    boxSizing: "border-box",
-  },
-  inputSmall: {
-    width: "100%",
-    height: "42px",
-    padding: "9px 12px",
-    borderRadius: "10px",
-    border: "1.5px solid #C8E6C9",
-    fontSize: "14px",
-    boxSizing: "border-box",
-    outline: "none",
-    background: "#fff",
-    color: "#263238",
-    fontFamily: "inherit",
-    boxShadow: "0 1px 3px rgba(46,125,50,0.08)",
-  },
-  saveBtn: {
-    width: "100%",
-    height: "42px",
-    padding: "0 16px",
-    background: "#2E7D32",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "800",
-    fontSize: "13px",
-    boxSizing: "border-box",
-    boxShadow: "0 3px 0 #1B5E20",
-    textTransform: "uppercase",
-  },
-  chipButtonGroup: {
-    display: "flex",
-    gap: "6px",
-    flexWrap: "wrap",
-    marginTop: "6px",
-  },
-  chipItem: (selected, opt) => ({
-    padding: "7px 12px",
-    borderRadius: "8px",
-    border: `1.5px solid ${selected ? opt.border || "#2E7D32" : "#E0E0E0"}`,
-    background: selected ? opt.bg || "#E8F5E9" : "#fff",
-    color: selected ? opt.color || "#1B5E20" : "#444",
-    fontWeight: selected ? "800" : "600",
-    fontSize: "12px",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  }),
-  actionArea: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-    marginTop: "16px",
-    paddingTop: "16px",
-    borderTop: "1px solid #E8F5E9",
-  },
-  actionButtons: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "10px",
-    width: "100%",
-  },
-  statusField: {
-    width: "100%",
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-  },
-  actionMeta: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    minHeight: "20px",
-  },
-  filterBox: {
-    background: "#fff",
-    border: "1px solid #C8E6C9",
-    borderRadius: "14px",
-    padding: "14px 16px",
-    marginBottom: "20px",
-    boxShadow: "0 3px 10px rgba(46,125,50,0.05)",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  filterLabel: {
-    color: "#1B5E20",
-    fontSize: "13px",
-    fontWeight: "800",
-    whiteSpace: "nowrap",
-  },
-  filterSelect: {
-    flex: "1 1 240px",
-    minWidth: "220px",
-    maxWidth: "360px",
-    height: "42px",
-    padding: "0 12px",
-    borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
-    color: "#263238",
-    fontSize: "14px",
-    fontWeight: "600",
-    fontFamily: "inherit",
-    outline: "none",
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-  studentSearch: {
-    flex: "1 1 280px",
-    minWidth: "240px",
-    maxWidth: "420px",
-    height: "42px",
-    padding: "0 14px",
-    borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
-    color: "#263238",
-    fontSize: "14px",
-    fontWeight: "600",
-    fontFamily: "inherit",
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  reportedAt: {
-    fontSize: "12px",
-    color: "#556B4D",
-    lineHeight: "1.4",
-  },
-  deleteBtn: {
-    width: "100%",
-    height: "42px",
-    padding: "0 16px",
-    background: "#D32F2F",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "800",
-    fontSize: "13px",
-    boxSizing: "border-box",
-    boxShadow: "0 3px 0 #9A0007",
-  },
-  thumbFoto: {
-    width: "80px",
-    height: "80px",
-    objectFit: "cover",
-    borderRadius: "10px",
-    cursor: "pointer",
-    border: "2px solid #2E7D32",
-    marginTop: "6px",
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.8)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-    padding: "20px",
-    boxSizing: "border-box",
-  },
-  modalCard: {
-    background: "#fff",
-    padding: "25px 20px",
-    borderRadius: "20px",
-    maxWidth: "380px",
-    width: "100%",
-    textAlign: "center",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
-    boxSizing: "border-box",
-  },
-  modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
-  confirmYesBtn: {
-    flex: 1,
-    background: "#D32F2F",
-    color: "#fff",
-    border: "none",
-    padding: "11px",
-    borderRadius: "10px",
-    fontWeight: "800",
-    fontSize: "13px",
-    cursor: "pointer",
-    boxShadow: "0 3px 0 #9A0007",
-    textTransform: "uppercase",
-  },
-  confirmNoBtn: {
-    flex: 1,
-    background: "#FFEB3B",
-    color: "#1B5E20",
-    border: "none",
-    padding: "11px",
-    borderRadius: "10px",
-    fontWeight: "800",
-    fontSize: "13px",
-    cursor: "pointer",
-    boxShadow: "0 3px 0 #FBC02D",
-    textTransform: "uppercase",
-  },
-  alertIconWrapper: (type) => ({
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    margin: "0 auto 12px auto",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px",
-    background:
-      type === "success" ? "#E8F5E9" : type === "error" ? "#FFEBEE" : "#FFFDE7",
-    border: `2px solid ${
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FBC02D"
-    }`,
-    color:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#F57F17",
-  }),
-  alertBtn: (type) => ({
-    width: "100%",
-    padding: "12px",
-    border: "none",
-    borderRadius: "12px",
-    fontWeight: "800",
-    fontSize: "14px",
-    cursor: "pointer",
-    textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
-    background:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
-    boxShadow:
-      type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
-  }),
-};
-
-const statusOptions = [
-  { label: "Diproses (Guru/BK)", color: "#F57F17", bg: "#FFFDE7", border: "#FFF59D" },
-  { label: "Eskalasi: Kepala Sekolah", color: "#512DA8", bg: "#EDE7F6", border: "#B39DDB" },
-  { label: "Eskalasi: Dinas/Pengawas", color: "#8E24AA", bg: "#F3E5F5", border: "#CE93D8" },
-  { label: "Selesai", color: "#2E7D32", bg: "#E8F5E9", border: "#A5D6A7" },
-  { label: "Ditolak (Fitnah / Tidak Valid)", color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A" },
-];
-
-// Menyamakan status lama "Diproses" dengan status tampilan "Diproses (Guru/BK)".
-// Ini membuat data lama dan data baru tetap terbaca oleh filter dan dropdown.
-const normalizeStatus = (status) => {
-  const value = String(status || "").trim();
-
-  if (
-    value === "" ||
-    value === "Diproses" ||
-    value === "Diproses (Guru/BK)"
-  ) {
-    return "Diproses (Guru/BK)";
-  }
-
-  return value;
-};
-
-const metodePenanganan = [
-  { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
-  { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
-  { id: "Pembinaan Terpisah", label: "Pembinaan Terpisah" },
-  { id: "Pendampingan Korban", label: "Pendampingan Korban" },
-  { id: "Konseling", label: "Konseling" },
-  { id: "Pemanggilan Orang Tua", label: "Pemanggilan Orang Tua" },
-  { id: "Lainnya", label: "Ketik sendiri" },
-];
-
-const getStatusBadgeStyle = (status) => {
-  switch (status) {
-    case "Selesai":
-      return { background: "#E8F5E9", color: "#2E7D32", border: "1px solid #A5D6A7" };
-    case "Ditolak (Fitnah / Tidak Valid)":
-      return { background: "#FFEBEE", color: "#C62828", border: "1px solid #EF9A9A" };
-    case "Eskalasi: Kepala Sekolah":
-      return { background: "#EDE7F6", color: "#512DA8", border: "1px solid #B39DDB" };
-    case "Eskalasi: Dinas/Pengawas":
-      return { background: "#F3E5F5", color: "#8E24AA", border: "1px solid #CE93D8" };
-    default:
-      return { background: "#FFFDE7", color: "#F57F17", border: "1px solid #FFF59D" };
-  }
-};
-
-// SUB-KOMPONEN KARTU TERISOLASI AGAR MENGETIK TIDAK MACET
-const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDelete, onFotoClick }) => {
-  const [penanganan, setPenanganan] = useState(item.penanganan || "Dipisahkan");
-  const [penangananLainnya, setPenangananLainnya] = useState(
-    item.penangananLainnya || ""
-  );
-  const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
-  const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
-
-  // State form sengaja hanya diinisialisasi saat kartu dibuat.
-  // Jangan sinkronkan ulang setiap kali props berubah, karena itu dapat
-  // membuat cursor/input terasa macet atau teks ter-reset saat mengetik.
-  return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <div style={styles.pelaporInfo}>
-          {item.nama || "Anonim"} (Kelas {item.kelas || "-"})
-          <span
-            style={{
-              fontSize: "12px",
-              marginLeft: "8px",
-              padding: "3px 8px",
-              background: "#FFEB3B",
-              color: "#1B5E20",
-              borderRadius: "6px",
-              fontWeight: "800",
-            }}
-          >
-            {item.peran || "Korban"}
-          </span>
-        </div>
-        <div style={{ ...styles.badge, ...getStatusBadgeStyle(item.status) }}>
-          {item.status || "Diproses (Guru/BK)"}
-        </div>
-      </div>
-
-      <div style={styles.grid}>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Tanggal Kejadian:</strong> <br />
-          {item.tanggal || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Lokasi:</strong> <br />
-          {item.lokasi || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Jenis Bullying:</strong> <br />
-          {item.jenis || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Terduga Pelaku:</strong> <br />
-          {item.pelaku || "Tidak disebutkan"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Saksi Mata:</strong> <br />
-          {item.saksi === "Ya"
-            ? `${item.namaSaksi || "Ada Saksi"} (${item.kelasSaksi || "Kelas -"})`
-            : "Tidak ada"}
-        </div>
-      </div>
-
-      <div>
-        <strong style={{ color: "#1B5E20", fontSize: "13px" }}>Kronologi Kejadian:</strong>
-        <div style={styles.ceritaBox}>{item.cerita}</div>
-      </div>
-
-      {item.fotoUrl && item.fotoUrl !== "-" && (
-        <div style={{ marginBottom: "14px" }}>
-          <strong style={{ color: "#1B5E20", fontSize: "13px" }}>Bukti Foto:</strong>
-          <div>
-            <img
-              src={item.fotoUrl}
-              alt="Bukti Pengaduan"
-              style={styles.thumbFoto}
-              onClick={() => onFotoClick(item.fotoUrl)}
-              title="Klik untuk memperbesar"
-            />
-          </div>
-        </div>
-      )}
-
-      <div style={styles.interventionBox}>
-        <div style={{ fontWeight: "800", fontSize: "14px", color: "#1B5E20", marginBottom: "12px" }}>
-          Modul Penanganan & Intervensi Kasus
-        </div>
-
-        <div style={styles.interventionGrid}>
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Penanganan Pelaku & Korban:
-            </label>
-
-            <select
-              value={penanganan}
-              onChange={(e) => {
-                const value = e.target.value;
-                setPenanganan(value);
-
-                if (value !== "Lainnya") {
-                  setPenangananLainnya("");
-                }
-              }}
-              style={{
-                ...styles.inputSmall,
-                ...styles.fieldControl,
-              }}
-            >
-              {metodePenanganan.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-
-            {penanganan === "Lainnya" && (
-              <input
-                type="text"
-                placeholder="Ketik penanganan lainnya..."
-                value={penangananLainnya}
-                onChange={(e) => setPenangananLainnya(e.target.value)}
-                style={styles.inputSmall}
-              />
-            )}
-          </div>
-
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Konfirmasi & Respon Orang Tua:
-            </label>
-            <input
-              type="text"
-              placeholder="Catatan respon orang tua..."
-              value={responOrangTua}
-              onChange={(e) => setResponOrangTua(e.target.value)}
-              style={styles.inputSmall}
-            />
-          </div>
-
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Tahapan Hukuman / Ganti Rugi:
-            </label>
-            <input
-              type="text"
-              placeholder="Pembinaan / Skorsing..."
-              value={tindakanSanksi}
-              onChange={(e) => setTindakanSanksi(e.target.value)}
-              style={styles.inputSmall}
-            />
-          </div>
-        </div>
-
-      </div>
-
-      <div style={styles.actionArea}>
-        <div style={styles.statusField}>
-          <label style={styles.fieldLabel}>
-            Ubah Status Kasus:
-          </label>
-
-          <select
-            value={normalizeStatus(item.status)}
-            onChange={(e) => onStatusChange(item.id, e.target.value)}
-            style={{ ...styles.inputSmall, ...styles.fieldControl }}
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.label} value={opt.label}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={styles.actionMeta}>
-          <div style={styles.reportedAt}>
-            Dilaporkan pada:{" "}
-            {item.createdAt
-              ? new Date(item.createdAt).toLocaleString("id-ID")
-              : "-"}
-          </div>
-        </div>
-
-        <div style={styles.actionButtons}>
-          <button
-            style={styles.saveBtn}
-            onClick={() =>
-              onSavePenanganan(item.id, {
-                penanganan,
-                penangananLainnya,
-                responOrangTua,
-                tindakanSanksi,
-              })
-            }
-          >
-            Simpan
-          </button>
-
-          <button
-            style={styles.deleteBtn}
-            onClick={() => onDelete(item.id)}
-          >
-            Hapus
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-function DaftarPengaduan() {
+function DashboardAdmin() {
   const navigate = useNavigate();
-  const [laporanList, setLaporanList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedFoto, setSelectedFoto] = useState(null);
-  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [jumlahAduanBaru, setJumlahAduanBaru] = useState(0);
+  const [notifBaru, setNotifBaru] = useState(null);
+  const [aduanList, setAduanList] = useState([]);
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Filter status dan pencarian siswa/NIS untuk memudahkan guru menemukan riwayat laporan siswa.
-  const [statusFilter, setStatusFilter] = useState("Semua");
-  const [studentSearch, setStudentSearch] = useState("");
+  const [showStatistikModal, setShowStatistikModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const [alertConfig, setAlertConfig] = useState({
-    isOpen: false,
-    type: "success",
-    title: "",
-    message: "",
-    onCloseCallback: null,
-  });
+  const namaGuru = localStorage.getItem("namaGuru") || "Guru BK";
+  const soundEnabled = localStorage.getItem("soundEnabled") !== "false";
 
-  const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
-    setAlertConfig({ isOpen: true, type, title, message, onCloseCallback });
-  }, []);
+  const VAPID_KEY =
+    "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
-  const handleCloseAlert = useCallback(() => {
-    setAlertConfig((prev) => {
-      if (prev.onCloseCallback) prev.onCloseCallback();
-      return { ...prev, isOpen: false };
-    });
-  }, []);
-
-  // Memuat pengaduan hanya saat halaman dibuka.
-  // Tidak memakai onValue() agar halaman daftar tidak terus menerima
-  // seluruh data pengaduan setiap ada perubahan di Firebase.
-  const loadPengaduan = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) setLoading(true);
-
-      const snapshot = await get(ref(db, "pengaduan"));
-
-      if (!snapshot.exists()) {
-        setLaporanList([]);
-        return;
-      }
-
-      const data = snapshot.val();
-
-      const formattedList = Object.keys(data)
-        .map((key) => ({
-          id: key,
-          ...data[key],
-        }))
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0) -
-            new Date(a.updatedAt || a.createdAt || 0)
-        );
-
-      setLaporanList(formattedList);
-    } catch (error) {
-      console.error("Gagal mengambil data pengaduan:", error);
-
-      showAlert(
-        "error",
-        "Gagal Memuat Data",
-        error.message || "Terjadi kesalahan saat mengambil data pengaduan."
-      );
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  }, [showAlert]);
-
+  // Toast laporan baru otomatis hilang tanpa perlu ditekan.
   useEffect(() => {
-    let mounted = true;
+    if (!notifBaru) return undefined;
 
-    const loadInitialData = async () => {
-      if (!mounted) return;
-      await loadPengaduan(true);
+    const timer = setTimeout(() => {
+      setNotifBaru(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [notifBaru]);
+
+  // Registrasi FCM Admin dilakukan sekali saat dashboard dibuka.
+  // Tidak digabung dengan listener pengaduan agar listener tidak dibuat ulang
+  // ketika pengaturan suara/nama berubah.
+  useEffect(() => {
+    let cancelled = false;
+
+    const setupAdminFCM = async () => {
+      try {
+        if (cancelled) return;
+
+        const msg = await messaging();
+        if (!msg || cancelled) return;
+
+        // Jangan meminta permission berulang kali jika browser sudah
+        // memberikan keputusan sebelumnya.
+        if (
+          typeof Notification === "undefined" ||
+          Notification.permission === "denied"
+        ) {
+          return;
+        }
+
+        if (Notification.permission === "default") {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted" || cancelled) return;
+        }
+
+        const currentToken = await getToken(msg, {
+          vapidKey: VAPID_KEY,
+        });
+
+        if (currentToken && !cancelled) {
+          await set(ref(db, "fcmTokens/admin/utama"), {
+            nama: namaGuru,
+            token: currentToken,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      } catch (err) {
+        console.warn("FCM Admin belum aktif:", err);
+      }
     };
 
-    loadInitialData();
+    setupAdminFCM();
 
     return () => {
-      mounted = false;
+      cancelled = true;
     };
-  }, [loadPengaduan]);
+  }, [namaGuru]);
 
-  // Update Status Instan (Optimistic)
-  const handleStatusChange = useCallback(async (id, statusBaru) => {
-    const updatedAt = new Date().toISOString();
+  // Listener realtime pengaduan.
+  // Tetap realtime karena dashboard membutuhkan notifikasi baru,
+  // tetapi pekerjaan React dibuat seminimal mungkin.
+  useEffect(() => {
+    const pengaduanRef = ref(db, "pengaduan");
+    let initialLoad = true;
 
-    setLaporanList((prevList) =>
-      prevList.map((item) =>
-        item.id === id
-          ? { ...item, status: statusBaru, updatedAt }
-          : item
-      )
+    const unsubscribe = onValue(
+      pengaduanRef,
+      (snapshot) => {
+        const data = snapshot.val();
+
+        if (!data) {
+          setAduanList([]);
+          setJumlahAduanBaru(0);
+          setUnreadCount(0);
+          initialLoad = false;
+          return;
+        }
+
+        const list = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt || 0) -
+              new Date(a.createdAt || 0)
+          );
+
+        // Satu kali update state untuk data pengaduan.
+        setAduanList(list);
+
+        // Jumlah laporan yang masih berstatus Diproses.
+        // Ini hanya untuk kebutuhan statistik, bukan badge "belum dibaca".
+        const aduanDiproses = list.reduce((total, item) => {
+          return (
+            total +
+            (!item.status ||
+            item.status.includes("Diproses")
+              ? 1
+              : 0)
+          );
+        }, 0);
+
+        setJumlahAduanBaru(aduanDiproses);
+
+        // Hitung notifikasi yang benar-benar belum dibaca.
+        // Hanya laporan baru yang dibuat setelah lastReadAdminNotif
+        // yang dianggap belum dibaca oleh badge dashboard.
+        const lastReadTime =
+          localStorage.getItem("lastReadAdminNotif");
+
+        const lastRead = lastReadTime
+          ? new Date(lastReadTime).getTime()
+          : 0;
+
+        const unread = list.reduce((total, item) => {
+          const created = new Date(
+            item.createdAt || 0
+          ).getTime();
+
+          return total + (created > lastRead ? 1 : 0);
+        }, 0);
+
+        setUnreadCount(unread);
+
+        // Jangan menampilkan notifikasi untuk data yang sudah ada
+        // ketika dashboard pertama kali dibuka.
+        if (!initialLoad && list.length > 0) {
+          const aduanTerbaru = list[0];
+          const lastShownToastId =
+            localStorage.getItem("lastShownToastId");
+
+          if (aduanTerbaru.id !== lastShownToastId) {
+            setNotifBaru(aduanTerbaru);
+            localStorage.setItem(
+              "lastShownToastId",
+              aduanTerbaru.id
+            );
+
+            // Notifikasi sistem hanya jika permission sudah granted.
+            if (
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted" &&
+              "serviceWorker" in navigator
+            ) {
+              navigator.serviceWorker.ready
+                .then((reg) => {
+                  reg.showNotification(
+                    "Laporan Pengaduan Baru!",
+                    {
+                      body: `Dari ${
+                        aduanTerbaru.nama || "Siswa"
+                      } (Kelas ${
+                        aduanTerbaru.kelas || "-"
+                      }): ${
+                        aduanTerbaru.jenis || "Bullying"
+                      }`,
+                      icon: "/pwa-192x192.png",
+                      badge: "/pwa-192x192.png",
+                      vibrate: [200, 100, 200],
+                    }
+                  );
+                })
+                .catch((err) => {
+                  console.warn(
+                    "Gagal menampilkan notifikasi sistem:",
+                    err
+                  );
+                });
+            }
+
+            // Suara hanya dibuat ketika benar-benar ada laporan baru.
+            if (soundEnabled) {
+              try {
+                const audio = new Audio(
+                  "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+                );
+
+                audio.volume = 0.7;
+
+                const playPromise = audio.play();
+
+                if (playPromise?.catch) {
+                  playPromise.catch(() => {
+                    console.log(
+                      "Audio autoplay diblokir browser."
+                    );
+                  });
+                }
+              } catch (err) {
+                console.log(
+                  "Audio notifikasi tidak dapat diputar:",
+                  err
+                );
+              }
+            }
+          }
+        }
+
+        initialLoad = false;
+      },
+      (error) => {
+        console.error(
+          "Gagal mendengarkan notifikasi:",
+          error
+        );
+      }
     );
 
-    try {
-      await update(ref(db, `pengaduan/${id}`), {
-        status: statusBaru,
-        updatedAt,
-      });
-      showAlert("success", "Status Diperbarui", `Status kasus berhasil diubah menjadi "${statusBaru}".`);
-    } catch (error) {
-      showAlert("error", "Gagal Mengubah Status", error.message || "Terjadi kendala saat memperbarui status.");
+    return () => unsubscribe();
+  }, [soundEnabled]);
+
+  const handleOpenNotif = () => {
+    setShowNotifModal(true);
+    setUnreadCount(0);
+    localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
+  };
+
+  const handleBukaLaporan = () => {
+    setShowNotifModal(false);
+    setUnreadCount(0);
+    localStorage.setItem("lastReadAdminNotif", new Date().toISOString());
+    navigate("/daftar-pengaduan");
+  };
+
+  const handleConfirmLogout = () => {
+    navigate("/");
+  };
+
+  // Perhitungan statistik dimemoisasi agar tidak dihitung ulang
+  // pada render yang hanya berkaitan dengan modal/notifikasi.
+  const {
+    totalAduan,
+    totalDiproses,
+    totalSelesai,
+    persentaseSelesai,
+  } = useMemo(() => {
+    let diproses = 0;
+    let selesai = 0;
+
+    for (const item of aduanList) {
+      if (!item.status || item.status.includes("Diproses")) {
+        diproses += 1;
+      }
+
+      if (item.status === "Selesai") {
+        selesai += 1;
+      }
     }
-  }, [showAlert]);
 
-  // Simpan
-  const handleSavePenanganan = useCallback(async (id, formData) => {
-    try {
-      await update(ref(db, `pengaduan/${id}`), {
-        penanganan: formData.penanganan,
-        penangananLainnya:
-          formData.penanganan === "Lainnya"
-            ? formData.penangananLainnya
-            : "",
-        responOrangTua: formData.responOrangTua,
-        tindakanSanksi: formData.tindakanSanksi,
-        updatedAt: new Date().toISOString(),
-      });
-      showAlert("success", "Catatan Tersimpan", "Catatan penanganan kasus berhasil diperbarui!");
-      setTimeout(() => handleCloseAlert(), 1600);
-    } catch (error) {
-      showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
-    }
-  }, [showAlert, handleCloseAlert]);
+    const total = aduanList.length;
 
-  // Hapus Laporan
-  const executeDelete = useCallback(async () => {
-    if (!deleteTargetId) return;
-    const id = deleteTargetId;
-    setDeleteTargetId(null);
+    return {
+      totalAduan: total,
+      totalDiproses: diproses,
+      totalSelesai: selesai,
+      persentaseSelesai:
+        total > 0
+          ? Math.round((selesai / total) * 100)
+          : 0,
+    };
+  }, [aduanList]);
 
-    setLaporanList((prev) => prev.filter((item) => item.id !== id));
+  // Panel notifikasi tidak perlu membuat ratusan elemen sekaligus.
+  // Tampilkan 50 laporan terbaru saja; statistik tetap menggunakan seluruh data.
+  const recentAduanList = useMemo(
+    () => aduanList.slice(0, 50),
+    [aduanList]
+  );
 
-    try {
-      await remove(ref(db, `pengaduan/${id}`));
-      showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus.");
-      setTimeout(() => handleCloseAlert(), 1600);
-    } catch (error) {
-      showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
-    }
-  }, [deleteTargetId, showAlert, handleCloseAlert]);
-
-
-  const refreshPengaduan = useCallback(async () => {
-    try {
-      setRefreshing(true);
-      await loadPengaduan(false);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [loadPengaduan]);
-
-  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
-
-  const filteredLaporanList = laporanList.filter((item) => {
-    const matchesStatus =
-      statusFilter === "Semua" ||
-      normalizeStatus(item.status) === statusFilter;
-
-    const namaSiswa = String(item.nama || "").toLowerCase();
-    const nisSiswa = String(item.nis || item.NIS || "").toLowerCase();
-
-    const matchesStudent =
-      !normalizedStudentSearch ||
-      namaSiswa.includes(normalizedStudentSearch) ||
-      nisSiswa.includes(normalizedStudentSearch);
-
-    return matchesStatus && matchesStudent;
-  });
+  const styles = {
+    page: {
+      minHeight: "100vh",
+      background: "#F4FBEE",
+      fontFamily: "'Segoe UI', Roboto, sans-serif",
+      padding: "20px 15px",
+      boxSizing: "border-box",
+    },
+    header: {
+      background: "#2E7D32",
+      color: "#fff",
+      padding: "20px",
+      borderRadius: "20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "25px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+      gap: "10px",
+      boxSizing: "border-box",
+    },
+    title: {
+      fontSize: "22px",
+      fontWeight: "800",
+      lineHeight: "1.2",
+      minWidth: 0,
+      margin: 0,
+    },
+    headerActions: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: "10px",
+      flexShrink: 0,
+    },
+    notifBtn: {
+      position: "relative",
+      fontSize: "22px",
+      cursor: "pointer",
+      background: "rgba(255, 255, 255, 0.25)",
+      border: "none",
+      color: "#fff",
+      borderRadius: "50%",
+      width: "44px",
+      height: "44px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      padding: 0,
+    },
+    badgeCount: {
+      position: "absolute",
+      top: "-2px",
+      right: "-2px",
+      background: "#FF3B30",
+      color: "#fff",
+      fontSize: "11px",
+      borderRadius: "50%",
+      padding: "2px 6px",
+      fontWeight: "bold",
+    },
+    logout: {
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "8px 16px",
+      minWidth: "118px",
+      height: "44px",
+      borderRadius: "18px",
+      cursor: "pointer",
+      fontWeight: "800",
+      fontSize: "13px",
+      boxShadow: "0 2px 0 #FBC02D",
+      boxSizing: "border-box",
+      flexShrink: 0,
+    },
+    toast: {
+      position: "fixed",
+      top: "20px",
+      right: "20px",
+      background: "#2E7D32",
+      color: "#fff",
+      padding: "15px 20px",
+      borderRadius: "16px",
+      boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      border: "2px solid #A5D6A7",
+    },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+      gap: "16px",
+    },
+    card: {
+      background: "#fff",
+      borderRadius: "18px",
+      padding: "22px 18px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+      border: "2px solid #C8E6C9",
+      textAlign: "center",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+    },
+    badgeNotifCard: {
+      position: "absolute",
+      top: "12px",
+      right: "12px",
+      background: "#D32F2F",
+      color: "#fff",
+      borderRadius: "50%",
+      width: "28px",
+      height: "28px",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "13px",
+      fontWeight: "800",
+    },
+    iconBadge: {
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "22px",
+      fontWeight: "800",
+      margin: "0 auto 15px",
+      border: "2px solid #2E7D32",
+    },
+    cardTitle: {
+      fontSize: "18px",
+      color: "#1B5E20",
+      fontWeight: "800",
+      marginBottom: "8px",
+    },
+    desc: { color: "#556B4D", marginBottom: "18px", lineHeight: "1.5", fontSize: "13px" },
+    button: {
+      background: "#2E7D32",
+      color: "#fff",
+      border: "none",
+      padding: "12px 18px",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontSize: "14px",
+      width: "100%",
+      fontWeight: "800",
+      boxShadow: "0 3px 0 #1B5E20",
+      textTransform: "uppercase",
+    },
+    centerModalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.55)",
+      backdropFilter: "blur(2px)",
+      zIndex: 1100,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: "15px",
+      boxSizing: "border-box",
+    },
+    centerModalContent: {
+      background: "#fff",
+      borderRadius: "20px",
+      padding: "25px 20px",
+      width: "100%",
+      maxWidth: "520px",
+      maxHeight: "85vh",
+      overflowY: "auto",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+    },
+    logoutModalCard: {
+      background: "#fff",
+      borderRadius: "22px",
+      padding: "26px 20px",
+      maxWidth: "370px",
+      width: "100%",
+      textAlign: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+      border: "2px solid #C8E6C9",
+      boxSizing: "border-box",
+    },
+    logoutIconBox: {
+      width: "65px",
+      height: "65px",
+      borderRadius: "50%",
+      margin: "0 auto 12px auto",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "28px",
+      background: "#FFFDE7",
+      border: "2px solid #FBC02D",
+    },
+    modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
+    yesBtn: {
+      flex: 1,
+      background: "#D32F2F",
+      color: "#fff",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #9A0007",
+      textTransform: "uppercase",
+    },
+    cancelBtn: {
+      flex: 1,
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      border: "none",
+      padding: "12px",
+      borderRadius: "12px",
+      fontWeight: "800",
+      fontSize: "13px",
+      cursor: "pointer",
+      boxShadow: "0 3px 0 #FBC02D",
+      textTransform: "uppercase",
+    },
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.6)",
+      zIndex: 1000,
+      display: "flex",
+      justifyContent: "flex-end",
+    },
+    sidePanel: {
+      width: "100%",
+      maxWidth: "400px",
+      height: "100%",
+      background: "#fff",
+      boxShadow: "-4px 0 25px rgba(0,0,0,0.15)",
+      display: "flex",
+      flexDirection: "column",
+      padding: "20px 18px",
+      boxSizing: "border-box",
+      overflowY: "auto",
+    },
+    panelHeader: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "18px",
+    },
+    panelTitle: {
+      fontSize: "20px",
+      fontWeight: "800",
+      color: "#1B5E20",
+      margin: 0,
+    },
+    closeBtn: {
+      background: "none",
+      border: "none",
+      fontSize: "20px",
+      cursor: "pointer",
+      color: "#555",
+      fontWeight: "800",
+    },
+    notifItemCard: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "12px 0",
+      borderBottom: "1px solid #E8F5E9",
+    },
+    itemAvatar: {
+      width: "42px",
+      height: "42px",
+      borderRadius: "50%",
+      background: "#FFEB3B",
+      color: "#1B5E20",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "16px",
+      fontWeight: "800",
+      marginRight: "10px",
+      border: "1px solid #2E7D32",
+    },
+    itemText: { fontSize: "13px", color: "#2E3D29", margin: 0, lineHeight: "1.4" },
+    actionBtn: {
+      padding: "6px 12px",
+      background: "#2E7D32",
+      color: "#fff",
+      border: "none",
+      borderRadius: "10px",
+      fontWeight: "700",
+      fontSize: "12px",
+      cursor: "pointer",
+    },
+    statBox: {
+      background: "#F4FBEE",
+      padding: "14px",
+      borderRadius: "14px",
+      textAlign: "center",
+      border: "2px solid #C8E6C9",
+    },
+  };
 
   return (
     <div style={styles.page}>
+      {/* TOAST ADUAN BARU */}
+      {notifBaru && (
+        <div style={styles.toast}>
+          <div>
+            <strong style={{ fontSize: "14px" }}>Laporan Pengaduan Baru!</strong>
+            <br />
+            <span style={{ fontSize: "12px" }}>
+              Dari: {notifBaru.nama || "Siswa"} (Kelas {notifBaru.kelas || "-"})
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER DASHBOARD */}
       <div style={styles.header}>
         <div>
-          <div style={styles.title}>Daftar Laporan Pengaduan</div>
-
-          <p
-            style={{
-              color: "#fff",
-              margin: "4px 0 0 0",
-              fontSize: "13px",
-              opacity: 0.95,
-            }}
-          >
-            Total Laporan Masuk:{" "}
-            <strong>{laporanList.length}</strong>
+          <div style={styles.title}>Dashboard {namaGuru}</div>
+          <p style={{ margin: "4px 0 0 0", fontSize: "13px", opacity: 0.95 }}>
+            Selamat datang di Sistem Pengaduan Bullying
           </p>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            type="button"
-            onClick={refreshPengaduan}
-            disabled={refreshing}
-            style={{
-              ...styles.backButton,
-              opacity: refreshing ? 0.6 : 1,
-              cursor: refreshing ? "not-allowed" : "pointer",
-            }}
-          >
-            {refreshing ? "Memuat..." : " Refresh"}
+        <div style={styles.headerActions}>
+          <button style={styles.notifBtn} onClick={handleOpenNotif} title="Notifikasi">
+            🔔
+            {unreadCount > 0 && (
+              <span style={styles.badgeCount}>{unreadCount}</span>
+            )}
           </button>
 
-          <button
-            type="button"
-            style={styles.backButton}
-            onClick={() => navigate("/dashboard-admin")}
-          >
-            Kembali ke Dashboard
+          <button style={styles.logout} onClick={() => setShowLogoutModal(true)}>
+            Keluar
           </button>
         </div>
       </div>
 
-      {!loading && laporanList.length > 0 && (
-        <div style={styles.filterBox}>
-          <div style={styles.filterLabel}>Status:</div>
+      {/* GRID MENU ADMIN */}
+      <div style={styles.grid}>
+        <div style={styles.card}>
+          {unreadCount > 0 && (
+            <div style={styles.badgeNotifCard}>{unreadCount}</div>
+          )}
+          <div style={styles.iconBadge}>DP</div>
+          <div style={styles.cardTitle}>Daftar Pengaduan</div>
+          <div style={styles.desc}>Lihat seluruh laporan bullying dari siswa.</div>
+          <button style={styles.button} onClick={handleBukaLaporan}>
+            {unreadCount > 0
+              ? `Buka (${unreadCount} Baru)`
+              : "Buka"}
+          </button>
+        </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={styles.filterSelect}
-            aria-label="Filter status pengaduan"
+        <div style={styles.card}>
+          <div style={styles.iconBadge}>ED</div>
+          <div style={styles.cardTitle}>Kelola Edukasi</div>
+          <div style={styles.desc}>Tambah dan edit artikel edukasi siswa.</div>
+          <button style={styles.button} onClick={() => navigate("/kelola-edukasi")}>
+            Buka
+          </button>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.iconBadge}>DS</div>
+          <div style={styles.cardTitle}>Data Siswa</div>
+          <div style={styles.desc}>Kelola data siswa dan QR Code login.</div>
+          <button style={styles.button} onClick={() => navigate("/data-siswa")}>
+            Buka
+          </button>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.iconBadge}>ST</div>
+          <div style={styles.cardTitle}>Statistik</div>
+          <div style={styles.desc}>Lihat grafik dan ringkasan pengaduan.</div>
+          <button style={styles.button} onClick={() => setShowStatistikModal(true)}>
+            Buka
+          </button>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.iconBadge}>PG</div>
+          <div style={styles.cardTitle}>Pengaturan</div>
+          <div style={styles.desc}>Atur profil guru, WhatsApp, dan sandi admin.</div>
+          <button style={styles.button} onClick={() => navigate("/pengaturan-admin")}>
+            Buka
+          </button>
+        </div>
+      </div>
+
+      {/* MODAL STATISTIK */}
+      {showStatistikModal && (
+        <div
+          style={styles.centerModalOverlay}
+          onClick={() => setShowStatistikModal(false)}
+        >
+          <div
+            style={styles.centerModalContent}
+            onClick={(e) => e.stopPropagation()}
           >
-            <option value="Semua">Semua Status ({laporanList.length})</option>
+            <div style={styles.panelHeader}>
+              <h2 style={{ color: "#1B5E20", margin: 0, fontSize: "20px", fontWeight: "800" }}>
+                Statistik Pengaduan
+              </h2>
+              <button
+                style={styles.closeBtn}
+                onClick={() => setShowStatistikModal(false)}
+              >
+                ✕
+              </button>
+            </div>
 
-            {statusOptions.map((opt) => {
-              const jumlah = laporanList.filter(
-                (item) =>
-                  normalizeStatus(item.status) === opt.label
-              ).length;
+            <p style={{ color: "#556B4D", marginBottom: "18px", fontSize: "13px" }}>
+              Ringkasan data laporan bullying real-time di sekolah.
+            </p>
 
-              return (
-                <option key={opt.label} value={opt.label}>
-                  {opt.label} ({jumlah})
-                </option>
-              );
-            })}
-          </select>
-
-          <div style={styles.filterLabel}>Cari Siswa:</div>
-
-          <input
-            type="text"
-            value={studentSearch}
-            onChange={(e) => setStudentSearch(e.target.value)}
-            placeholder="Ketik nama siswa atau NIS..."
-            style={styles.studentSearch}
-            aria-label="Cari siswa berdasarkan nama atau NIS"
-          />
-
-          {(studentSearch || statusFilter !== "Semua") && (
-            <button
-              type="button"
-              onClick={() => {
-                setStudentSearch("");
-                setStatusFilter("Semua");
-              }}
+            <div
               style={{
-                height: "42px",
-                padding: "0 14px",
-                borderRadius: "10px",
-                border: "1px solid #C8E6C9",
-                background: "#fff",
-                color: "#2E7D32",
-                fontWeight: "800",
-                fontSize: "12px",
-                cursor: "pointer",
-                boxSizing: "border-box",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+                marginBottom: "20px",
               }}
             >
-              Reset Filter
-            </button>
-          )}
-
-          <div
-            style={{
-              width: "100%",
-              color: "#556B4D",
-              fontSize: "12px",
-              fontWeight: "600",
-              marginTop: "2px",
-            }}
-          >
-            Menampilkan {filteredLaporanList.length} dari {laporanList.length} laporan
-            {studentSearch.trim()
-              ? ` untuk "${studentSearch.trim()}"`
-              : ""}
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#1B5E20", fontWeight: "700" }}>
-          Memuat data laporan...
-        </div>
-      ) : laporanList.length === 0 ? (
-        <div
-          style={{
-            background: "#fff",
-            padding: "35px 20px",
-            borderRadius: "18px",
-            textAlign: "center",
-            color: "#556B4D",
-            border: "2px solid #C8E6C9",
-            fontWeight: "600",
-          }}
-        >
-          Belum ada laporan pengaduan yang masuk.
-        </div>
-      ) : filteredLaporanList.length === 0 ? (
-        <div
-          style={{
-            background: "#fff",
-            padding: "35px 20px",
-            borderRadius: "18px",
-            textAlign: "center",
-            color: "#556B4D",
-            border: "2px solid #C8E6C9",
-            fontWeight: "600",
-          }}
-        >
-          {statusFilter !== "Semua" && studentSearch.trim()
-            ? `Tidak ada laporan dengan status "${statusFilter}" untuk "${studentSearch.trim()}".`
-            : statusFilter !== "Semua"
-            ? `Tidak ada laporan dengan status "${statusFilter}".`
-            : `Tidak ada laporan untuk "${studentSearch.trim()}".`}
-        </div>
-      ) : (
-        filteredLaporanList.slice(0, 100).map((item) => (
-          <ItemPengaduanCard
-            key={item.id}
-            item={item}
-            onStatusChange={handleStatusChange}
-            onSavePenanganan={handleSavePenanganan}
-            onDelete={setDeleteTargetId}
-            onFotoClick={setSelectedFoto}
-          />
-        ))
-      )}
-
-      {!loading &&
-        statusFilter === "Semua" &&
-        !studentSearch.trim() &&
-        laporanList.length > 100 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "12px",
-            marginBottom: "16px",
-            color: "#556B4D",
-            fontSize: "12px",
-            fontWeight: "700",
-          }}
-        >
-          Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
-          Gunakan filter status atau pencarian siswa untuk mempersempit daftar.
-        </div>
-      )}
-
-      {selectedFoto && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
-          <div style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }}>
-            <img
-              src={selectedFoto}
-              alt="Bukti Besar"
-              style={{ width: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "12px" }}
-            />
-            <div style={{ color: "#fff", textAlign: "center", marginTop: "10px", fontSize: "13px" }}>
-              Klik di mana saja untuk menutup gambar
+              <div style={styles.statBox}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#1B5E20" }}>
+                  {totalAduan}
+                </div>
+                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                  Total Aduan Masuk
+                </div>
+              </div>
+              <div style={styles.statBox}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#D32F2F" }}>
+                  {totalDiproses}
+                </div>
+                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                  Sedang Diproses
+                </div>
+              </div>
+              <div style={styles.statBox}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#2E7D32" }}>
+                  {totalSelesai}
+                </div>
+                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                  Selesai Ditangani
+                </div>
+              </div>
+              <div style={styles.statBox}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#E65100" }}>
+                  {persentaseSelesai}%
+                </div>
+                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                  Tingkat Penyelesaian
+                </div>
+              </div>
             </div>
+
+            <button
+              style={{ ...styles.button, background: "#FFEB3B", color: "#1B5E20", boxShadow: "0 3px 0 #FBC02D" }}
+              onClick={() => setShowStatistikModal(false)}
+            >
+              Tutup
+            </button>
           </div>
         </div>
       )}
 
-      {deleteTargetId && (
-        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper("warning")}></div>
-            <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
-              Konfirmasi Hapus Laporan
-            </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
-              Apakah Anda yakin ingin menghapus laporan pengaduan ini secara permanen?
-            </p>
-            <div style={styles.modalBtnGroup}>
-              <button style={styles.confirmYesBtn} onClick={executeDelete}>
-                Ya, Hapus
+      {/* NOTIFIKASI PANEL KANAN */}
+      {showNotifModal && (
+        <div
+          style={styles.modalOverlay}
+          onClick={() => setShowNotifModal(false)}
+        >
+          <div style={styles.sidePanel} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.panelHeader}>
+              <h2 style={styles.panelTitle}>Notifikasi Admin</h2>
+              <button
+                style={styles.closeBtn}
+                onClick={() => setShowNotifModal(false)}
+              >
+                ✕
               </button>
-              <button style={styles.confirmNoBtn} onClick={() => setDeleteTargetId(null)}>
+            </div>
+
+            {aduanList.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px 10px",
+                  color: "#556B4D",
+                }}
+              >
+                <h3 style={{ fontSize: "16px", color: "#1B5E20" }}>Belum Ada Laporan</h3>
+              </div>
+            ) : (
+              <div>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "800",
+                    marginBottom: "12px",
+                    color: "#1B5E20",
+                  }}
+                >
+                  Laporan Masuk Terbaru
+                </div>
+                {recentAduanList.map((item) => (
+                  <div key={item.id} style={styles.notifItemCard}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <div style={styles.itemAvatar}>
+                        {item.nama ? item.nama.charAt(0).toUpperCase() : "S"}
+                      </div>
+                      <div>
+                        <p style={styles.itemText}>
+                          <strong>
+                            {item.nama || "Siswa"} ({item.kelas || "-"})
+                          </strong>
+                        </p>
+                        <span style={{ fontSize: "12px", color: "#556B4D" }}>
+                          Kategori: <strong>{item.jenis || "Bullying"}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      style={styles.actionBtn}
+                      onClick={handleBukaLaporan}
+                    >
+                      Buka
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP MODAL KONFIRMASI KELUAR ADMIN */}
+      {showLogoutModal && (
+        <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
+          <div style={styles.logoutModalCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.logoutIconBox}>🚪</div>
+            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#1B5E20", margin: "0 0 8px 0" }}>
+              Keluar Akun Admin?
+            </h3>
+            <p style={{ fontSize: "13px", color: "#556B4D", margin: "0 0 10px 0", lineHeight: "1.5" }}>
+              Apakah Bapak/Ibu Guru yakin ingin keluar dari panel admin?
+            </p>
+
+            <div style={styles.modalBtnGroup}>
+              <button style={styles.yesBtn} onClick={handleConfirmLogout}>
+                Ya, Keluar
+              </button>
+              <button style={styles.cancelBtn} onClick={() => setShowLogoutModal(false)}>
                 Batal
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {alertConfig.isOpen && (
-        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper(alertConfig.type)}>
-              <span
-                style={{
-                  fontSize: "34px",
-                  fontWeight: "900",
-                  lineHeight: 1,
-                }}
-              >
-                {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "×" : "!"}
-              </span>
-            </div>
-
-            <h3
-              style={{
-                fontSize: "18px",
-                fontWeight: "800",
-                marginBottom: "8px",
-                color:
-                  alertConfig.type === "success"
-                    ? "#1B5E20"
-                    : alertConfig.type === "error"
-                    ? "#C62828"
-                    : "#E65100",
-              }}
-            >
-              {alertConfig.title}
-            </h3>
-
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
-              {alertConfig.message}
-            </p>
-
-            <button style={styles.alertBtn(alertConfig.type)} onClick={handleCloseAlert}>
-              Mengerti
-            </button>
           </div>
         </div>
       )}
@@ -1058,4 +879,4 @@ function DaftarPengaduan() {
   );
 }
 
-export default DaftarPengaduan;
+export default DashboardAdmin;
