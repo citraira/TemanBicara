@@ -277,7 +277,6 @@ function ScanQR() {
   const [manualNis, setManualNis] = useState("");
   const [loadingManual, setLoadingManual] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(true);
-  const [facingMode, setFacingMode] = useState("environment");
 
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -291,6 +290,7 @@ function ScanQR() {
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
   const isHandlingScan = useRef(false);
+  const currentModeRef = useRef("environment");
 
   const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
     setAlertConfig({
@@ -375,7 +375,7 @@ function ScanQR() {
       const studentEntry = await findStudent(cleanNis);
 
       if (!studentEntry) {
-        setErrorMsg("NIS / Barcode (" + cleanNis + ") tidak terdaftar di sekolah.");
+        setErrorMsg("NIS / Barcode (" + cleanNis + ") tidak terdaftar di database sekolah.");
         isHandlingScan.current = false;
         return;
       }
@@ -428,30 +428,42 @@ function ScanQR() {
     await verifyStudentData(cleanData);
   }, [verifyStudentData, stopMediaStream]);
 
-  // Memulai Kamera Native (Sangat Cepat & Tanpa Lag)
-  const startNativeCamera = useCallback(async (mode) => {
+  // Fungsi Inisialisasi Kamera Bebas Restart Loop
+  const startCameraStream = useCallback(async (mode) => {
     stopMediaStream();
     setCameraLoading(true);
     setErrorMsg("");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
-          facingMode: { ideal: mode },
+          facingMode: mode ? { exact: mode } : "environment",
           width: { ideal: 640 },
           height: { ideal: 640 },
         },
         audio: false,
-      });
+      };
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        // Fallback jika exact mode ditolak di browser HP
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: mode || "environment" },
+          audio: false,
+        });
+      }
 
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true");
         await videoRef.current.play();
         setCameraLoading(false);
 
-        // Jika browser mendukung native BarcodeDetector
+        // Detektor Barcode Otomatis
         if ("BarcodeDetector" in window) {
           const barcodeDetector = new window.BarcodeDetector({
             formats: ["qr_code"],
@@ -470,29 +482,32 @@ function ScanQR() {
                 }
               } catch (e) {}
             }
-          }, 300);
+          }, 350);
         }
       }
     } catch (err) {
-      console.error("Kamera native error:", err);
+      console.error("Kamera error:", err);
       setCameraLoading(false);
       setErrorMsg("Kamera tidak dapat dibuka. Berikan izin akses kamera pada browser.");
     }
   }, [stopMediaStream, handleDetectedQR]);
 
+  // Buka kamera hanya sekali saat halaman pertama kali dibuka
   useEffect(() => {
     isHandlingScan.current = false;
-    startNativeCamera("environment");
+    currentModeRef.current = "environment";
+    startCameraStream("environment");
 
     return () => {
       stopMediaStream();
     };
-  }, [startNativeCamera, stopMediaStream]);
+  }, []); // Mengosongkan dependency array agar tidak terjadi loop restart
 
+  // Tombol Flip Kamera
   const handleFlipCamera = () => {
-    const nextMode = facingMode === "environment" ? "user" : "environment";
-    setFacingMode(nextMode);
-    startNativeCamera(nextMode);
+    const nextMode = currentModeRef.current === "environment" ? "user" : "environment";
+    currentModeRef.current = nextMode;
+    startCameraStream(nextMode);
   };
 
   // Upload Gambar QR
@@ -505,7 +520,6 @@ function ScanQR() {
       setLoadingManual(true);
       setErrorMsg("");
 
-      // Jika browser mendukung native BarcodeDetector
       if ("BarcodeDetector" in window) {
         const barcodeDetector = new window.BarcodeDetector({ formats: ["qr_code"] });
         const img = await createImageBitmap(file);
@@ -547,7 +561,7 @@ function ScanQR() {
         <h2 style={styles.title}>Scan QR Code Siswa</h2>
         <p style={styles.desc}>Arahkan QR Code Kartu Siswa ke dalam kotak kamera.</p>
 
-        {/* AREA KAMERA NATIVE LANGSUNG */}
+        {/* AREA KAMERA NATIVE STABIL */}
         <div style={styles.scannerWrapper}>
           <video
             ref={videoRef}
