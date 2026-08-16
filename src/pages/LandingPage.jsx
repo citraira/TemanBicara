@@ -375,7 +375,7 @@ function LandingPage() {
       {/* Footer */}
       <footer style={styles.footer}>
         <strong style={{ fontSize: "16px" }}>Sistem Pengaduan Bullying SD</strong>
-        <p style={{ margin: "5px 0 0", opacity: 0.8 }}>Program Kerja KKN ITH 2026</p>
+        <p style={{ margin: "5px 0 0", opacity: 0.8 }}>Program Kerja KKN ITH 03 TIRO SOMPE</p>
       </footer>
     </div>
   );
