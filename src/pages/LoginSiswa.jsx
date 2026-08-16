@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase";
@@ -233,35 +233,75 @@ function LoginSiswa() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) callback();
-  };
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
+    if (callback) {
+      callback();
+    }
+  }, [alertConfig.onCloseCallback]);
+
+  const restoreLastFocus = useCallback(() => {
+    const inputRef = lastFocusedInputRef.current;
+
+    if (!inputRef?.current) return;
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    });
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
 
     const namaVal = namaRef.current?.value || "";
     const nisVal = nisRef.current?.value || "";
 
     if (namaVal.trim() === "") {
-      showAlert("warning", "Nama Belum Diisi", "Silakan masukkan nama lengkapmu terlebih dahulu.");
+      showAlert(
+        "warning",
+        "Nama Belum Diisi",
+        "Silakan masukkan nama lengkapmu terlebih dahulu."
+      );
+
+      requestAnimationFrame(() => {
+        namaRef.current?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
     if (nisVal.trim() === "") {
-      showAlert("warning", "NIS Belum Diisi", "Silakan masukkan Nomor Induk Siswa (NIS) milikmu.");
+      showAlert(
+        "warning",
+        "NIS Belum Diisi",
+        "Silakan masukkan Nomor Induk Siswa (NIS) milikmu."
+      );
+
+      requestAnimationFrame(() => {
+        nisRef.current?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
@@ -330,7 +370,12 @@ function LoginSiswa() {
             Selamat datang di Sistem Pengaduan Bullying SD.
           </div>
 
-          <button type="button" style={styles.qrButton} onClick={() => navigate("/scan-qr")}>
+          <button
+            type="button"
+            aria-label="Scan QR Code untuk login"
+            style={styles.qrButton}
+            onClick={() => navigate("/scan-qr")}
+          >
             SCAN QR CODE LOGIN
           </button>
 
@@ -358,6 +403,7 @@ function LoginSiswa() {
               style={styles.input}
               disabled={loading}
               inputMode="numeric"
+              enterKeyHint="go"
               onFocus={() => {
                 lastFocusedInputRef.current = nisRef;
               }}
@@ -372,9 +418,19 @@ function LoginSiswa() {
             </button>
           </form>
 
-          <div style={styles.back} onClick={() => navigate("/")}>
+          <button
+            type="button"
+            style={{
+              ...styles.back,
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              width: "100%",
+            }}
+            onClick={() => navigate("/")}
+          >
             Kembali ke Beranda
-          </div>
+          </button>
         </div>
 
         <div style={styles.right}>

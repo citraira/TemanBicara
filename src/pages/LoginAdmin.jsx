@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
@@ -273,35 +273,75 @@ function LoginAdmin() {
     lastFocusedInputRef.current = ref;
   };
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const restoreLastFocus = useCallback(() => {
+    const inputRef = lastFocusedInputRef.current;
 
-  const handleCloseAlert = () => {
+    if (!inputRef?.current) return;
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    });
+  }, []);
+
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
+
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) callback();
-  };
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
+    if (callback) {
+      callback();
+    }
+  }, [alertConfig.onCloseCallback]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
 
     const emailVal = emailRef.current?.value || "";
     const passwordVal = passwordRef.current?.value || "";
 
     if (!emailVal.trim()) {
-      showAlert("warning", "Email Kosong", "Silakan masukkan email admin terlebih dahulu.");
+      showAlert(
+        "warning",
+        "Email Kosong",
+        "Silakan masukkan email admin terlebih dahulu."
+      );
+
+      requestAnimationFrame(() => {
+        emailRef.current?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
     if (!passwordVal) {
-      showAlert("warning", "Kata Sandi Kosong", "Silakan masukkan kata sandi Anda.");
+      showAlert(
+        "warning",
+        "Kata Sandi Kosong",
+        "Silakan masukkan kata sandi Anda."
+      );
+
+      requestAnimationFrame(() => {
+        passwordRef.current?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
@@ -347,6 +387,8 @@ function LoginAdmin() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+
+    if (resetLoading) return;
 
     const resetEmailVal = resetEmailRef.current?.value || "";
 
@@ -412,10 +454,7 @@ function LoginAdmin() {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setShowPassword((prev) => !prev);
-
-                setTimeout(() => {
-                  passwordRef.current?.focus();
-                }, 0);
+                restoreLastFocus();
               }}
               aria-label="Tampilkan atau sembunyikan kata sandi"
             >
@@ -477,6 +516,9 @@ function LoginAdmin() {
                 style={styles.input}
                 disabled={resetLoading}
                 autoComplete="email"
+                inputMode="email"
+                enterKeyHint="send"
+                onFocus={() => rememberFocus(resetEmailRef)}
               />
 
               <button

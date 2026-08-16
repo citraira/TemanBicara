@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ref, get, update } from "firebase/database";
 import { db } from "../firebase";
@@ -25,15 +25,18 @@ function EditSiswa() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
   const handleCloseAlert = () => {
     const callback = alertConfig.onCloseCallback;
@@ -44,9 +47,24 @@ function EditSiswa() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const ambilData = async () => {
       try {
+        if (!id) {
+          if (isMounted) {
+            showAlert(
+              "error",
+              "ID Siswa Tidak Valid",
+              "ID data siswa tidak ditemukan."
+            );
+          }
+          return;
+        }
+
         const snapshot = await get(ref(db, `siswa/${id}`));
+
+        if (!isMounted) return;
 
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -66,6 +84,10 @@ function EditSiswa() {
           );
         }
       } catch (error) {
+        if (!isMounted) return;
+
+        console.error("Gagal memuat data siswa:", error);
+
         showAlert(
           "error",
           "Gagal Memuat Data",
@@ -75,10 +97,17 @@ function EditSiswa() {
     };
 
     ambilData();
-  }, [id, navigate]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, navigate, showAlert]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+
+    // Cegah double submit saat tombol ditekan berkali-kali.
+    if (loading) return;
 
     if (
       nama.trim() === "" ||
@@ -97,20 +126,25 @@ function EditSiswa() {
     setLoading(true);
 
     try {
+      const namaFinal = nama.trim();
+      const nisFinal = nis.trim();
+      const noHpFinal = noHp.trim() || "-";
+      const alamatFinal = alamat.trim() || "-";
+
       await update(ref(db, `siswa/${id}`), {
-        nama: nama.trim(),
-        nis: nis.trim(),
+        nama: namaFinal,
+        nis: nisFinal,
         kelas,
         jenisKelamin,
-        noHp: noHp.trim() || "-",
-        alamat: alamat.trim() || "-",
+        noHp: noHpFinal,
+        alamat: alamatFinal,
         updatedAt: new Date().toISOString(),
       });
 
       showAlert(
         "success",
         "Berhasil Diperbarui!",
-        `Data siswa "${nama.trim()}" telah berhasil diperbarui.`,
+        `Data siswa "${namaFinal}" telah berhasil diperbarui.`,
         () => {
           navigate("/data-siswa");
         }
@@ -181,7 +215,7 @@ function EditSiswa() {
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "14px",
+      fontSize: "16px",
       outline: "none",
       boxSizing: "border-box",
       background: "#FAFAFA",
@@ -192,7 +226,7 @@ function EditSiswa() {
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "14px",
+      fontSize: "16px",
       resize: "vertical",
       minHeight: "90px",
       outline: "none",

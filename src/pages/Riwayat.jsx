@@ -1,59 +1,104 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue } from "firebase/database";
+import { ref, get, query, orderByChild, equalTo } from "firebase/database";
 import { db } from "../firebase";
 
 function Riwayat() {
   const navigate = useNavigate();
   const [riwayatList, setRiwayatList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [namaSiswa, setNamaSiswa] = useState("");
+  const [nisSiswa, setNisSiswa] = useState("");
   const [selectedFoto, setSelectedFoto] = useState(null);
 
-  useEffect(() => {
-    const savedNama = localStorage.getItem("namaSiswa");
-    if (savedNama) {
+  // Riwayat siswa tidak perlu membaca seluruh /pengaduan.
+  // Gunakan NIS (jika tersedia) agar Firebase hanya mengirim data milik siswa.
+  const loadRiwayat = useCallback(
+    async (showInitialLoading = false) => {
+      const savedNama =
+        localStorage.getItem("namaSiswa") || "";
+      const savedNis =
+        localStorage.getItem("nisSiswa") || "";
+
       setNamaSiswa(savedNama);
-    }
+      setNisSiswa(savedNis);
 
-    const pengaduanRef = ref(db, "pengaduan");
+      try {
+        if (showInitialLoading) {
+          setLoading(true);
+        }
 
-    const unsubscribe = onValue(
-      pengaduanRef,
-      (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const formattedList = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-          }));
+        let snapshot;
 
-          const filtered = savedNama
-            ? formattedList.filter(
-                (item) =>
-                  item.nama &&
-                  item.nama.toLowerCase().trim() === savedNama.toLowerCase().trim()
-              )
-            : formattedList;
-
-          filtered.sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        if (savedNis.trim()) {
+          const riwayatQuery = query(
+            ref(db, "pengaduan"),
+            orderByChild("nis"),
+            equalTo(savedNis.trim())
           );
 
-          setRiwayatList(filtered);
+          snapshot = await get(riwayatQuery);
+        } else if (savedNama.trim()) {
+          // Fallback untuk laporan lama yang belum memiliki field NIS.
+          const namaQuery = query(
+            ref(db, "pengaduan"),
+            orderByChild("nama"),
+            equalTo(savedNama.trim())
+          );
+
+          snapshot = await get(namaQuery);
         } else {
           setRiwayatList([]);
+          return;
         }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Gagal mengambil data riwayat:", error);
-        setLoading(false);
-      }
-    );
 
-    return () => unsubscribe();
-  }, []);
+        if (!snapshot.exists()) {
+          setRiwayatList([]);
+          return;
+        }
+
+        const data = snapshot.val();
+
+        const formattedList = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt || b.createdAt || 0) -
+              new Date(a.updatedAt || a.createdAt || 0)
+          );
+
+        setRiwayatList(formattedList);
+      } catch (error) {
+        console.error(
+          "Gagal mengambil data riwayat:",
+          error
+        );
+        setRiwayatList([]);
+      } finally {
+        if (showInitialLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    loadRiwayat(true);
+  }, [loadRiwayat]);
+
+  const refreshRiwayat = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await loadRiwayat(false);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadRiwayat]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -215,12 +260,34 @@ function Riwayat() {
               {namaSiswa ? `Laporan atas nama: ${namaSiswa}` : "Pantau status pengaduanmu di sini"}
             </p>
           </div>
-          <button
-            style={styles.backButton}
-            onClick={() => navigate("/dashboard-siswa")}
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
           >
-            Kembali
-          </button>
+            <button
+              type="button"
+              style={{
+                ...styles.backButton,
+                opacity: refreshing ? 0.6 : 1,
+                cursor: refreshing ? "not-allowed" : "pointer",
+              }}
+              onClick={refreshRiwayat}
+              disabled={refreshing}
+            >
+              {refreshing ? "Memuat..." : "↻ Refresh"}
+            </button>
+
+            <button
+              type="button"
+              style={styles.backButton}
+              onClick={() => navigate("/dashboard-siswa")}
+            >
+              Kembali
+            </button>
+          </div>
         </div>
 
         {/* CONTENT */}
@@ -243,7 +310,7 @@ function Riwayat() {
             Kamu belum pernah mengirimkan laporan pengaduan.
           </div>
         ) : (
-          riwayatList.map((item) => {
+          riwayatList.slice(0, 100).map((item) => {
             const statusInfo = getStatusBadge(item.status);
             return (
               <div key={item.id} style={styles.card}>
@@ -322,6 +389,20 @@ function Riwayat() {
               </div>
             );
           })
+        )}
+
+        {!loading && riwayatList.length > 100 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "12px",
+              color: "#556B4D",
+              fontSize: "12px",
+              fontWeight: "700",
+            }}
+          >
+            Menampilkan 100 laporan terbaru dari {riwayatList.length} laporan.
+          </div>
         )}
       </div>
 

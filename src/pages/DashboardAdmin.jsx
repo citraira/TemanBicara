@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, onValue, set } from "firebase/database";
 import { getToken } from "firebase/messaging";
@@ -21,23 +21,43 @@ function DashboardAdmin() {
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
+  // Registrasi FCM Admin dilakukan sekali saat dashboard dibuka.
+  // Tidak digabung dengan listener pengaduan agar listener tidak dibuat ulang
+  // ketika pengaturan suara/nama berubah.
   useEffect(() => {
-    // Daftarkan Token FCM Admin
+    let cancelled = false;
+
     const setupAdminFCM = async () => {
       try {
-        const msg = await messaging();
-        if (!msg) return;
+        if (cancelled) return;
 
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
-          if (currentToken) {
-            await set(ref(db, "fcmTokens/admin/utama"), {
-              nama: namaGuru,
-              token: currentToken,
-              updatedAt: new Date().toISOString(),
-            });
-          }
+        const msg = await messaging();
+        if (!msg || cancelled) return;
+
+        // Jangan meminta permission berulang kali jika browser sudah
+        // memberikan keputusan sebelumnya.
+        if (
+          typeof Notification === "undefined" ||
+          Notification.permission === "denied"
+        ) {
+          return;
+        }
+
+        if (Notification.permission === "default") {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted" || cancelled) return;
+        }
+
+        const currentToken = await getToken(msg, {
+          vapidKey: VAPID_KEY,
+        });
+
+        if (currentToken && !cancelled) {
+          await set(ref(db, "fcmTokens/admin/utama"), {
+            nama: namaGuru,
+            token: currentToken,
+            updatedAt: new Date().toISOString(),
+          });
         }
       } catch (err) {
         console.warn("FCM Admin belum aktif:", err);
@@ -46,7 +66,15 @@ function DashboardAdmin() {
 
     setupAdminFCM();
 
-    // Listener Realtime Pengaduan Masuk
+    return () => {
+      cancelled = true;
+    };
+  }, [namaGuru]);
+
+  // Listener realtime pengaduan.
+  // Tetap realtime karena dashboard membutuhkan notifikasi baru,
+  // tetapi pekerjaan React dibuat seminimal mungkin.
+  useEffect(() => {
     const pengaduanRef = ref(db, "pengaduan");
     let initialLoad = true;
 
@@ -54,79 +82,143 @@ function DashboardAdmin() {
       pengaduanRef,
       (snapshot) => {
         const data = snapshot.val();
-        if (data) {
-          const list = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-          }));
 
-          list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          setAduanList(list);
-
-          const aduanDiproses = list.filter(
-            (item) => !item.status || item.status.includes("Diproses")
-          );
-          setJumlahAduanBaru(aduanDiproses.length);
-
-          const lastReadTime = localStorage.getItem("lastReadAdminNotif");
-          if (lastReadTime) {
-            const unread = list.filter(
-              (item) => new Date(item.createdAt) > new Date(lastReadTime)
-            ).length;
-            setUnreadCount(unread);
-          } else {
-            setUnreadCount(0);
-          }
-
-          // Pemicu Notifikasi Sistem HP Admin saat ada Laporan Masuk
-          const lastShownToastId = localStorage.getItem("lastShownToastId");
-          if (!initialLoad && list.length > 0) {
-            const aduanTerbaru = list[0];
-
-            if (aduanTerbaru.id !== lastShownToastId) {
-              setNotifBaru(aduanTerbaru);
-              localStorage.setItem("lastShownToastId", aduanTerbaru.id);
-
-              // Tampilkan di Status Bar HP / Desktop Admin
-              if (Notification.permission === "granted") {
-                if ("serviceWorker" in navigator) {
-                  navigator.serviceWorker.ready.then((reg) => {
-                    reg.showNotification("Laporan Pengaduan Baru!", {
-                      body: `Dari ${aduanTerbaru.nama || "Siswa"} (Kelas ${aduanTerbaru.kelas || "-"}): ${aduanTerbaru.jenis || "Bullying"}`,
-                      icon: "/pwa-192x192.png",
-                      badge: "/pwa-192x192.png",
-                      vibrate: [200, 100, 200],
-                    });
-                  });
-                }
-              }
-
-              if (soundEnabled) {
-                try {
-                  const audio = new Audio(
-                    "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
-                  );
-                  audio.play();
-                } catch (err) {
-                  console.log("Audio autoplay diblokir browser:", err);
-                }
-              }
-            }
-          }
-        } else {
+        if (!data) {
           setAduanList([]);
           setJumlahAduanBaru(0);
           setUnreadCount(0);
+          initialLoad = false;
+          return;
         }
+
+        const list = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt || 0) -
+              new Date(a.createdAt || 0)
+          );
+
+        // Satu kali update state untuk data pengaduan.
+        setAduanList(list);
+
+        // Hitung jumlah pengaduan yang masih diproses.
+        const aduanDiproses = list.reduce((total, item) => {
+          return total +
+            (!item.status || item.status.includes("Diproses") ? 1 : 0);
+        }, 0);
+
+        setJumlahAduanBaru(aduanDiproses);
+
+        // Hitung notifikasi yang belum dibaca.
+        const lastReadTime =
+          localStorage.getItem("lastReadAdminNotif");
+
+        if (lastReadTime) {
+          const lastRead = new Date(lastReadTime).getTime();
+
+          const unread = list.reduce((total, item) => {
+            const created = new Date(
+              item.createdAt || 0
+            ).getTime();
+
+            return total + (created > lastRead ? 1 : 0);
+          }, 0);
+
+          setUnreadCount(unread);
+        } else {
+          setUnreadCount(0);
+        }
+
+        // Jangan menampilkan notifikasi untuk data yang sudah ada
+        // ketika dashboard pertama kali dibuka.
+        if (!initialLoad && list.length > 0) {
+          const aduanTerbaru = list[0];
+          const lastShownToastId =
+            localStorage.getItem("lastShownToastId");
+
+          if (aduanTerbaru.id !== lastShownToastId) {
+            setNotifBaru(aduanTerbaru);
+            localStorage.setItem(
+              "lastShownToastId",
+              aduanTerbaru.id
+            );
+
+            // Notifikasi sistem hanya jika permission sudah granted.
+            if (
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted" &&
+              "serviceWorker" in navigator
+            ) {
+              navigator.serviceWorker.ready
+                .then((reg) => {
+                  reg.showNotification(
+                    "Laporan Pengaduan Baru!",
+                    {
+                      body: `Dari ${
+                        aduanTerbaru.nama || "Siswa"
+                      } (Kelas ${
+                        aduanTerbaru.kelas || "-"
+                      }): ${
+                        aduanTerbaru.jenis || "Bullying"
+                      }`,
+                      icon: "/pwa-192x192.png",
+                      badge: "/pwa-192x192.png",
+                      vibrate: [200, 100, 200],
+                    }
+                  );
+                })
+                .catch((err) => {
+                  console.warn(
+                    "Gagal menampilkan notifikasi sistem:",
+                    err
+                  );
+                });
+            }
+
+            // Suara hanya dibuat ketika benar-benar ada laporan baru.
+            if (soundEnabled) {
+              try {
+                const audio = new Audio(
+                  "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+                );
+
+                audio.volume = 0.7;
+
+                const playPromise = audio.play();
+
+                if (playPromise?.catch) {
+                  playPromise.catch(() => {
+                    console.log(
+                      "Audio autoplay diblokir browser."
+                    );
+                  });
+                }
+              } catch (err) {
+                console.log(
+                  "Audio notifikasi tidak dapat diputar:",
+                  err
+                );
+              }
+            }
+          }
+        }
+
         initialLoad = false;
       },
       (error) => {
-        console.error("Gagal mendengarkan notifikasi:", error);
+        console.error(
+          "Gagal mendengarkan notifikasi:",
+          error
+        );
       }
     );
 
     return () => unsubscribe();
-  }, [soundEnabled, namaGuru]);
+  }, [soundEnabled]);
 
   const handleOpenNotif = () => {
     setShowNotifModal(true);
@@ -145,15 +237,46 @@ function DashboardAdmin() {
     navigate("/");
   };
 
-  const totalAduan = aduanList.length;
-  const totalDiproses = aduanList.filter(
-    (item) => !item.status || item.status.includes("Diproses")
-  ).length;
-  const totalSelesai = aduanList.filter(
-    (item) => item.status === "Selesai"
-  ).length;
-  const persentaseSelesai =
-    totalAduan > 0 ? Math.round((totalSelesai / totalAduan) * 100) : 0;
+  // Perhitungan statistik dimemoisasi agar tidak dihitung ulang
+  // pada render yang hanya berkaitan dengan modal/notifikasi.
+  const {
+    totalAduan,
+    totalDiproses,
+    totalSelesai,
+    persentaseSelesai,
+  } = useMemo(() => {
+    let diproses = 0;
+    let selesai = 0;
+
+    for (const item of aduanList) {
+      if (!item.status || item.status.includes("Diproses")) {
+        diproses += 1;
+      }
+
+      if (item.status === "Selesai") {
+        selesai += 1;
+      }
+    }
+
+    const total = aduanList.length;
+
+    return {
+      totalAduan: total,
+      totalDiproses: diproses,
+      totalSelesai: selesai,
+      persentaseSelesai:
+        total > 0
+          ? Math.round((selesai / total) * 100)
+          : 0,
+    };
+  }, [aduanList]);
+
+  // Panel notifikasi tidak perlu membuat ratusan elemen sekaligus.
+  // Tampilkan 50 laporan terbaru saja; statistik tetap menggunakan seluruh data.
+  const recentAduanList = useMemo(
+    () => aduanList.slice(0, 50),
+    [aduanList]
+  );
 
   const styles = {
     page: {
@@ -684,7 +807,7 @@ function DashboardAdmin() {
                 >
                   Laporan Masuk Terbaru
                 </div>
-                {aduanList.map((item) => (
+                {recentAduanList.map((item) => (
                   <div key={item.id} style={styles.notifItemCard}>
                     <div style={{ display: "flex", alignItems: "center" }}>
                       <div style={styles.itemAvatar}>

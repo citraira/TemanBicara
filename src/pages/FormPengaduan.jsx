@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref as dbRef, push } from "firebase/database";
 import { db } from "../firebase";
@@ -279,22 +279,41 @@ function FormPengaduan() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({ isOpen: true, type, title, message, onCloseCallback });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) callback();
-  };
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
+    if (callback) {
+      callback();
+    }
+  }, [alertConfig.onCloseCallback]);
 
   useEffect(() => {
-    const namaSaved = localStorage.getItem("namaSiswa");
-    const kelasSaved = localStorage.getItem("kelasSiswa");
+    const namaSaved = localStorage.getItem("namaSiswa") || "";
+    const kelasSaved = localStorage.getItem("kelasSiswa") || "";
 
-    setNama((current) => current || namaSaved || "");
-    setKelas((current) => current || kelasSaved || "");
+    // Nilai dari localStorage hanya digunakan saat state masih kosong.
+    // Tidak ada effect yang bergantung pada state input, sehingga mengetik
+    // tidak akan memicu pengisian ulang form.
+    setNama((current) => (current ? current : namaSaved));
+    setKelas((current) => (current ? current : kelasSaved));
   }, []);
 
   const listKelas = ["1", "2", "3", "4", "5", "6"];
@@ -323,24 +342,61 @@ function FormPengaduan() {
 
   // Kompresi Gambar Cepat agar Ringan di Jaringan Lambat
   const compressImage = (file) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+
+      reader.onerror = () => {
+        reject(new Error("Gagal membaca file gambar."));
+      };
+
       reader.onload = (e) => {
         const img = new Image();
-        img.src = e.target.result;
+
+        img.onerror = () => {
+          reject(new Error("File gambar tidak dapat diproses."));
+        };
+
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 800;
-          const scale = MAX_WIDTH / img.width;
-          canvas.width = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
-          canvas.height = img.width > MAX_WIDTH ? img.height * scale : img.height;
+
+          // Batas resolusi supaya fallback tidak membuat data Firebase terlalu besar.
+          const MAX_WIDTH = 640;
+          const MAX_HEIGHT = 640;
+
+          const scale = Math.min(
+            1,
+            MAX_WIDTH / img.width,
+            MAX_HEIGHT / img.height
+          );
+
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
 
           const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/jpeg", 0.7)); // Kompres kualitas 70%
+
+          if (!ctx) {
+            reject(new Error("Browser tidak mendukung pemrosesan gambar."));
+            return;
+          }
+
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+          // Kualitas 55% cukup untuk bukti foto dan jauh lebih ringan.
+          resolve(
+            canvas.toDataURL("image/jpeg", 0.55)
+          );
         };
+
+        img.src = e.target.result;
       };
+
+      reader.readAsDataURL(file);
     });
   };
 
@@ -372,8 +428,13 @@ function FormPengaduan() {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
+    // Cegah submit ganda ketika tombol ditekan berkali-kali.
+    if (loading) return;
+
     const lokasiFinal = lokasi === "Lainnya" ? lokasiLainnya : lokasi;
     const jenisFinal = jenis === "Lainnya" ? jenisLainnya : jenis;
+
+    const nisSiswa = localStorage.getItem("nisSiswa") || "";
 
     if (
       nama.trim() === "" ||
@@ -404,6 +465,7 @@ function FormPengaduan() {
 
       await push(dbRef(db, "pengaduan"), {
         nama: nama.trim(),
+        nis: nisSiswa,
         kelas: kelas.trim(),
         peran,
         tanggal,
@@ -657,7 +719,7 @@ function FormPengaduan() {
             <label style={styles.label}>Unggah Foto Bukti (Opsional)</label>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/*"
               onChange={(e) => setFoto(e.target.files[0])}
               style={styles.input}
               disabled={loading}

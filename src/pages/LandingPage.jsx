@@ -284,6 +284,8 @@ function LandingPage() {
 
           <div style={styles.heroButton}>
             <button
+              type="button"
+              aria-label="Lapor sekarang sebagai siswa"
               style={styles.btnMainSiswa}
               onClick={() => navigate("/login-siswa")}
             >
@@ -291,6 +293,8 @@ function LandingPage() {
             </button>
 
             <button
+              type="button"
+              aria-label="Masuk ke halaman admin"
               style={styles.btnMainGuru}
               onClick={() => navigate("/login-admin")}
             >
@@ -311,7 +315,7 @@ function LandingPage() {
 
       {/* Fitur Utama */}
       <section style={styles.section}>
-        <h2 style={sectionTitleStyle(styles.sectionTitle)}>Mengapa Harus Melapor?</h2>
+        <h2 style={styles.sectionTitle}>Mengapa Harus Melapor?</h2>
 
         <div style={styles.grid}>
           <div style={styles.card}>
@@ -377,9 +381,5 @@ function LandingPage() {
   );
 }
 
-// Helper style
-function sectionTitleStyle(baseStyle) {
-  return baseStyle;
-}
 
 export default LandingPage;

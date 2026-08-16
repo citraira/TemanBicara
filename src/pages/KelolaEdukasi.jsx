@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue, push, update, remove } from "firebase/database";
+import { ref, get, push, update, remove } from "firebase/database";
 import { db } from "../firebase";
 
 function KelolaEdukasi() {
   const navigate = useNavigate();
   const [edukasiList, setEdukasiList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form State
   const [judul, setJudul] = useState("");
@@ -27,44 +29,91 @@ function KelolaEdukasi() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
     if (callback) {
       callback();
     }
-  };
+  }, [alertConfig.onCloseCallback]);
 
-  // Read Data Edukasi dari Firebase
-  useEffect(() => {
-    const edukasiRef = ref(db, "edukasi");
-    const unsubscribe = onValue(edukasiRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const formatted = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
-        formatted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // Data edukasi tidak membutuhkan listener realtime pada halaman admin.
+  // Ambil sekali saat dibuka dan ulangi hanya ketika Refresh diperlukan.
+  const loadEdukasi = useCallback(
+    async (showInitialLoading = false) => {
+      try {
+        if (showInitialLoading) {
+          setLoading(true);
+        }
+
+        const snapshot = await get(ref(db, "edukasi"));
+
+        if (!snapshot.exists()) {
+          setEdukasiList([]);
+          return;
+        }
+
+        const data = snapshot.val();
+
+        const formatted = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt || b.createdAt || 0) -
+              new Date(a.updatedAt || a.createdAt || 0)
+          );
+
         setEdukasiList(formatted);
-      } else {
-        setEdukasiList([]);
-      }
-      setLoading(false);
-    });
+      } catch (error) {
+        console.error("Gagal mengambil data edukasi:", error);
 
-    return () => unsubscribe();
-  }, []);
+        showAlert(
+          "error",
+          "Gagal Memuat Data",
+          error.message || "Terjadi kesalahan saat mengambil materi edukasi."
+        );
+      } finally {
+        if (showInitialLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    [showAlert]
+  );
+
+  useEffect(() => {
+    loadEdukasi(true);
+  }, [loadEdukasi]);
+
+  const refreshEdukasi = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await loadEdukasi(false);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadEdukasi]);
 
   // Reset Form Input
   const resetForm = () => {
@@ -78,36 +127,105 @@ function KelolaEdukasi() {
   // Tambah atau Update Edukasi
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!judul.trim() || !isi.trim()) {
-      showAlert("warning", "Data Belum Lengkap", "Judul dan Isi Konten edukasi wajib diisi!");
+
+    if (saving) return;
+
+    const judulFinal = judul.trim();
+    const ringkasanFinal = ringkasan.trim();
+    const isiFinal = isi.trim();
+
+    if (!judulFinal || !isiFinal) {
+      showAlert(
+        "warning",
+        "Data Belum Lengkap",
+        "Judul dan Isi Konten edukasi wajib diisi!"
+      );
       return;
     }
 
+    setSaving(true);
+
     try {
       if (editId) {
-        // Mode Edit
         await update(ref(db, `edukasi/${editId}`), {
-          judul: judul.trim(),
+          judul: judulFinal,
           kategori,
-          ringkasan: ringkasan.trim(),
-          isi: isi.trim(),
+          ringkasan: ringkasanFinal,
+          isi: isiFinal,
           updatedAt: new Date().toISOString(),
         });
-        showAlert("success", "Berhasil Diperbarui", "Konten edukasi anti-bullying berhasil diperbarui!");
+
+        // Optimistic UI update agar kartu berubah tanpa membaca seluruh
+        // node edukasi sekali lagi.
+        setEdukasiList((prev) =>
+          prev
+            .map((item) =>
+              item.id === editId
+                ? {
+                    ...item,
+                    judul: judulFinal,
+                    kategori,
+                    ringkasan: ringkasanFinal,
+                    isi: isiFinal,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : item
+            )
+            .sort(
+              (a, b) =>
+                new Date(b.updatedAt || b.createdAt || 0) -
+                new Date(a.updatedAt || a.createdAt || 0)
+            )
+        );
+
+        showAlert(
+          "success",
+          "Berhasil Diperbarui",
+          "Konten edukasi anti-bullying berhasil diperbarui!"
+        );
       } else {
-        // Mode Tambah
-        await push(ref(db, "edukasi"), {
-          judul: judul.trim(),
+        const createdAt = new Date().toISOString();
+
+        const newRef = await push(ref(db, "edukasi"), {
+          judul: judulFinal,
           kategori,
-          ringkasan: ringkasan.trim(),
-          isi: isi.trim(),
-          createdAt: new Date().toISOString(),
+          ringkasan: ringkasanFinal,
+          isi: isiFinal,
+          createdAt,
+          updatedAt: createdAt,
         });
-        showAlert("success", "Berhasil Diterbitkan", "Konten edukasi baru berhasil diterbitkan untuk siswa!");
+
+        // Tambahkan item baru langsung ke state agar tidak perlu
+        // membaca seluruh database kembali.
+        setEdukasiList((prev) => [
+          {
+            id: newRef.key,
+            judul: judulFinal,
+            kategori,
+            ringkasan: ringkasanFinal,
+            isi: isiFinal,
+            createdAt,
+            updatedAt: createdAt,
+          },
+          ...prev,
+        ]);
+
+        showAlert(
+          "success",
+          "Berhasil Diterbitkan",
+          "Konten edukasi baru berhasil diterbitkan untuk siswa!"
+        );
       }
+
       resetForm();
     } catch (error) {
-      showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan materi.");
+      showAlert(
+        "error",
+        "Gagal Menyimpan",
+        error.message || "Terjadi kesalahan saat menyimpan materi."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -129,13 +247,34 @@ function KelolaEdukasi() {
   // Eksekusi Hapus Konten
   const executeDelete = async () => {
     const id = deleteTargetId;
+
+    if (!id) return;
+
     setDeleteTargetId(null);
+
+    // Simpan state sebelumnya untuk rollback jika Firebase gagal.
+    const previousList = edukasiList;
+
+    setEdukasiList((prev) =>
+      prev.filter((item) => item.id !== id)
+    );
 
     try {
       await remove(ref(db, `edukasi/${id}`));
-      showAlert("success", "Berhasil Dihapus", "Konten edukasi berhasil dihapus dari sistem.");
+
+      showAlert(
+        "success",
+        "Berhasil Dihapus",
+        "Konten edukasi berhasil dihapus dari sistem."
+      );
     } catch (error) {
-      showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus materi.");
+      setEdukasiList(previousList);
+
+      showAlert(
+        "error",
+        "Gagal Menghapus",
+        error.message || "Terjadi kesalahan saat menghapus materi."
+      );
     }
   };
 
@@ -406,9 +545,34 @@ function KelolaEdukasi() {
             Tambah dan edit artikel / panduan edukasi anti-bullying
           </p>
         </div>
-        <button style={styles.backBtn} onClick={() => navigate("/dashboard-admin")}>
-          Kembali ke Dashboard
-        </button>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            type="button"
+            style={{
+              ...styles.backBtn,
+              opacity: refreshing ? 0.6 : 1,
+              cursor: refreshing ? "not-allowed" : "pointer",
+            }}
+            onClick={refreshEdukasi}
+            disabled={refreshing}
+          >
+            {refreshing ? "Memuat..." : "↻ Refresh"}
+          </button>
+
+          <button
+            type="button"
+            style={styles.backBtn}
+            onClick={() => navigate("/dashboard-admin")}
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
       </div>
 
       {/* FORM EDIT / TAMBAH */}
@@ -466,11 +630,32 @@ function KelolaEdukasi() {
           </div>
 
           <div style={styles.btnContainer}>
-            <button type="submit" style={styles.btnSubmit}>
-              {editId ? "Simpan Perubahan" : "Terbitkan Konten"}
+            <button
+              type="submit"
+              style={{
+                ...styles.btnSubmit,
+                opacity: saving ? 0.6 : 1,
+                cursor: saving ? "not-allowed" : "pointer",
+              }}
+              disabled={saving}
+            >
+              {saving
+                ? "Menyimpan..."
+                : editId
+                ? "Simpan Perubahan"
+                : "Terbitkan Konten"}
             </button>
             {editId && (
-              <button type="button" style={styles.btnCancel} onClick={resetForm}>
+              <button
+                type="button"
+                style={{
+                  ...styles.btnCancel,
+                  opacity: saving ? 0.6 : 1,
+                  cursor: saving ? "not-allowed" : "pointer",
+                }}
+                onClick={resetForm}
+                disabled={saving}
+              >
                 Batal Edit
               </button>
             )}
@@ -487,7 +672,7 @@ function KelolaEdukasi() {
           Belum ada materi edukasi. Silakan buat materi baru di atas.
         </div>
       ) : (
-        edukasiList.map((item) => (
+        edukasiList.slice(0, 100).map((item) => (
           <div key={item.id} style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
               <span style={styles.kategoriBadge}>
@@ -517,6 +702,20 @@ function KelolaEdukasi() {
             </div>
           </div>
         ))
+      )}
+
+      {!loading && edukasiList.length > 100 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "12px",
+            color: "#556B4D",
+            fontSize: "12px",
+            fontWeight: "700",
+          }}
+        >
+          Menampilkan 100 konten terbaru dari {edukasiList.length} konten.
+        </div>
       )}
 
       {/* MODAL KONFIRMASI HAPUS KONTEN EDUKASI */}

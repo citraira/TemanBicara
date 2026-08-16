@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ref, onValue, remove } from "firebase/database";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ref, get, remove } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { db } from "../firebase";
@@ -9,6 +9,8 @@ function DataSiswa() {
 
   const [dataSiswa, setDataSiswa] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedQr, setSelectedQr] = useState(null);
 
   // State untuk Modal Konfirmasi Hapus
@@ -41,26 +43,57 @@ function DataSiswa() {
     }
   };
 
-  useEffect(() => {
-    const siswaRef = ref(db, "siswa");
+  // Ambil data siswa satu kali saat halaman dibuka.
+  // Halaman Data Siswa tidak membutuhkan listener realtime terus-menerus,
+  // sehingga perubahan satu siswa tidak memaksa seluruh tabel di-render ulang.
+  const loadDataSiswa = useCallback(async (showInitialLoading = false) => {
+    try {
+      if (showInitialLoading) {
+        setLoading(true);
+      }
 
-    const unsubscribe = onValue(siswaRef, (snapshot) => {
+      const snapshot = await get(ref(db, "siswa"));
+
+      if (!snapshot.exists()) {
+        setDataSiswa([]);
+        return;
+      }
+
       const data = snapshot.val();
 
-      if (data) {
-        const list = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
+      const list = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
 
-        setDataSiswa(list);
-      } else {
-        setDataSiswa([]);
+      setDataSiswa(list);
+    } catch (error) {
+      console.error("Gagal mengambil data siswa:", error);
+
+      showAlert(
+        "error",
+        "Gagal Memuat Data",
+        error.message || "Terjadi kesalahan saat mengambil data siswa."
+      );
+    } finally {
+      if (showInitialLoading) {
+        setLoading(false);
       }
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
+
+  useEffect(() => {
+    loadDataSiswa(true);
+  }, [loadDataSiswa]);
+
+  const refreshDataSiswa = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await loadDataSiswa(false);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadDataSiswa]);
 
   // Membuka modal konfirmasi hapus
   const confirmDelete = (id) => {
@@ -70,13 +103,28 @@ function DataSiswa() {
   // Eksekusi penghapusan data setelah dikonfirmasi
   const executeDelete = async () => {
     const id = deleteTarget;
+    if (!id) return;
+
     setDeleteTarget(null);
 
     try {
       await remove(ref(db, `siswa/${id}`));
-      showAlert("success", "Berhasil Dihapus", "Data siswa berhasil dihapus dari sistem.");
+
+      // Optimistic update agar baris langsung hilang tanpa menunggu
+      // listener realtime atau reload seluruh halaman.
+      setDataSiswa((prev) => prev.filter((item) => item.id !== id));
+
+      showAlert(
+        "success",
+        "Berhasil Dihapus",
+        "Data siswa berhasil dihapus dari sistem."
+      );
     } catch (err) {
-      showAlert("error", "Gagal Menghapus", err.message || "Terjadi kesalahan saat menghapus data.");
+      showAlert(
+        "error",
+        "Gagal Menghapus",
+        err.message || "Terjadi kesalahan saat menghapus data."
+      );
     }
   };
 
@@ -172,15 +220,22 @@ function DataSiswa() {
   }
 };
 
-  const hasilPencarian = dataSiswa.filter((item) => {
-    const keyword = search.toLowerCase();
+  // Hanya hitung ulang hasil pencarian ketika data atau kata kunci berubah.
+  const hasilPencarian = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
 
-    return (
-      item.nama?.toLowerCase().includes(keyword) ||
-      item.nis?.toLowerCase().includes(keyword) ||
-      item.kelas?.toLowerCase().includes(keyword)
-    );
-  });
+    if (!keyword) {
+      return dataSiswa;
+    }
+
+    return dataSiswa.filter((item) => {
+      return (
+        String(item.nama || "").toLowerCase().includes(keyword) ||
+        String(item.nis || "").toLowerCase().includes(keyword) ||
+        String(item.kelas || "").toLowerCase().includes(keyword)
+      );
+    });
+  }, [dataSiswa, search]);
 
   const styles = {
     page: {
@@ -452,12 +507,34 @@ function DataSiswa() {
       <div style={styles.header}>
         <h1 style={styles.title}>Data Siswa</h1>
 
-        <button
-          style={styles.topButton}
-          onClick={() => navigate("/tambah-siswa")}
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
         >
-          Tambah Siswa
-        </button>
+          <button
+            type="button"
+            style={{
+              ...styles.topButton,
+              opacity: refreshing ? 0.6 : 1,
+              cursor: refreshing ? "not-allowed" : "pointer",
+            }}
+            onClick={refreshDataSiswa}
+            disabled={refreshing}
+          >
+            {refreshing ? "Memuat..." : "↻ Refresh"}
+          </button>
+
+          <button
+            type="button"
+            style={styles.topButton}
+            onClick={() => navigate("/tambah-siswa")}
+          >
+            Tambah Siswa
+          </button>
+        </div>
       </div>
 
       {/* SEARCH */}
@@ -470,6 +547,21 @@ function DataSiswa() {
       />
 
       {/* TABEL */}
+      {loading ? (
+        <div
+          style={{
+            background: "#fff",
+            padding: "35px 20px",
+            borderRadius: "18px",
+            textAlign: "center",
+            color: "#1B5E20",
+            border: "2px solid #C8E6C9",
+            fontWeight: "700",
+          }}
+        >
+          Memuat data siswa...
+        </div>
+      ) : (
       <div style={styles.tableContainer}>
         <table style={styles.table}>
           <thead>
@@ -489,7 +581,9 @@ function DataSiswa() {
             {hasilPencarian.length === 0 ? (
               <tr>
                 <td colSpan="8" style={styles.empty}>
-                  Belum ada data siswa.
+                  {search.trim()
+                    ? "Data siswa yang dicari tidak ditemukan."
+                    : "Belum ada data siswa."}
                 </td>
               </tr>
             ) : (
@@ -530,6 +624,7 @@ function DataSiswa() {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* MODAL POPUP CETAK/LIHAT QR CODE */}
       {selectedQr && (

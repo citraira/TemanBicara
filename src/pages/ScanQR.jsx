@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { ref, get } from "firebase/database";
@@ -252,25 +252,38 @@ function ScanQR() {
   });
 
   const html5QrCodeRef = useRef(null);
+  const scannerStartingRef = useRef(false);
+  const scanHandledRef = useRef(false);
+  const isMountedRef = useRef(true);
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
-    if (callback) callback();
-  };
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
+    if (callback) {
+      callback();
+    }
+  }, [alertConfig.onCloseCallback]);
 
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
 
     const initScanner = async () => {
       try {
@@ -279,29 +292,46 @@ function ScanQR() {
         }
 
         const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0 && isMounted) {
+
+        if (!isMountedRef.current) return;
+
+        if (devices && devices.length > 0) {
           setCameras(devices);
 
-          let defaultIndex = devices.findIndex(
-            (device) =>
-              device.label.toLowerCase().includes("back") ||
-              device.label.toLowerCase().includes("belakang") ||
-              device.label.toLowerCase().includes("environment")
-          );
-          if (defaultIndex === -1) defaultIndex = devices.length - 1;
+          let defaultIndex = devices.findIndex((device) => {
+            const label = (device.label || "").toLowerCase();
+
+            return (
+              label.includes("back") ||
+              label.includes("belakang") ||
+              label.includes("environment") ||
+              label.includes("rear")
+            );
+          });
+
+          if (defaultIndex === -1) {
+            defaultIndex = devices.length - 1;
+          }
 
           setCurrentCameraIndex(defaultIndex);
+
           await startScanner(devices[defaultIndex].id);
-        } else if (isMounted) {
-          // Fallback menggunakan facingMode jika list kamera kosong
+        } else {
           await startScanner({ facingMode: "environment" });
         }
       } catch (err) {
         console.warn("Mencoba fallback kamera:", err);
-        if (isMounted) {
-          startScanner({ facingMode: "environment" }).catch((error) => {
-            setErrorMsg("Izin kamera belum aktif. Berikan izin kamera di pengaturan browser.");
-          });
+
+        if (!isMountedRef.current) return;
+
+        try {
+          await startScanner({ facingMode: "environment" });
+        } catch (_) {
+          if (isMountedRef.current) {
+            setErrorMsg(
+              "Izin kamera belum aktif. Berikan izin kamera di pengaturan browser."
+            );
+          }
         }
       }
     };
@@ -309,101 +339,198 @@ function ScanQR() {
     initScanner();
 
     return () => {
-      isMounted = false;
-      if (html5QrCodeRef.current) {
+      isMountedRef.current = false;
+      scannerStartingRef.current = false;
+      scanHandledRef.current = true;
+
+      const scanner = html5QrCodeRef.current;
+      html5QrCodeRef.current = null;
+
+      if (scanner) {
         try {
-          if (html5QrCodeRef.current.isScanning) {
-            html5QrCodeRef.current.stop().then(() => {
-              html5QrCodeRef.current.clear();
-            }).catch(() => {});
-          } else {
-            html5QrCodeRef.current.clear();
+          if (scanner.isScanning) {
+            scanner.stop().catch(() => {});
           }
-        } catch (e) {
-          console.error(e);
-        }
+
+          setTimeout(() => {
+            try {
+              scanner.clear();
+            } catch (_) {}
+          }, 0);
+        } catch (_) {}
       }
     };
   }, []);
 
-  const startScanner = async (cameraConfig) => {
-    if (!html5QrCodeRef.current) return;
+  const startScanner = useCallback(async (cameraConfig) => {
+    const scanner = html5QrCodeRef.current;
+
+    if (!scanner || !isMountedRef.current) return;
+    if (scannerStartingRef.current) return;
+
+    scannerStartingRef.current = true;
+    scanHandledRef.current = false;
 
     try {
-      if (html5QrCodeRef.current.isScanning) {
-        await html5QrCodeRef.current.stop();
+      if (scanner.isScanning) {
+        await scanner.stop();
       }
 
-      await html5QrCodeRef.current.start(
+      if (!isMountedRef.current) return;
+
+      await scanner.start(
         cameraConfig,
         {
-          fps: 15,
-          qrbox: { width: 230, height: 230 },
+          fps: 10,
+          qrbox: { width: 220, height: 220 },
           aspectRatio: 1.0,
         },
         (decodedText) => {
+          if (scanHandledRef.current) return;
+
+          scanHandledRef.current = true;
           handleSuccessScan(decodedText);
         },
         () => {}
       );
-      setErrorMsg("");
+
+      if (isMountedRef.current) {
+        setErrorMsg("");
+      }
     } catch (err) {
       console.error("Gagal start kamera:", err);
-      setErrorMsg("Kamera tidak dapat diakses. Pastikan izin kamera aktif dan web menggunakan HTTPS.");
-    }
-  };
 
-  const handleFlipCamera = () => {
+      if (isMountedRef.current) {
+        setErrorMsg(
+          "Kamera tidak dapat diakses. Pastikan izin kamera aktif dan web menggunakan HTTPS."
+        );
+      }
+    } finally {
+      scannerStartingRef.current = false;
+    }
+  }, []);
+
+  const handleFlipCamera = async () => {
     if (cameras.length < 2) {
-      showAlert("warning", "Kamera Tunggal", "Hanya 1 kamera yang terdeteksi di perangkat Anda.");
+      showAlert(
+        "warning",
+        "Kamera Tunggal",
+        "Hanya 1 kamera yang terdeteksi di perangkat Anda."
+      );
       return;
     }
-    const nextIndex = (currentCameraIndex + 1) % cameras.length;
+
+    if (scannerStartingRef.current) return;
+
+    const nextIndex =
+      (currentCameraIndex + 1) % cameras.length;
+
     setCurrentCameraIndex(nextIndex);
-    startScanner(cameras[nextIndex].id);
+    scanHandledRef.current = false;
+
+    await startScanner(cameras[nextIndex].id);
   };
 
-  const handleSuccessScan = (qrData) => {
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-      html5QrCodeRef.current.stop().catch(() => {});
+  const handleSuccessScan = useCallback(async (qrData) => {
+    const cleanQrData = String(qrData || "").trim();
+
+    if (!cleanQrData || !isMountedRef.current) return;
+
+    scanHandledRef.current = true;
+
+    const scanner = html5QrCodeRef.current;
+
+    if (scanner?.isScanning) {
+      try {
+        await scanner.stop();
+      } catch (_) {}
     }
-    setScanResult(qrData);
-    verifyStudentData(qrData);
-  };
+
+    if (!isMountedRef.current) return;
+
+    setScanResult(cleanQrData);
+    setErrorMsg("");
+
+    await verifyStudentData(cleanQrData);
+  }, []);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files?.[0];
 
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-      await html5QrCodeRef.current.stop().catch(() => {});
-    }
+    // Izinkan memilih file yang sama kembali.
+    e.target.value = "";
+
+    if (!file || !html5QrCodeRef.current) return;
+
+    const scanner = html5QrCodeRef.current;
 
     try {
-      const decodedText = await html5QrCodeRef.current.scanFile(file, true);
-      handleSuccessScan(decodedText);
+      if (scanner.isScanning) {
+        await scanner.stop();
+      }
+
+      scanHandledRef.current = true;
+
+      const decodedText = await scanner.scanFile(file, true);
+
+      if (!isMountedRef.current) return;
+
+      setScanResult(decodedText);
+      setErrorMsg("");
+
+      await verifyStudentData(decodedText);
     } catch (err) {
       console.error("Gagal baca file:", err);
-      setErrorMsg("Tidak dapat membaca QR Code dari foto ini. Pastikan gambar jelas!");
+
+      if (!isMountedRef.current) return;
+
+      setErrorMsg(
+        "Tidak dapat membaca QR Code dari foto ini. Pastikan gambar jelas!"
+      );
+
+      scanHandledRef.current = false;
+
       if (cameras.length > 0) {
-        startScanner(cameras[currentCameraIndex].id);
+        await startScanner(cameras[currentCameraIndex].id);
+      } else {
+        await startScanner({ facingMode: "environment" });
       }
     }
   };
 
   const verifyStudentData = async (qrData) => {
-    setErrorMsg("");
+    const cleanQrData = String(qrData || "").trim();
+
+    if (!cleanQrData) {
+      if (isMountedRef.current) {
+        setErrorMsg("QR Code / NIS tidak valid.");
+      }
+      return;
+    }
+
     try {
-      const cleanQrData = qrData.trim();
+      setErrorMsg("");
+
       const studentRef = ref(db, `siswa/${cleanQrData}`);
       const snapshot = await get(studentRef);
+
+      if (!isMountedRef.current) return;
 
       if (snapshot.exists()) {
         const dataSiswa = snapshot.val();
 
-        localStorage.setItem("namaSiswa", dataSiswa.nama);
-        localStorage.setItem("nisSiswa", dataSiswa.nis || cleanQrData);
-        localStorage.setItem("kelasSiswa", dataSiswa.kelas || "-");
+        localStorage.setItem(
+          "namaSiswa",
+          dataSiswa.nama || ""
+        );
+        localStorage.setItem(
+          "nisSiswa",
+          dataSiswa.nis || cleanQrData
+        );
+        localStorage.setItem(
+          "kelasSiswa",
+          dataSiswa.kelas || "-"
+        );
 
         showAlert(
           "success",
@@ -414,27 +541,50 @@ function ScanQR() {
           }
         );
       } else {
-        setErrorMsg("QR Code atau NISN tidak terdaftar di sistem sekolah!");
+        setErrorMsg(
+          "QR Code atau NISN tidak terdaftar di sistem sekolah!"
+        );
+
+        scanHandledRef.current = false;
+
         if (cameras.length > 0) {
-          startScanner(cameras[currentCameraIndex].id);
+          await startScanner(cameras[currentCameraIndex].id);
+        } else {
+          await startScanner({ facingMode: "environment" });
         }
       }
     } catch (err) {
-      console.error(err);
-      setErrorMsg("Terjadi kendala koneksi saat verifikasi data.");
+      console.error("Gagal verifikasi siswa:", err);
+
+      if (isMountedRef.current) {
+        setErrorMsg(
+          "Terjadi kendala koneksi saat verifikasi data."
+        );
+        scanHandledRef.current = false;
+      }
     } finally {
-      setLoadingManual(false);
+      if (isMountedRef.current) {
+        setLoadingManual(false);
+      }
     }
   };
 
   const handleManualSubmit = (e) => {
     e.preventDefault();
-    if (!manualNis.trim()) {
+
+    if (loadingManual) return;
+
+    const nis = manualNis.trim();
+
+    if (!nis) {
       setErrorMsg("Silakan masukkan NISN / NIS Siswa!");
       return;
     }
+
     setLoadingManual(true);
-    verifyStudentData(manualNis.trim());
+    scanHandledRef.current = true;
+
+    verifyStudentData(nis);
   };
 
   return (
@@ -501,7 +651,11 @@ function ScanQR() {
           </button>
         </form>
 
-        <button style={styles.backBtn} onClick={() => navigate("/login-siswa")}>
+        <button
+          type="button"
+          style={styles.backBtn}
+          onClick={() => navigate("/login-siswa")}
+        >
           Kembali ke Login
         </button>
       </div>

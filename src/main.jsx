@@ -1,27 +1,52 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+
 import App from "./App";
 import "./index.css";
 
-// Import PWA Auto Register
 import { registerSW } from "virtual:pwa-register";
 
-registerSW({ immediate: true });
+// ========================================
+// REGISTER PWA SERVICE WORKER
+// ========================================
 
-// Daftarkan Service Worker Firebase untuk Notifikasi Background
+registerSW({
+  immediate: true,
+});
+
+// ========================================
+// REGISTER FIREBASE MESSAGING SERVICE WORKER
+// ========================================
+
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("/firebase-messaging-sw.js")
-    .then((registration) => {
-      console.log("FCM Service Worker aktif:", registration.scope);
-    })
-    .catch((err) => {
-      console.error("Gagal registrasi FCM Service Worker:", err);
-    });
+  window.addEventListener("load", async () => {
+    try {
+      const registration =
+        await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js"
+        );
+
+      console.log(
+        "FCM Service Worker aktif:",
+        registration.scope
+      );
+    } catch (error) {
+      console.error(
+        "Gagal registrasi FCM Service Worker:",
+        error
+      );
+    }
+  });
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+// ========================================
+// RENDER APPLICATION
+// ========================================
+
+ReactDOM.createRoot(
+  document.getElementById("root")
+).render(
   <BrowserRouter>
     <App />
   </BrowserRouter>

@@ -277,13 +277,9 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
   const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
   const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
 
-  // Update state lokal jika item props berubah dari luar
-  useEffect(() => {
-    setPenanganan(item.penanganan || "Dipisahkan");
-    setResponOrangTua(item.responOrangTua || "");
-    setTindakanSanksi(item.tindakanSanksi || "");
-  }, [item.penanganan, item.responOrangTua, item.tindakanSanksi]);
-
+  // State form sengaja hanya diinisialisasi saat kartu dibuat.
+  // Jangan sinkronkan ulang setiap kali props berubah, karena itu dapat
+  // membuat cursor/input terasa macet atau teks ter-reset saat mengetik.
   return (
     <div style={styles.card}>
       <div style={styles.cardHeader}>
@@ -479,71 +475,78 @@ function DaftarPengaduan() {
     });
   }, []);
 
-  // Ambil data pengaduan satu kali saat halaman dibuka
+  // Memuat pengaduan hanya saat halaman dibuka.
+  // Tidak memakai onValue() agar halaman daftar tidak terus menerima
+  // seluruh data pengaduan setiap ada perubahan di Firebase.
+  const loadPengaduan = useCallback(async (showLoading = false) => {
+    try {
+      if (showLoading) setLoading(true);
+
+      const snapshot = await get(ref(db, "pengaduan"));
+
+      if (!snapshot.exists()) {
+        setLaporanList([]);
+        return;
+      }
+
+      const data = snapshot.val();
+
+      const formattedList = Object.keys(data)
+        .map((key) => ({
+          id: key,
+          ...data[key],
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt || 0) -
+            new Date(a.updatedAt || a.createdAt || 0)
+        );
+
+      setLaporanList(formattedList);
+    } catch (error) {
+      console.error("Gagal mengambil data pengaduan:", error);
+
+      showAlert(
+        "error",
+        "Gagal Memuat Data",
+        error.message || "Terjadi kesalahan saat mengambil data pengaduan."
+      );
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, [showAlert]);
+
   useEffect(() => {
     let mounted = true;
 
-    const loadPengaduan = async () => {
-      try {
-        const pengaduanRef = ref(db, "pengaduan");
-        const snapshot = await get(pengaduanRef);
-
-        if (!mounted) return;
-
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-
-          const formattedList = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-          }));
-
-          formattedList.sort(
-            (a, b) =>
-              new Date(b.createdAt || 0) -
-              new Date(a.createdAt || 0)
-          );
-
-          setLaporanList(formattedList);
-        } else {
-          setLaporanList([]);
-        }
-      } catch (error) {
-        console.error("Gagal mengambil data pengaduan:", error);
-
-        if (mounted) {
-          showAlert(
-            "error",
-            "Gagal Memuat Data",
-            error.message || "Terjadi kesalahan saat mengambil data pengaduan."
-          );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
+    const loadInitialData = async () => {
+      if (!mounted) return;
+      await loadPengaduan(true);
     };
 
-    loadPengaduan();
+    loadInitialData();
 
     return () => {
       mounted = false;
     };
-  }, [showAlert]);
+  }, [loadPengaduan]);
 
   // Update Status Instan (Optimistic)
   const handleStatusChange = useCallback(async (id, statusBaru) => {
+    const updatedAt = new Date().toISOString();
+
     setLaporanList((prevList) =>
       prevList.map((item) =>
-        item.id === id ? { ...item, status: statusBaru } : item
+        item.id === id
+          ? { ...item, status: statusBaru, updatedAt }
+          : item
       )
     );
 
     try {
       await update(ref(db, `pengaduan/${id}`), {
         status: statusBaru,
-        updatedAt: new Date().toISOString(),
+        updatedAt,
       });
       showAlert("success", "Status Diperbarui", `Status kasus berhasil diubah menjadi "${statusBaru}".`);
     } catch (error) {
@@ -583,42 +586,14 @@ function DaftarPengaduan() {
   }, [deleteTargetId, showAlert]);
 
 
-  const refreshPengaduan = async () => {
-  try {
-    setRefreshing(true);
-
-    const snapshot = await get(ref(db, "pengaduan"));
-
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-
-      const formattedList = Object.keys(data).map((key) => ({
-        id: key,
-        ...data[key],
-      }));
-
-      formattedList.sort(
-        (a, b) =>
-          new Date(b.createdAt || 0) -
-          new Date(a.createdAt || 0)
-      );
-
-      setLaporanList(formattedList);
-    } else {
-      setLaporanList([]);
+  const refreshPengaduan = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await loadPengaduan(false);
+    } finally {
+      setRefreshing(false);
     }
-  } catch (error) {
-    console.error("Gagal refresh pengaduan:", error);
-
-    showAlert(
-      "error",
-      "Refresh Gagal",
-      error.message || "Tidak dapat memperbarui daftar pengaduan."
-    );
-  } finally {
-    setRefreshing(false);
-  }
-};
+  }, [loadPengaduan]);
 
   return (
     <div style={styles.page}>
@@ -688,7 +663,7 @@ function DaftarPengaduan() {
           Belum ada laporan pengaduan yang masuk.
         </div>
       ) : (
-        laporanList.map((item) => (
+        laporanList.slice(0, 100).map((item) => (
           <ItemPengaduanCard
             key={item.id}
             item={item}
@@ -698,6 +673,22 @@ function DaftarPengaduan() {
             onFotoClick={setSelectedFoto}
           />
         ))
+      )}
+
+      {!loading && laporanList.length > 100 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "12px",
+            marginBottom: "16px",
+            color: "#556B4D",
+            fontSize: "12px",
+            fontWeight: "700",
+          }}
+        >
+          Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
+          Gunakan pencarian/paginasi pada tahap berikutnya jika datanya semakin banyak.
+        </div>
       )}
 
       {selectedFoto && (

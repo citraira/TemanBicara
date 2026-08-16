@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, push } from "firebase/database";
 import { db } from "../firebase";
@@ -23,30 +23,46 @@ function TambahSiswa() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
     if (callback) {
       callback();
     }
-  };
+  }, [alertConfig.onCloseCallback]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Cegah double submit ketika tombol ditekan berkali-kali.
+    if (loading) return;
+
+    const namaFinal = nama.trim();
+    const nisFinal = nis.trim();
+    const noHpFinal = noHp.trim() || "-";
+    const alamatFinal = alamat.trim() || "-";
+
     if (
-      nama.trim() === "" ||
-      nis.trim() === "" ||
+      namaFinal === "" ||
+      nisFinal === "" ||
       kelas === "" ||
       jenisKelamin === ""
     ) {
@@ -62,24 +78,27 @@ function TambahSiswa() {
 
     try {
       await push(ref(db, "siswa"), {
-        nama: nama.trim(),
-        nis: nis.trim(),
+        nama: namaFinal,
+        nis: nisFinal,
         kelas,
         jenisKelamin,
-        noHp: noHp.trim() || "-",
-        alamat: alamat.trim() || "-",
+        noHp: noHpFinal,
+        alamat: alamatFinal,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       showAlert(
         "success",
         "Berhasil Disimpan!",
-        `Data siswa "${nama.trim()}" berhasil ditambahkan ke dalam sistem.`,
+        `Data siswa "${namaFinal}" berhasil ditambahkan ke dalam sistem.`,
         () => {
           navigate("/data-siswa");
         }
       );
     } catch (error) {
+      console.error("Gagal menambahkan siswa:", error);
+
       showAlert(
         "error",
         "Gagal Menyimpan",
@@ -145,7 +164,7 @@ function TambahSiswa() {
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "14px",
+      fontSize: "16px",
       outline: "none",
       boxSizing: "border-box",
       background: "#FAFAFA",
@@ -156,7 +175,7 @@ function TambahSiswa() {
       padding: "12px 14px",
       borderRadius: "12px",
       border: "2px solid #C8E6C9",
-      fontSize: "14px",
+      fontSize: "16px",
       resize: "vertical",
       minHeight: "90px",
       outline: "none",
@@ -310,6 +329,8 @@ function TambahSiswa() {
               placeholder="Masukkan Nama Lengkap"
               style={styles.input}
               disabled={loading}
+              autoComplete="name"
+              enterKeyHint="next"
             />
           </div>
 
@@ -323,6 +344,8 @@ function TambahSiswa() {
               placeholder="Masukkan NIS"
               style={styles.input}
               disabled={loading}
+              inputMode="numeric"
+              enterKeyHint="next"
             />
           </div>
 
@@ -391,13 +414,13 @@ function TambahSiswa() {
             type="submit"
             style={styles.saveButton}
             disabled={loading}
-            onMouseDown={(e) => e.preventDefault()}
           >
             {loading ? "Menyimpan..." : "Simpan Data"}
           </button>
 
             <button
               type="button"
+              aria-label="Kembali ke data siswa"
               style={styles.backButton}
               onClick={() => navigate("/data-siswa")}
               disabled={loading}

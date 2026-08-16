@@ -1,33 +1,67 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue } from "firebase/database";
+import { ref, get } from "firebase/database";
 import { db } from "../firebase";
 
 function Edukasi() {
   const navigate = useNavigate();
   const [edukasiList, setEdukasiList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedMateri, setSelectedMateri] = useState(null);
 
-  useEffect(() => {
-    const edukasiRef = ref(db, "edukasi");
-    const unsubscribe = onValue(edukasiRef, (snapshot) => {
+  // Materi edukasi tidak perlu listener realtime terus-menerus.
+  // Ambil data saat halaman dibuka dan saat pengguna menekan Refresh.
+  const loadEdukasi = useCallback(async (showInitialLoading = false) => {
+    try {
+      if (showInitialLoading) {
+        setLoading(true);
+      }
+
+      const snapshot = await get(ref(db, "edukasi"));
+
+      if (!snapshot.exists()) {
+        setEdukasiList([]);
+        return;
+      }
+
       const data = snapshot.val();
-      if (data) {
-        const formatted = Object.keys(data).map((key) => ({
+
+      const formatted = Object.keys(data)
+        .map((key) => ({
           id: key,
           ...data[key],
-        }));
-        formatted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setEdukasiList(formatted);
-      } else {
-        setEdukasiList([]);
-      }
-      setLoading(false);
-    });
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt || 0) -
+            new Date(a.updatedAt || a.createdAt || 0)
+        );
 
-    return () => unsubscribe();
+      setEdukasiList(formatted);
+    } catch (error) {
+      console.error("Gagal mengambil materi edukasi:", error);
+      setEdukasiList([]);
+    } finally {
+      if (showInitialLoading) {
+        setLoading(false);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    loadEdukasi(true);
+  }, [loadEdukasi]);
+
+  const refreshEdukasi = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await loadEdukasi(false);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadEdukasi]);
+
 
   const styles = {
     page: {
@@ -172,12 +206,34 @@ function Edukasi() {
               Pelajari informasi penting untuk mencegah dan menghadapi bullying di sekolah
             </p>
           </div>
-          <button
-            style={styles.backButton}
-            onClick={() => navigate("/dashboard-siswa")}
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
           >
-            Kembali
-          </button>
+            <button
+              type="button"
+              style={{
+                ...styles.backButton,
+                opacity: refreshing ? 0.6 : 1,
+                cursor: refreshing ? "not-allowed" : "pointer",
+              }}
+              onClick={refreshEdukasi}
+              disabled={refreshing}
+            >
+              {refreshing ? "Memuat..." : "↻ Refresh"}
+            </button>
+
+            <button
+              type="button"
+              style={styles.backButton}
+              onClick={() => navigate("/dashboard-siswa")}
+            >
+              Kembali
+            </button>
+          </div>
         </div>
 
         {loading ? (

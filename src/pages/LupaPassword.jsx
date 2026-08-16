@@ -1,10 +1,14 @@
-import { useState } from "react";
+
+
+
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 
 function LupaPassword() {
   const navigate = useNavigate();
+  const emailRef = useRef(null);
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,29 +22,48 @@ function LupaPassword() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
     if (callback) {
       callback();
     }
-  };
+  }, [alertConfig.onCloseCallback]);
 
   const handleReset = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
     if (!email.trim()) {
-      showAlert("warning", "Email Diperlukan", "Masukkan email admin terlebih dahulu.");
+      showAlert(
+        "warning",
+        "Email Diperlukan",
+        "Masukkan email admin terlebih dahulu."
+      );
+
+      requestAnimationFrame(() => {
+        emailRef.current?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
@@ -273,13 +296,19 @@ function LupaPassword() {
           <label style={styles.label}>📧 Email Admin</label>
 
           <input
+            ref={emailRef}
             type="email"
             placeholder="contoh@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
+            style={{
+              ...styles.input,
+              fontSize: "16px",
+            }}
             disabled={loading}
             autoComplete="email"
+            inputMode="email"
+            enterKeyHint="send"
             autoFocus
           />
 

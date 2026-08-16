@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, query, orderByChild, equalTo } from "firebase/database";
 import { getToken } from "firebase/messaging";
 import { db, messaging } from "../firebase";
 
@@ -17,25 +17,30 @@ function DashboardSiswa() {
   const VAPID_KEY =
     "BNvX0y1mYfy8p2i78-htBoIL7jvm4vReNiFYh5BePlOIm3XdtHfttEru76AnrrvAtDhVSncZ-kVbleS3gczxEDw";
 
+  // Ambil identitas siswa sekali saat dashboard dibuka.
+  const savedNama = localStorage.getItem("namaSiswa") || "";
+  const savedNis = localStorage.getItem("nisSiswa") || "anonim";
+
   useEffect(() => {
-    const savedNama = localStorage.getItem("namaSiswa");
-    const savedNis = localStorage.getItem("nisSiswa") || "anonim";
-
-    if (savedNama) {
-      setNamaSiswa(savedNama);
-    }
-
-    // Registrasi Token Notifikasi
     const setupFCM = async () => {
       try {
         const msg = await messaging();
         if (!msg) return;
 
-        const permission = await Notification.requestPermission();
+        // Jangan meminta permission berulang kali jika browser
+        // sudah mempunyai keputusan permission.
+        let permission = Notification.permission;
+
+        if (permission === "default") {
+          permission = await Notification.requestPermission();
+        }
+
         if (permission === "granted") {
           const currentToken = await getToken(msg, { vapidKey: VAPID_KEY });
+
           if (currentToken) {
             const cleanKey = savedNis.replace(/[.#$[\]]/g, "_");
+
             await set(ref(db, `fcmTokens/siswa/${cleanKey}`), {
               nama: savedNama || "Siswa",
               token: currentToken,
@@ -49,71 +54,116 @@ function DashboardSiswa() {
     };
 
     setupFCM();
+  }, [savedNis, savedNama]);
 
-    // Listener Realtime Pengaduan
-    const pengaduanRef = ref(db, "pengaduan");
+  useEffect(() => {
+    // Jika identitas siswa belum tersedia, jangan membaca seluruh
+    // node "pengaduan". Ini mencegah query besar yang tidak perlu.
+    if (!savedNama) {
+      setNotifList([]);
+      setUnreadCount(0);
+      return undefined;
+    }
+
+    // SEBELUMNYA halaman mengambil seluruh /pengaduan lalu melakukan
+    // .filter() di browser. Sekarang Firebase langsung mengirim
+    // pengaduan yang nama siswanya sesuai.
+    const pengaduanQuery = query(
+      ref(db, "pengaduan"),
+      orderByChild("nama"),
+      equalTo(savedNama)
+    );
+
     let initialLoad = true;
 
-    const unsubscribe = onValue(pengaduanRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
+    const unsubscribe = onValue(
+      pengaduanQuery,
+      (snapshot) => {
+        const data = snapshot.val();
+
+        if (!data) {
+          setNotifList([]);
+          setUnreadCount(0);
+          initialLoad = false;
+          return;
+        }
+
         const formatted = Object.keys(data).map((key) => ({
           id: key,
           ...data[key],
         }));
 
-        const aduanSaya = savedNama
-          ? formatted.filter(
-              (item) =>
-                item.nama &&
-                item.nama.toLowerCase().trim() === savedNama.toLowerCase().trim()
-            )
-          : formatted;
-
-        aduanSaya.sort(
+        // Urutkan berdasarkan update terakhir.
+        formatted.sort(
           (a, b) =>
-            new Date(b.updatedAt || b.createdAt) -
-            new Date(a.updatedAt || a.createdAt)
+            new Date(b.updatedAt || b.createdAt || 0) -
+            new Date(a.updatedAt || a.createdAt || 0)
         );
-        setNotifList(aduanSaya);
 
-        const storageKey = `lastReadNotif_${savedNama || "guest"}`;
+        // Statistik unread tetap dihitung dari seluruh data hasil query,
+        // tetapi UI hanya menyimpan 50 terbaru agar render tetap ringan.
+        const storageKey = `lastReadNotif_${savedNama}`;
         const lastReadTime = localStorage.getItem(storageKey);
+        const lastReadDate = lastReadTime ? new Date(lastReadTime) : null;
 
-        if (lastReadTime) {
-          const unread = aduanSaya.filter((item) => {
-            const waktu = new Date(item.updatedAt || item.createdAt);
-            return waktu > new Date(lastReadTime);
-          }).length;
+        if (lastReadDate) {
+          let unread = 0;
+
+          for (const item of formatted) {
+            const waktu = new Date(item.updatedAt || item.createdAt || 0);
+
+            if (waktu > lastReadDate) {
+              unread++;
+            }
+          }
+
           setUnreadCount(unread);
         } else {
-          setUnreadCount(aduanSaya.length);
+          setUnreadCount(formatted.length);
         }
 
-        // Pemicu Notifikasi Realtime HP saat Status Berubah
-        if (!initialLoad && aduanSaya.length > 0) {
-          const aduanTerbaru = aduanSaya[0];
+        // Hanya render 50 notifikasi terbaru di panel.
+        setNotifList(formatted.slice(0, 50));
+
+        // Pemicu notifikasi realtime saat status laporan berubah.
+        if (!initialLoad && formatted.length > 0) {
+          const aduanTerbaru = formatted[0];
           const lastStatusKey = `lastSeenStatus_${aduanTerbaru.id}`;
           const lastSavedStatus = localStorage.getItem(lastStatusKey);
 
-          if (lastSavedStatus && lastSavedStatus !== aduanTerbaru.status) {
-            // 1. Tampilkan Toast di dalam aplikasi
+          if (
+            lastSavedStatus &&
+            lastSavedStatus !== aduanTerbaru.status
+          ) {
             setToastStatus({
               jenis: aduanTerbaru.jenis || "Pengaduan",
               status: aduanTerbaru.status,
             });
 
-            // 2. MUNCULKAN DI STATUS BAR HP / LUAR WEB
             if (Notification.permission === "granted") {
               if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.ready.then((reg) => {
-                  reg.showNotification("Pembaruan Laporan - Teman Bicara", {
-                    body: `Laporan ${aduanTerbaru.jenis || ""} kamu diubah statusnya menjadi: "${aduanTerbaru.status}"`,
-                    icon: "/pwa-192x192.png",
-                    badge: "/pwa-192x192.png",
-                    vibrate: [200, 100, 200],
+                navigator.serviceWorker.ready
+                  .then((reg) => {
+                    return reg.showNotification(
+                      "Pembaruan Laporan - Teman Bicara",
+                      {
+                        body: `Laporan ${
+                          aduanTerbaru.jenis || ""
+                        } kamu diubah statusnya menjadi: "${
+                          aduanTerbaru.status
+                        }"`,
+                        icon: "/pwa-192x192.png",
+                        badge: "/pwa-192x192.png",
+                        vibrate: [200, 100, 200],
+                      }
+                    );
+                  })
+                  .catch((err) => {
+                    console.warn(
+                      "Gagal menampilkan notifikasi:",
+                      err
+                    );
                   });
-                });
               }
             }
 
@@ -121,28 +171,48 @@ function DashboardSiswa() {
               const audio = new Audio(
                 "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
               );
-              audio.play();
+
+              const playPromise = audio.play();
+
+              if (playPromise && typeof playPromise.catch === "function") {
+                playPromise.catch((err) => {
+                  console.log(
+                    "Audio diblokir browser:",
+                    err
+                  );
+                });
+              }
             } catch (err) {
               console.log("Audio diblokir browser:", err);
             }
           }
 
-          localStorage.setItem(lastStatusKey, aduanTerbaru.status);
-        } else if (initialLoad && aduanSaya.length > 0) {
-          aduanSaya.forEach((item) => {
-            localStorage.setItem(`lastSeenStatus_${item.id}`, item.status);
+          localStorage.setItem(
+            lastStatusKey,
+            aduanTerbaru.status || ""
+          );
+        } else if (initialLoad && formatted.length > 0) {
+          // Hanya inisialisasi status terakhir tanpa memicu notifikasi.
+          formatted.forEach((item) => {
+            localStorage.setItem(
+              `lastSeenStatus_${item.id}`,
+              item.status || ""
+            );
           });
         }
-      } else {
-        setNotifList([]);
-        setUnreadCount(0);
-      }
 
-      initialLoad = false;
-    });
+        initialLoad = false;
+      },
+      (error) => {
+        console.error(
+          "Gagal mendengarkan pengaduan siswa:",
+          error
+        );
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [savedNama]);
 
   const markNotifAsRead = () => {
     const savedNama = localStorage.getItem("namaSiswa") || "guest";

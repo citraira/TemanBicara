@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { 
@@ -32,59 +32,109 @@ function PengaturanAdmin() {
     onCloseCallback: null,
   });
 
-  const showAlert = (type, title, message, onCloseCallback = null) => {
-    setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      onCloseCallback,
-    });
-  };
+  const showAlert = useCallback(
+    (type, title, message, onCloseCallback = null) => {
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onCloseCallback,
+      });
+    },
+    []
+  );
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     const callback = alertConfig.onCloseCallback;
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
     if (callback) {
       callback();
     }
-  };
+  }, [alertConfig.onCloseCallback]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadAdminData = async () => {
       const currentUser = auth.currentUser;
-      
-      const activeEmail = currentUser?.email || localStorage.getItem("emailGuru") || "";
-      setEmailGuru(activeEmail);
+
+      const activeEmail =
+        currentUser?.email ||
+        localStorage.getItem("emailGuru") ||
+        "";
+
+      if (isMounted) {
+        setEmailGuru(activeEmail);
+      }
 
       try {
         const snapshot = await get(ref(db, "pengaturan/admin"));
+
+        if (!isMounted) return;
+
         if (snapshot.exists()) {
           const data = snapshot.val();
-          setNamaGuru(data.nama || localStorage.getItem("namaGuru") || "");
-          setNoWaGuru(data.noWa || localStorage.getItem("noWaGuru") || "");
+
+          setNamaGuru(
+            data.nama ||
+              localStorage.getItem("namaGuru") ||
+              ""
+          );
+
+          setNoWaGuru(
+            data.noWa ||
+              localStorage.getItem("noWaGuru") ||
+              ""
+          );
         } else {
-          setNamaGuru(localStorage.getItem("namaGuru") || "");
-          setNoWaGuru(localStorage.getItem("noWaGuru") || "");
+          setNamaGuru(
+            localStorage.getItem("namaGuru") || ""
+          );
+
+          setNoWaGuru(
+            localStorage.getItem("noWaGuru") || ""
+          );
         }
       } catch (err) {
-        console.error("Gagal memuat data database:", err);
-        setNamaGuru(localStorage.getItem("namaGuru") || "");
-        setNoWaGuru(localStorage.getItem("noWaGuru") || "");
+        console.error(
+          "Gagal memuat data database:",
+          err
+        );
+
+        if (isMounted) {
+          setNamaGuru(
+            localStorage.getItem("namaGuru") || ""
+          );
+
+          setNoWaGuru(
+            localStorage.getItem("noWaGuru") || ""
+          );
+        }
       }
     };
 
     loadAdminData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSimpanPengaturan = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    // Cegah request berulang jika tombol ditekan berkali-kali.
+    if (loading) return;
 
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
-      setLoading(false);
       showAlert(
         "warning",
         "Sesi Berakhir",
@@ -94,48 +144,108 @@ function PengaturanAdmin() {
       return;
     }
 
-    const currentEmail = currentUser.email;
-    const isEmailChanged = emailGuru.trim().toLowerCase() !== currentEmail.toLowerCase();
-    const isPasswordChanged = sandiBaru.trim().length > 0;
+    const currentEmail = currentUser.email || "";
+    const emailFinal = emailGuru.trim();
+    const namaFinal = namaGuru.trim();
+    const noWaFinal = noWaGuru.trim();
+    const passwordFinal = sandiBaru.trim();
+
+    if (!emailFinal) {
+      showAlert(
+        "warning",
+        "Email Diperlukan",
+        "Email admin wajib diisi."
+      );
+      return;
+    }
+
+    if (!namaFinal) {
+      showAlert(
+        "warning",
+        "Nama Diperlukan",
+        "Nama Guru/Admin wajib diisi."
+      );
+      return;
+    }
+
+    const isEmailChanged =
+      emailFinal.toLowerCase() !==
+      currentEmail.toLowerCase();
+
+    const isPasswordChanged =
+      passwordFinal.length > 0;
+
+    if (isPasswordChanged && passwordFinal.length < 6) {
+      showAlert(
+        "warning",
+        "Kata Sandi Kurang",
+        "Kata sandi baru minimal harus terdiri dari 6 karakter!"
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // 1. JIKA KATA SANDI DIUBAH
+      // 1. Ubah password bila diminta.
       if (isPasswordChanged) {
-        if (sandiBaru.trim().length < 6) {
-          setLoading(false);
-          showAlert("warning", "Kata Sandi Kurang", "Kata sandi baru minimal harus terdiri dari 6 karakter!");
-          return;
-        }
-
-        await updatePassword(currentUser, sandiBaru.trim());
+        await updatePassword(
+          currentUser,
+          passwordFinal
+        );
       }
 
-      // 2. JIKA EMAIL DIUBAH
+      // 2. Kirim verifikasi bila email berubah.
       if (isEmailChanged) {
-        await verifyBeforeUpdateEmail(currentUser, emailGuru.trim());
-        setPendingEmail(emailGuru.trim());
+        await verifyBeforeUpdateEmail(
+          currentUser,
+          emailFinal
+        );
+
+        setPendingEmail(emailFinal);
         setShowEmailModal(true);
       }
 
-      // 3. SIMPAN NAMA & NO WA KE FIREBASE REALTIME DATABASE & LOCALSTORAGE
-      await saveOtherData(currentEmail);
+      // 3. Simpan profil menggunakan email yang benar-benar
+      // akan digunakan sebagai data profil.
+      await saveOtherData(
+        isEmailChanged ? emailFinal : currentEmail
+      );
 
-      let message = "Pengaturan profil admin berhasil diperbarui!";
+      let message =
+        "Pengaturan profil admin berhasil diperbarui!";
+
       if (isPasswordChanged && isEmailChanged) {
-        message = "Kata sandi berhasil diubah dan tautan verifikasi telah dikirim ke email baru Anda.";
+        message =
+          "Kata sandi berhasil diubah dan tautan verifikasi telah dikirim ke email baru Anda.";
       } else if (isPasswordChanged) {
-        message = "Kata sandi berhasil diubah! Silakan gunakan kata sandi baru saat login berikutnya.";
+        message =
+          "Kata sandi berhasil diubah! Silakan gunakan kata sandi baru saat login berikutnya.";
       } else if (isEmailChanged) {
-        message = "Tautan verifikasi telah dikirim ke email baru Anda!";
+        message =
+          "Tautan verifikasi telah dikirim ke email baru Anda!";
       }
 
-      showAlert("success", "Pengaturan Disimpan", message);
       setSandiBaru("");
+
+      // Jangan menimpa modal verifikasi email dengan alert sukses
+      // jika email memang sedang menunggu verifikasi.
+      if (!isEmailChanged) {
+        showAlert(
+          "success",
+          "Pengaturan Disimpan",
+          message
+        );
+      }
     } catch (error) {
-      console.error("Gagal menyimpan pengaturan:", error);
+      console.error(
+        "Gagal menyimpan pengaturan:",
+        error
+      );
 
       if (
-        error.code === "auth/requires-recent-login" || 
+        error.code ===
+          "auth/requires-recent-login" ||
         error.code === "auth/user-token-expired"
       ) {
         showAlert(
@@ -145,29 +255,50 @@ function PengaturanAdmin() {
           () => navigate("/login-admin")
         );
       } else if (error.code === "auth/invalid-email") {
-        showAlert("error", "Email Tidak Valid", "Format penulisan email admin tidak valid!");
+        showAlert(
+          "error",
+          "Email Tidak Valid",
+          "Format penulisan email admin tidak valid!"
+        );
       } else if (error.code === "auth/weak-password") {
-        showAlert("error", "Kata Sandi Lemah", "Kata sandi terlalu lemah! Gunakan minimal 6 karakter kombinasi.");
+        showAlert(
+          "error",
+          "Kata Sandi Lemah",
+          "Kata sandi terlalu lemah! Gunakan minimal 6 karakter kombinasi."
+        );
       } else {
-        showAlert("error", "Gagal Menyimpan", "Gagal menyimpan pengaturan: " + error.message);
+        showAlert(
+          "error",
+          "Gagal Menyimpan",
+          "Gagal menyimpan pengaturan: " +
+            (error.message || "Terjadi kesalahan.")
+        );
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const saveOtherData = async (emailToSave) => {
-    localStorage.setItem("emailGuru", emailToSave);
-    localStorage.setItem("namaGuru", namaGuru.trim());
-    localStorage.setItem("noWaGuru", noWaGuru.trim());
+  const saveOtherData = useCallback(
+    async (emailToSave) => {
+      const emailFinal = (emailToSave || "").trim();
+      const namaFinal = namaGuru.trim();
+      const noWaFinal = noWaGuru.trim();
 
-    // PENTING: Menyimpan ke node 'pengaturan/admin' agar dapat dibaca oleh 'HubungiGuru.jsx'
-    await set(ref(db, "pengaturan/admin"), {
-      email: emailToSave,
-      nama: namaGuru.trim(),
-      noWa: noWaGuru.trim(),
-    });
-  };
+      localStorage.setItem("emailGuru", emailFinal);
+      localStorage.setItem("namaGuru", namaFinal);
+      localStorage.setItem("noWaGuru", noWaFinal);
+
+      // PENTING: node ini dibaca oleh HubungiGuru.jsx.
+      await set(ref(db, "pengaturan/admin"), {
+        email: emailFinal,
+        nama: namaFinal,
+        noWa: noWaFinal,
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [namaGuru, noWaGuru]
+  );
 
   const styles = {
     page: {
@@ -227,7 +358,7 @@ function PengaturanAdmin() {
       borderRadius: "10px",
       border: "2px solid #C8E6C9",
       marginBottom: "16px",
-      fontSize: "14px",
+      fontSize: "16px",
       boxSizing: "border-box",
       outline: "none",
       background: "#FAFAFA",
@@ -364,15 +495,20 @@ function PengaturanAdmin() {
             onChange={(e) => setNamaGuru(e.target.value)}
             placeholder="Nama Lengkap"
             style={styles.input}
+            autoComplete="name"
+            disabled={loading}
           />
 
           <label style={styles.label}>No. WhatsApp</label>
           <input
-            type="text"
+            type="tel"
             value={noWaGuru}
             onChange={(e) => setNoWaGuru(e.target.value)}
             placeholder="08123456789"
             style={styles.input}
+            inputMode="tel"
+            autoComplete="tel"
+            disabled={loading}
           />
 
           {/* AKUN LOGIN */}
@@ -385,7 +521,10 @@ function PengaturanAdmin() {
             onChange={(e) => setEmailGuru(e.target.value)}
             placeholder="admin@sekolah.sch.id"
             style={styles.input}
+            inputMode="email"
+            autoComplete="email"
             required
+            disabled={loading}
           />
 
           <label style={styles.label}>Kata Sandi Baru (Opsional)</label>
@@ -395,6 +534,9 @@ function PengaturanAdmin() {
             onChange={(e) => setSandiBaru(e.target.value)}
             placeholder="Biarkan kosong jika tidak diubah"
             style={styles.input}
+            autoComplete="new-password"
+            enterKeyHint="done"
+            disabled={loading}
           />
 
           <button type="submit" style={styles.btn} disabled={loading}>
