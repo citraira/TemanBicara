@@ -94,16 +94,12 @@ function DashboardSiswa() {
    * notifikasi baru.
    */
   const getNotifSignature = (item) => {
-    const updatedAt =
-      item?.updatedAt ||
-      item?.createdAt ||
-      "";
-
-    const status =
-      item?.status ||
-      "";
-
-    return `${updatedAt}__${status}`;
+    // Notifikasi siswa hanya dipicu ketika STATUS berubah.
+    // Perubahan updatedAt saja (misalnya catatan penanganan) tidak dianggap
+    // sebagai notifikasi baru.
+    return String(
+      item?.status || "Diproses"
+    ).trim();
   };
 
   /*
@@ -353,19 +349,22 @@ function DashboardSiswa() {
               readState[item.id];
 
             /*
-             * Belum pernah dilihat
+             * Laporan pertama kali dikenali:
+             * jadikan status saat ini sebagai baseline.
+             *
+             * Status awal "Diproses" TIDAK dianggap notifikasi.
+             * Notifikasi baru hanya muncul setelah status berubah.
              */
             if (!savedRead) {
-              unread++;
+              readState[item.id] = {
+                signature,
+                readAt: new Date().toISOString(),
+              };
               return;
             }
 
             /*
-             * Signature berbeda berarti:
-             *
-             * - status berubah
-             * - updatedAt berubah
-             * - laporan mengalami pembaruan
+             * Hanya perubahan STATUS yang membuat notifikasi baru.
              */
             if (
               savedRead.signature !==
@@ -375,6 +374,10 @@ function DashboardSiswa() {
             }
           }
         );
+
+        // Simpan baseline status yang baru dikenali agar
+        // status awal "Diproses" tidak muncul sebagai notifikasi.
+        saveReadNotifState(readState);
 
         setUnreadCount(unread);
 
@@ -401,6 +404,9 @@ function DashboardSiswa() {
            * Karena data sudah diurutkan dari terbaru,
            * item pertama adalah laporan yang terakhir
            * diperbarui.
+           *
+           * Notifikasi hanya boleh keluar ketika status benar-benar
+           * berubah dari baseline sebelumnya.
            */
           const aduanTerbaru =
             aduanSaya[0];
@@ -414,16 +420,11 @@ function DashboardSiswa() {
             );
 
           const statusSekarang =
-            aduanTerbaru.status || "";
+            String(
+              aduanTerbaru.status ||
+              "Diproses"
+            ).trim();
 
-          /*
-           * Jangan tampilkan toast jika:
-           *
-           * - belum ada status sebelumnya
-           *
-           * karena itu biasanya merupakan data yang
-           * baru pertama kali dikenali oleh browser.
-           */
           if (
             statusSebelumnya !== null &&
             statusSebelumnya !==
@@ -536,7 +537,9 @@ function DashboardSiswa() {
 
               localStorage.setItem(
                 `currentStatus_${item.id}`,
-                item.status || ""
+                String(
+                  item.status || "Diproses"
+                ).trim()
               );
             }
           );
@@ -1407,7 +1410,7 @@ function DashboardSiswa() {
                   styles.panelTitle
                 }
               >
-                Notifikasi Laporan
+                Notifikasi Status Laporan
               </h2>
 
               <button
