@@ -1,608 +1,536 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+
 import { useNavigate } from "react-router-dom";
-import { ref, get, update, remove } from "firebase/database";
+
+import {
+  ref as dbRef,
+  push,
+} from "firebase/database";
+
 import { db } from "../firebase";
+
+// ======================================================
+// STYLE
+// ======================================================
 
 const styles = {
   page: {
     minHeight: "100dvh",
     background: "#F4FBEE",
-    padding: "20px 15px 40px",
-    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    padding: "16px 12px 40px",
+    fontFamily:
+      "'Segoe UI', Roboto, sans-serif",
     boxSizing: "border-box",
   },
+
   header: {
     background: "#2E7D32",
     color: "#fff",
-    padding: "20px",
-    borderRadius: "20px",
-    marginBottom: "20px",
+    padding: "20px 18px",
+    borderRadius: "18px",
+    marginBottom: "14px",
+    textAlign: "center",
+    boxShadow:
+      "0 4px 12px rgba(0,0,0,0.06)",
+  },
+
+  title: {
+    fontSize: "22px",
+    fontWeight: "800",
+    margin: "0 0 6px 0",
+  },
+
+  subtitle: {
+    fontSize: "14px",
+    lineHeight: "1.5",
+    margin: 0,
+  },
+
+  hotlineBox: {
+    background: "#FFFDE7",
+    border: "1.5px solid #FFF59D",
+    borderRadius: "14px",
+    padding: "12px 14px",
+    maxWidth: "750px",
+    margin: "0 auto 14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
     flexWrap: "wrap",
-    gap: "12px",
+    gap: "10px",
   },
-  title: { fontSize: "22px", fontWeight: "800", margin: 0 },
-  backButton: {
-    padding: "10px 16px",
+
+  hotlineText: {
+    color: "#1B5E20",
+    fontSize: "13px",
+    lineHeight: "1.4",
+    flex: 1,
+  },
+
+  hotlineBtn: {
+    background: "#25D366",
+    color: "#fff",
+    padding: "8px 14px",
+    borderRadius: "10px",
+    textDecoration: "none",
+    fontWeight: "700",
+    fontSize: "13px",
+  },
+
+  container: {
+    background: "#fff",
+    maxWidth: "750px",
+    margin: "0 auto",
+    padding: "20px 16px",
+    borderRadius: "18px",
+    boxShadow:
+      "0 4px 14px rgba(0,0,0,0.04)",
+    border: "1.5px solid #C8E6C9",
+    boxSizing: "border-box",
+  },
+
+  group: {
+    marginBottom: "18px",
+  },
+
+  labelRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
+    marginBottom: "8px",
+  },
+
+  label: {
+    display: "block",
+    fontWeight: "800",
+    color: "#1B5E20",
+    fontSize: "14px",
+    lineHeight: "1.4",
+  },
+
+  helperText: {
+    fontSize: "12px",
+    color: "#667C5E",
+    marginTop: "4px",
+    lineHeight: "1.4",
+  },
+
+  input: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: "1.5px solid #C8E6C9",
+    fontSize: "16px",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+  },
+
+  readonlyInput: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: "1.5px solid #C8E6C9",
+    fontSize: "16px",
+    boxSizing: "border-box",
+    background: "#F1F8E9",
+    color: "#33691E",
+    fontWeight: "700",
+  },
+
+  textarea: {
+    width: "100%",
+    minHeight: "130px",
+    padding: "13px 14px",
+    borderRadius: "12px",
+    border: "1.5px solid #C8E6C9",
+    fontSize: "16px",
+    resize: "vertical",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#FAFAFA",
+    lineHeight: "1.5",
+    fontFamily:
+      "'Segoe UI', Roboto, sans-serif",
+  },
+
+  selectWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    width: "100%",
+  },
+
+  selectEmoji: {
+    width: "46px",
+    height: "46px",
+    flexShrink: 0,
+    borderRadius: "13px",
+    background: "#E8F5E9",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    border: "1.5px solid #C8E6C9",
+  },
+
+  childSelect: {
+    flex: 1,
+    minWidth: 0,
+    padding: "12px 13px",
+    borderRadius: "12px",
+    border: "1.5px solid #C8E6C9",
+    background: "#FAFAFA",
+    color: "#1B5E20",
+    fontSize: "16px",
+    fontWeight: "700",
+    boxSizing: "border-box",
+  },
+
+  speakButton: {
+    border: "none",
+    background: "#E8F5E9",
+    color: "#1B5E20",
+    borderRadius: "11px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    flexShrink: 0,
+  },
+
+  speakingButton: {
+    border: "none",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    borderRadius: "11px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    flexShrink: 0,
+  },
+
+  voiceButton: {
+    border: "none",
+    background: "#E3F2FD",
+    color: "#1565C0",
+    borderRadius: "11px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    flexShrink: 0,
+  },
+
+  listeningButton: {
+    border: "none",
+    background: "#FFEB3B",
+    color: "#1B5E20",
+    borderRadius: "11px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    flexShrink: 0,
+  },
+
+  voiceHelp: {
+    background: "#FFFDE7",
+    border: "1.5px solid #FFF59D",
+    borderRadius: "12px",
+    padding: "10px 12px",
+    marginTop: "8px",
+    fontSize: "12px",
+    color: "#5D5D32",
+    lineHeight: "1.5",
+  },
+
+  childInfoBox: {
+    background:
+      "linear-gradient(135deg,#E8F5E9,#F1F8E9)",
+    border: "1.5px solid #A5D6A7",
+    borderRadius: "14px",
+    padding: "13px 14px",
+    marginBottom: "18px",
+    display: "flex",
+    gap: "10px",
+  },
+
+  gridTwo: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+  },
+
+  choiceButton: (selected) => ({
+    width: "100%",
+    padding: "13px 10px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "800",
+    fontSize: "14px",
+    border: `1.5px solid ${
+      selected ? "#2E7D32" : "#E0E0E0"
+    }`,
+    background: selected
+      ? "#E8F5E9"
+      : "#FAFAFA",
+    color: selected
+      ? "#1B5E20"
+      : "#444",
+    minHeight: "52px",
+  }),
+
+  otherInputBox: {
+    marginTop: "9px",
+    padding: "10px",
+    background: "#F1F8E9",
+    borderRadius: "12px",
+    border: "1.5px dashed #A5D6A7",
+  },
+
+  fileBox: {
+    background: "#FAFAFA",
+    border: "1.5px dashed #A5D6A7",
+    borderRadius: "12px",
+    padding: "12px",
+  },
+
+  antiFitnahBox: {
+    background: "#FFFDE7",
+    border: "1.5px solid #FFF59D",
+    borderRadius: "12px",
+    padding: "12px 13px",
+    marginBottom: "18px",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+  },
+
+  btnContainer: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+
+  submitBtn: (disabled) => ({
+    flex: "1 1 180px",
+    padding: "14px",
+    background: disabled
+      ? "#A5D6A7"
+      : "#2E7D32",
+    color: "#fff",
+    border: "none",
+    borderRadius: "12px",
+    cursor: disabled
+      ? "not-allowed"
+      : "pointer",
+    fontSize: "14px",
+    fontWeight: "800",
+  }),
+
+  backBtn: {
+    flex: "1 1 180px",
+    padding: "14px",
     background: "#FFEB3B",
     color: "#1B5E20",
     border: "none",
     borderRadius: "12px",
     cursor: "pointer",
-    fontWeight: "800",
-    fontSize: "13px",
-    boxShadow: "0 3px 0 #FBC02D",
-  },
-  card: {
-    background: "#fff",
-    borderRadius: "18px",
-    padding: "20px 18px",
-    marginBottom: "20px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-    borderLeft: "6px solid #2E7D32",
-    borderTop: "1px solid #E8F5E9",
-    borderRight: "1px solid #E8F5E9",
-    borderBottom: "1px solid #E8F5E9",
-  },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #E8F5E9",
-    paddingBottom: "10px",
-    marginBottom: "14px",
-    flexWrap: "wrap",
-    gap: "8px",
-  },
-  pelaporInfo: { fontSize: "16px", fontWeight: "800", color: "#1B5E20" },
-  badge: { padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: "800" },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: "10px",
-    marginBottom: "12px",
-    fontSize: "13px",
-    color: "#556B4D",
-  },
-  ceritaBox: {
-    background: "#FAFAFA",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "1px dashed #C8E6C9",
-    fontSize: "13px",
-    lineHeight: "1.5",
-    color: "#2E3D29",
-    marginTop: "6px",
-    marginBottom: "14px",
-  },
-  interventionBox: {
-    background: "#FFFDE7",
-    border: "2px solid #FFF59D",
-    borderRadius: "14px",
-    padding: "18px",
-    marginTop: "16px",
-    marginBottom: "16px",
-  },
-  interventionGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "16px",
-    alignItems: "start",
-  },
-  interventionField: {
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-  },
-  fieldLabel: {
-    display: "block",
-    minHeight: "30px",
-    fontSize: "12px",
-    fontWeight: "700",
-    lineHeight: "1.3",
-    color: "#1B5E20",
-    marginBottom: "6px",
-  },
-  fieldControl: {
-    width: "100%",
-    minHeight: "42px",
-    boxSizing: "border-box",
-  },
-  inputSmall: {
-    width: "100%",
-    height: "42px",
-    padding: "9px 12px",
-    borderRadius: "10px",
-    border: "1.5px solid #C8E6C9",
     fontSize: "14px",
-    boxSizing: "border-box",
-    outline: "none",
-    background: "#fff",
-    color: "#263238",
-    fontFamily: "inherit",
-    boxShadow: "0 1px 3px rgba(46,125,50,0.08)",
-  },
-  saveBtn: {
-    width: "100%",
-    height: "42px",
-    padding: "0 16px",
-    background: "#2E7D32",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
     fontWeight: "800",
-    fontSize: "13px",
-    boxSizing: "border-box",
-    boxShadow: "0 3px 0 #1B5E20",
-    textTransform: "uppercase",
   },
-  chipButtonGroup: {
-    display: "flex",
-    gap: "6px",
-    flexWrap: "wrap",
-    marginTop: "6px",
-  },
-  chipItem: (selected, opt) => ({
-    padding: "7px 12px",
-    borderRadius: "8px",
-    border: `1.5px solid ${selected ? opt.border || "#2E7D32" : "#E0E0E0"}`,
-    background: selected ? opt.bg || "#E8F5E9" : "#fff",
-    color: selected ? opt.color || "#1B5E20" : "#444",
-    fontWeight: selected ? "800" : "600",
-    fontSize: "12px",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  }),
-  actionArea: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-    marginTop: "16px",
-    paddingTop: "16px",
-    borderTop: "1px solid #E8F5E9",
-  },
-  actionButtons: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "10px",
-    width: "100%",
-  },
-  statusField: {
-    width: "100%",
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-  },
-  actionMeta: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    minHeight: "20px",
-  },
-  filterBox: {
-    background: "#fff",
-    border: "1px solid #C8E6C9",
-    borderRadius: "14px",
-    padding: "14px 16px",
-    marginBottom: "20px",
-    boxShadow: "0 3px 10px rgba(46,125,50,0.05)",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  filterLabel: {
-    color: "#1B5E20",
-    fontSize: "13px",
-    fontWeight: "800",
-    whiteSpace: "nowrap",
-  },
-  filterSelect: {
-    flex: "1 1 240px",
-    minWidth: "220px",
-    maxWidth: "360px",
-    height: "42px",
-    padding: "0 12px",
-    borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
-    color: "#263238",
-    fontSize: "14px",
-    fontWeight: "600",
-    fontFamily: "inherit",
-    outline: "none",
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-  studentSearch: {
-    flex: "1 1 280px",
-    minWidth: "240px",
-    maxWidth: "420px",
-    height: "42px",
-    padding: "0 14px",
-    borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
-    color: "#263238",
-    fontSize: "14px",
-    fontWeight: "600",
-    fontFamily: "inherit",
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  reportedAt: {
-    fontSize: "12px",
-    color: "#556B4D",
-    lineHeight: "1.4",
-  },
-  deleteBtn: {
-    width: "100%",
-    height: "42px",
-    padding: "0 16px",
-    background: "#D32F2F",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "800",
-    fontSize: "13px",
-    boxSizing: "border-box",
-    boxShadow: "0 3px 0 #9A0007",
-  },
-  thumbFoto: {
-    width: "80px",
-    height: "80px",
-    objectFit: "cover",
-    borderRadius: "10px",
-    cursor: "pointer",
-    border: "2px solid #2E7D32",
-    marginTop: "6px",
-  },
+
   modalOverlay: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.8)",
+    inset: 0,
+    background: "rgba(0,0,0,0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
-    padding: "20px",
-    boxSizing: "border-box",
+    padding: "15px",
   },
+
   modalCard: {
     background: "#fff",
-    padding: "25px 20px",
-    borderRadius: "20px",
-    maxWidth: "380px",
+    padding: "24px 20px",
+    borderRadius: "18px",
+    maxWidth: "360px",
     width: "100%",
     textAlign: "center",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
-    boxSizing: "border-box",
   },
-  modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
-  confirmYesBtn: {
-    flex: 1,
-    background: "#D32F2F",
-    color: "#fff",
-    border: "none",
-    padding: "11px",
-    borderRadius: "10px",
+
+  modalTitle: {
+    fontSize: "18px",
     fontWeight: "800",
-    fontSize: "13px",
-    cursor: "pointer",
-    boxShadow: "0 3px 0 #9A0007",
-    textTransform: "uppercase",
+    margin: "0 0 8px",
   },
-  confirmNoBtn: {
-    flex: 1,
-    background: "#FFEB3B",
-    color: "#1B5E20",
-    border: "none",
-    padding: "11px",
-    borderRadius: "10px",
-    fontWeight: "800",
+
+  modalMsg: {
     fontSize: "13px",
-    cursor: "pointer",
-    boxShadow: "0 3px 0 #FBC02D",
-    textTransform: "uppercase",
+    color: "#556B4D",
+    lineHeight: "1.5",
+    margin: "0 0 18px",
   },
-  alertIconWrapper: (type) => ({
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    margin: "0 auto 12px auto",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px",
-    background:
-      type === "success" ? "#E8F5E9" : type === "error" ? "#FFEBEE" : "#FFFDE7",
-    border: `2px solid ${
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FBC02D"
-    }`,
-    color:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#F57F17",
-  }),
+
   alertBtn: (type) => ({
     width: "100%",
     padding: "12px",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "10px",
     fontWeight: "800",
-    fontSize: "14px",
     cursor: "pointer",
-    textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
     background:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
-    boxShadow:
-      type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
+      type === "success"
+        ? "#2E7D32"
+        : type === "error"
+        ? "#D32F2F"
+        : "#FFEB3B",
+    color:
+      type === "warning"
+        ? "#1B5E20"
+        : "#fff",
   }),
 };
 
-const statusOptions = [
-  { label: "Diproses (Guru/BK)", color: "#F57F17", bg: "#FFFDE7", border: "#FFF59D" },
-  { label: "Eskalasi: Kepala Sekolah", color: "#512DA8", bg: "#EDE7F6", border: "#B39DDB" },
-  { label: "Eskalasi: Dinas/Pengawas", color: "#8E24AA", bg: "#F3E5F5", border: "#CE93D8" },
-  { label: "Selesai", color: "#2E7D32", bg: "#E8F5E9", border: "#A5D6A7" },
-  { label: "Ditolak (Fitnah / Tidak Valid)", color: "#C62828", bg: "#FFEBEE", border: "#EF9A9A" },
-];
+// ======================================================
+// COMPONENT
+// ======================================================
 
-const metodePenanganan = [
-  { id: "Dipisahkan", label: "Dipisahkan (Perlindungan Korban)" },
-  { id: "Dipertemukan", label: "Dipertemukan (Mediasi)" },
-  { id: "Pembinaan Terpisah", label: "Pembinaan Terpisah" },
-  { id: "Pendampingan Korban", label: "Pendampingan Korban" },
-  { id: "Konseling", label: "Konseling" },
-  { id: "Pemanggilan Orang Tua", label: "Pemanggilan Orang Tua" },
-  { id: "Lainnya", label: "Ketik sendiri" },
-];
-
-const getStatusBadgeStyle = (status) => {
-  switch (status) {
-    case "Selesai":
-      return { background: "#E8F5E9", color: "#2E7D32", border: "1px solid #A5D6A7" };
-    case "Ditolak (Fitnah / Tidak Valid)":
-      return { background: "#FFEBEE", color: "#C62828", border: "1px solid #EF9A9A" };
-    case "Eskalasi: Kepala Sekolah":
-      return { background: "#EDE7F6", color: "#512DA8", border: "1px solid #B39DDB" };
-    case "Eskalasi: Dinas/Pengawas":
-      return { background: "#F3E5F5", color: "#8E24AA", border: "1px solid #CE93D8" };
-    default:
-      return { background: "#FFFDE7", color: "#F57F17", border: "1px solid #FFF59D" };
-  }
-};
-
-// SUB-KOMPONEN KARTU TERISOLASI AGAR MENGETIK TIDAK MACET
-const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDelete, onFotoClick }) => {
-  const [penanganan, setPenanganan] = useState(item.penanganan || "Dipisahkan");
-  const [penangananLainnya, setPenangananLainnya] = useState(
-    item.penangananLainnya || ""
-  );
-  const [responOrangTua, setResponOrangTua] = useState(item.responOrangTua || "");
-  const [tindakanSanksi, setTindakanSanksi] = useState(item.tindakanSanksi || "");
-
-  // State form sengaja hanya diinisialisasi saat kartu dibuat.
-  // Jangan sinkronkan ulang setiap kali props berubah, karena itu dapat
-  // membuat cursor/input terasa macet atau teks ter-reset saat mengetik.
-  return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <div style={styles.pelaporInfo}>
-          {item.nama || "Anonim"} (Kelas {item.kelas || "-"})
-          <span
-            style={{
-              fontSize: "12px",
-              marginLeft: "8px",
-              padding: "3px 8px",
-              background: "#FFEB3B",
-              color: "#1B5E20",
-              borderRadius: "6px",
-              fontWeight: "800",
-            }}
-          >
-            {item.peran || "Korban"}
-          </span>
-        </div>
-        <div style={{ ...styles.badge, ...getStatusBadgeStyle(item.status) }}>
-          {item.status || "Diproses (Guru/BK)"}
-        </div>
-      </div>
-
-      <div style={styles.grid}>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Tanggal Kejadian:</strong> <br />
-          {item.tanggal || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Lokasi:</strong> <br />
-          {item.lokasi || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Jenis Bullying:</strong> <br />
-          {item.jenis || "-"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Terduga Pelaku:</strong> <br />
-          {item.pelaku || "Tidak disebutkan"}
-        </div>
-        <div>
-          <strong style={{ color: "#1B5E20" }}>Saksi Mata:</strong> <br />
-          {item.saksi === "Ya"
-            ? `${item.namaSaksi || "Ada Saksi"} (${item.kelasSaksi || "Kelas -"})`
-            : "Tidak ada"}
-        </div>
-      </div>
-
-      <div>
-        <strong style={{ color: "#1B5E20", fontSize: "13px" }}>Kronologi Kejadian:</strong>
-        <div style={styles.ceritaBox}>{item.cerita}</div>
-      </div>
-
-      {item.fotoUrl && item.fotoUrl !== "-" && (
-        <div style={{ marginBottom: "14px" }}>
-          <strong style={{ color: "#1B5E20", fontSize: "13px" }}>Bukti Foto:</strong>
-          <div>
-            <img
-              src={item.fotoUrl}
-              alt="Bukti Pengaduan"
-              style={styles.thumbFoto}
-              onClick={() => onFotoClick(item.fotoUrl)}
-              title="Klik untuk memperbesar"
-            />
-          </div>
-        </div>
-      )}
-
-      <div style={styles.interventionBox}>
-        <div style={{ fontWeight: "800", fontSize: "14px", color: "#1B5E20", marginBottom: "12px" }}>
-          Modul Penanganan & Intervensi Kasus
-        </div>
-
-        <div style={styles.interventionGrid}>
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Penanganan Pelaku & Korban:
-            </label>
-
-            <select
-              value={penanganan}
-              onChange={(e) => {
-                const value = e.target.value;
-                setPenanganan(value);
-
-                if (value !== "Lainnya") {
-                  setPenangananLainnya("");
-                }
-              }}
-              style={{
-                ...styles.inputSmall,
-                ...styles.fieldControl,
-              }}
-            >
-              {metodePenanganan.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-
-            {penanganan === "Lainnya" && (
-              <input
-                type="text"
-                placeholder="Ketik penanganan lainnya..."
-                value={penangananLainnya}
-                onChange={(e) => setPenangananLainnya(e.target.value)}
-                style={styles.inputSmall}
-              />
-            )}
-          </div>
-
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Konfirmasi & Respon Orang Tua:
-            </label>
-            <input
-              type="text"
-              placeholder="Catatan respon orang tua..."
-              value={responOrangTua}
-              onChange={(e) => setResponOrangTua(e.target.value)}
-              style={styles.inputSmall}
-            />
-          </div>
-
-          <div style={styles.interventionField}>
-            <label style={styles.fieldLabel}>
-              Tahapan Hukuman / Ganti Rugi:
-            </label>
-            <input
-              type="text"
-              placeholder="Pembinaan / Skorsing..."
-              value={tindakanSanksi}
-              onChange={(e) => setTindakanSanksi(e.target.value)}
-              style={styles.inputSmall}
-            />
-          </div>
-        </div>
-
-      </div>
-
-      <div style={styles.actionArea}>
-        <div style={styles.statusField}>
-          <label style={styles.fieldLabel}>
-            Ubah Status Kasus:
-          </label>
-
-          <select
-            value={item.status || "Diproses (Guru/BK)"}
-            onChange={(e) => onStatusChange(item.id, e.target.value)}
-            style={{ ...styles.inputSmall, ...styles.fieldControl }}
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.label} value={opt.label}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={styles.actionMeta}>
-          <div style={styles.reportedAt}>
-            Dilaporkan pada:{" "}
-            {item.createdAt
-              ? new Date(item.createdAt).toLocaleString("id-ID")
-              : "-"}
-          </div>
-        </div>
-
-        <div style={styles.actionButtons}>
-          <button
-            style={styles.saveBtn}
-            onClick={() =>
-              onSavePenanganan(item.id, {
-                penanganan,
-                penangananLainnya,
-                responOrangTua,
-                tindakanSanksi,
-              })
-            }
-          >
-            Simpan
-          </button>
-
-          <button
-            style={styles.deleteBtn}
-            onClick={() => onDelete(item.id)}
-          >
-            Hapus
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-function DaftarPengaduan() {
+function FormPengaduan() {
   const navigate = useNavigate();
-  const [laporanList, setLaporanList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedFoto, setSelectedFoto] = useState(null);
-  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  // Filter status dan pencarian siswa/NIS untuk memudahkan guru menemukan riwayat laporan siswa.
-  const [statusFilter, setStatusFilter] = useState("Semua");
-  const [studentSearch, setStudentSearch] = useState("");
+  // ====================================================
+  // CLOUDINARY
+  // ====================================================
 
-  const [alertConfig, setAlertConfig] = useState({
+  const CLOUD_NAME = "r61tomq9";
+
+  const UPLOAD_PRESET = "ml_default";
+
+  const NOMOR_WA_GURU =
+    "6281234567890";
+
+  // ====================================================
+  // FORM STATE
+  // ====================================================
+
+  const [nama, setNama] =
+    useState("");
+
+  const [nis, setNis] =
+    useState("");
+
+  const [kelas, setKelas] =
+    useState("");
+
+  const [peran, setPeran] =
+    useState("Korban");
+
+  const [tanggal, setTanggal] =
+    useState("");
+
+  const [lokasi, setLokasi] =
+    useState("");
+
+  const [
+    lokasiLainnya,
+    setLokasiLainnya,
+  ] = useState("");
+
+  const [jenis, setJenis] =
+    useState("");
+
+  const [
+    jenisLainnya,
+    setJenisLainnya,
+  ] = useState("");
+
+  const [cerita, setCerita] =
+    useState("");
+
+  const [pelaku, setPelaku] =
+    useState("");
+
+  const [saksi, setSaksi] =
+    useState("Tidak");
+
+  const [
+    namaSaksi,
+    setNamaSaksi,
+  ] = useState("");
+
+  const [
+    kelasSaksi,
+    setKelasSaksi,
+  ] = useState("");
+
+  const [
+    setujuJujur,
+    setSetujuJujur,
+  ] = useState(false);
+
+  const [foto, setFoto] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  // ====================================================
+  // TTS
+  // ====================================================
+
+  const [
+    isSpeaking,
+    setIsSpeaking,
+  ] = useState(false);
+
+  const audioRef =
+    useRef(null);
+
+  const audioUrlRef =
+    useRef(null);
+
+  // ====================================================
+  // SPEECH TO TEXT
+  // ====================================================
+
+  const [
+    isListening,
+    setIsListening,
+  ] = useState(false);
+
+  const recognitionRef =
+    useRef(null);
+
+  // ====================================================
+  // ALERT
+  // ====================================================
+
+  const [
+    alertConfig,
+    setAlertConfig,
+  ] = useState({
     isOpen: false,
     type: "success",
     title: "",
@@ -610,514 +538,2135 @@ function DaftarPengaduan() {
     onCloseCallback: null,
   });
 
-  const showAlert = useCallback((type, title, message, onCloseCallback = null) => {
-    setAlertConfig({ isOpen: true, type, title, message, onCloseCallback });
-  }, []);
+  const submitLockRef =
+    useRef(false);
 
-  const handleCloseAlert = useCallback(() => {
-    setAlertConfig((prev) => {
-      if (prev.onCloseCallback) prev.onCloseCallback();
-      return { ...prev, isOpen: false };
-    });
-  }, []);
+  // ====================================================
+  // DATA
+  // ====================================================
 
-  // Semua popup notifikasi tertutup otomatis tanpa perlu menekan tombol.
-  // Popup konfirmasi hapus dan preview foto tetap membutuhkan tindakan pengguna.
+  const listKelas = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ];
+
+  const listPeran = [
+    {
+      id: "Korban",
+      label:
+        "😟 Saya yang mengalami",
+    },
+    {
+      id: "Saksi / Teman",
+      label:
+        "👀 Saya melihat teman",
+    },
+  ];
+
+  const listLokasi = [
+    {
+      value: "Ruang Kelas",
+      label: "🏫 Ruang Kelas",
+    },
+    {
+      value: "Halaman Sekolah",
+      label: "🌳 Halaman Sekolah",
+    },
+    {
+      value: "Kantin",
+      label: "🍜 Kantin",
+    },
+    {
+      value: "Lapangan",
+      label: "⚽ Lapangan",
+    },
+    {
+      value: "Perpustakaan",
+      label: "📚 Perpustakaan",
+    },
+    {
+      value: "Toilet",
+      label: "🚻 Toilet",
+    },
+    {
+      value: "Depan Gerbang",
+      label: "🚪 Depan Gerbang",
+    },
+    {
+      value: "Lainnya",
+      label: "❓ Tempat lainnya",
+    },
+  ];
+
+  const listJenisBullying = [
+    {
+      value: "Kekerasan Fisik",
+      label:
+        "👊 Dipukul / ditendang",
+      sub:
+        "Dipukul, ditendang, didorong",
+    },
+    {
+      value: "Kekerasan Verbal",
+      label:
+        "😡 Diejek / dihina",
+      sub:
+        "Diejek, dihina, dipanggil nama buruk",
+    },
+    {
+      value: "Pengucilan Sosial",
+      label:
+        "🙁 Dijauhi teman",
+      sub:
+        "Dijauhi teman atau disebarkan fitnah",
+    },
+    {
+      value:
+        "Pemalakan / Ancaman",
+      label:
+        "😨 Diancam / diminta uang",
+      sub:
+        "Uang atau barang diambil paksa",
+    },
+    {
+      value: "Cyberbullying",
+      label:
+        "📱 Diganggu lewat HP",
+      sub:
+        "Melalui chat atau media sosial",
+    },
+    {
+      value: "Lainnya",
+      label:
+        "❓ Kejadian lainnya",
+      sub:
+        "Ketik jenis kejadian lainnya",
+    },
+  ];
+
+  // ====================================================
+  // ALERT
+  // ====================================================
+
+  const showAlert =
+    useCallback(
+      (
+        type,
+        title,
+        message,
+        onCloseCallback = null
+      ) => {
+        setAlertConfig({
+          isOpen: true,
+          type,
+          title,
+          message,
+          onCloseCallback,
+        });
+      },
+      []
+    );
+
+  const closeAlert =
+    useCallback(() => {
+      const callback =
+        alertConfig.onCloseCallback;
+
+      setAlertConfig(
+        (prev) => ({
+          ...prev,
+          isOpen: false,
+          onCloseCallback: null,
+        })
+      );
+
+      if (callback) {
+        callback();
+      }
+    }, [
+      alertConfig.onCloseCallback,
+    ]);
+
+  // ====================================================
+  // IDENTITAS SISWA
+  // ====================================================
+
   useEffect(() => {
-    if (!alertConfig.isOpen) return;
+    const savedNama =
+      localStorage.getItem(
+        "namaSiswa"
+      ) || "";
 
-    const timer = setTimeout(() => {
-      handleCloseAlert();
-    }, 1600);
+    const savedNis =
+      localStorage.getItem(
+        "nisSiswa"
+      ) || "";
 
-    return () => clearTimeout(timer);
-  }, [alertConfig.isOpen, handleCloseAlert]);
+    const savedKelas =
+      localStorage.getItem(
+        "kelasSiswa"
+      ) || "";
 
-  // Memuat pengaduan hanya saat halaman dibuka.
-  // Tidak memakai onValue() agar halaman daftar tidak terus menerima
-  // seluruh data pengaduan setiap ada perubahan di Firebase.
-  const loadPengaduan = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) setLoading(true);
+    setNama(
+      savedNama.trim()
+    );
 
-      const snapshot = await get(ref(db, "pengaduan"));
+    setNis(
+      savedNis.trim()
+    );
 
-      if (!snapshot.exists()) {
-        setLaporanList([]);
+    setKelas(
+      savedKelas.trim()
+    );
+
+    setTanggal(
+      new Date()
+        .toISOString()
+        .split("T")[0]
+    );
+  }, []);
+
+  // ====================================================
+  // TTS BAHASA INDONESIA - TANPA API / TANPA AUDIO FILE
+  // ====================================================
+
+  const getIndonesianVoice = useCallback(() => {
+    if (!("speechSynthesis" in window)) {
+      return null;
+    }
+
+    const voices =
+      window.speechSynthesis.getVoices() || [];
+
+    if (!voices.length) {
+      return null;
+    }
+
+    // Prioritas utama: voice Indonesia yang benar-benar id-ID.
+    const exactId = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-") === "id-id"
+    );
+
+    if (exactId) {
+      return exactId;
+    }
+
+    // Cadangan: semua voice yang diawali id-
+    const indonesiaVoice = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-")
+          .startsWith("id-")
+    );
+
+    return indonesiaVoice || null;
+  }, []);
+
+  const speakText = useCallback(
+    (text) => {
+      if (!("speechSynthesis" in window)) {
+        showAlert(
+          "warning",
+          "Suara Tidak Tersedia",
+          "Browser ini belum mendukung fitur suara. Silakan gunakan Chrome atau Edge terbaru."
+        );
         return;
       }
 
-      const data = snapshot.val();
+      const cleanText = String(text || "").trim();
 
-      const formattedList = Object.keys(data)
-        .map((key) => ({
-          id: key,
-          ...data[key],
-        }))
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0) -
-            new Date(a.updatedAt || a.createdAt || 0)
+      if (!cleanText) {
+        return;
+      }
+
+      // Hentikan bacaan sebelumnya.
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+
+      const startSpeaking = () => {
+        const voice = getIndonesianVoice();
+
+        // Jangan diam-diam menggunakan voice Inggris.
+        if (!voice) {
+          setIsSpeaking(false);
+
+          showAlert(
+            "warning",
+            "Suara Bahasa Indonesia Tidak Ditemukan",
+            "Perangkat atau browser ini belum menyediakan voice Bahasa Indonesia (id-ID). Coba buka aplikasi di Chrome atau Edge dan pastikan voice Bahasa Indonesia tersedia di perangkat."
+          );
+
+          return;
+        }
+
+        const utterance =
+          new SpeechSynthesisUtterance(
+            cleanText
+          );
+
+        utterance.lang = "id-ID";
+        utterance.voice = voice;
+
+        // Kecepatan sedikit diperlambat agar lebih mudah
+        // dipahami oleh anak SD.
+        utterance.rate = 0.88;
+        utterance.pitch = 1.05;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+          setIsSpeaking(true);
+        };
+
+        utterance.onend = () => {
+          setIsSpeaking(false);
+        };
+
+        utterance.onerror = (event) => {
+          console.warn(
+            "Speech synthesis error:",
+            event.error
+          );
+
+          setIsSpeaking(false);
+        };
+
+        window.speechSynthesis.speak(
+          utterance
+        );
+      };
+
+      // Pada beberapa browser, getVoices() kosong pada pemanggilan pertama.
+      // Beri kesempatan browser memuat daftar voice terlebih dahulu.
+      const voices =
+        window.speechSynthesis.getVoices();
+
+      if (voices.length > 0) {
+        startSpeaking();
+        return;
+      }
+
+      let finished = false;
+
+      const handleVoicesChanged = () => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
         );
 
-      setLaporanList(formattedList);
-    } catch (error) {
-      console.error("Gagal mengambil data pengaduan:", error);
+        startSpeaking();
+      };
 
-      showAlert(
-        "error",
-        "Gagal Memuat Data",
-        error.message || "Terjadi kesalahan saat mengambil data pengaduan."
+      window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        handleVoicesChanged
       );
-    } finally {
-      if (showLoading) setLoading(false);
+
+      // Fallback jika browser tidak menembakkan voiceschanged.
+      setTimeout(() => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+        startSpeaking();
+      }, 1000);
+    },
+    [getIndonesianVoice, showAlert]
+  );
+
+  // ====================================================
+  // STOP TTS
+  // ====================================================
+
+  const stopAudio = useCallback(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
     }
-  }, [showAlert]);
+
+    setIsSpeaking(false);
+  }, []);
+
+  // ====================================================
+  // SPEECH TO TEXT
+  // ====================================================
+
+  const startVoiceInput = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      showAlert(
+        "warning",
+        "Fitur Bicara Tidak Tersedia",
+        "Browser ini belum mendukung input suara. Kamu masih bisa mengetik ceritamu."
+      );
+
+      return;
+    }
+
+    if (isListening) {
+      stopVoiceInput();
+
+      return;
+    }
+
+    try {
+      const recognition =
+        new SpeechRecognition();
+
+      /*
+       * Input suara tetap diarahkan
+       * ke Bahasa Indonesia.
+       */
+
+      recognition.lang =
+        "id-ID";
+
+      recognition.continuous =
+        false;
+
+      recognition.interimResults =
+        false;
+
+      recognition.maxAlternatives =
+        1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (
+        event
+      ) => {
+        const transcript =
+          event.results?.[0]?.[0]
+            ?.transcript || "";
+
+        if (!transcript.trim()) {
+          return;
+        }
+
+        setCerita(
+          (previous) => {
+            const oldText =
+              previous.trim();
+
+            if (!oldText) {
+              return transcript.trim();
+            }
+
+            return (
+              oldText +
+              " " +
+              transcript.trim()
+            );
+          }
+        );
+      };
+
+      recognition.onerror = (
+        event
+      ) => {
+        console.warn(
+          "Speech recognition:",
+          event.error
+        );
+
+        setIsListening(false);
+
+        if (
+          event.error ===
+          "not-allowed"
+        ) {
+          showAlert(
+            "warning",
+            "Mikrofon Belum Diizinkan",
+            "Izinkan akses mikrofon agar kamu bisa bercerita dengan suara."
+          );
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+
+        recognitionRef.current =
+          null;
+      };
+
+      recognitionRef.current =
+        recognition;
+
+      recognition.start();
+    } catch (error) {
+      console.error(error);
+
+      setIsListening(false);
+    }
+  };
+
+  const stopVoiceInput = () => {
+    try {
+      if (
+        recognitionRef.current
+      ) {
+        recognitionRef.current.stop();
+
+        recognitionRef.current =
+          null;
+      }
+    } catch (error) {
+      console.warn(error);
+    }
+
+    setIsListening(false);
+  };
+
+  // ====================================================
+  // CLEANUP
+  // ====================================================
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadInitialData = async () => {
-      if (!mounted) return;
-      await loadPengaduan(true);
-    };
-
-    loadInitialData();
-
     return () => {
-      mounted = false;
+      stopAudio();
+
+      try {
+        if (
+          recognitionRef.current
+        ) {
+          recognitionRef.current.stop();
+        }
+      } catch (error) {
+        console.warn(error);
+      }
     };
-  }, [loadPengaduan]);
+  }, []);
 
-  // Update Status Instan (Optimistic)
-  const handleStatusChange = useCallback(async (id, statusBaru) => {
-    const updatedAt = new Date().toISOString();
+  // ====================================================
+  // KOMPRESI GAMBAR
+  // ====================================================
 
-    setLaporanList((prevList) =>
-      prevList.map((item) =>
-        item.id === id
-          ? { ...item, status: statusBaru, updatedAt }
-          : item
-      )
-    );
+  const compressImage =
+    (file) => {
+      return new Promise(
+        (resolve, reject) => {
+          const reader =
+            new FileReader();
 
-    try {
-      await update(ref(db, `pengaduan/${id}`), {
-        status: statusBaru,
-        updatedAt,
-      });
-      showAlert("success", "Status Diperbarui", `Status kasus berhasil diubah menjadi "${statusBaru}".`);
-    } catch (error) {
-      showAlert("error", "Gagal Mengubah Status", error.message || "Terjadi kendala saat memperbarui status.");
-    }
-  }, [showAlert]);
+          reader.onerror = () => {
+            reject(
+              new Error(
+                "Gagal membaca foto."
+              )
+            );
+          };
 
-  // Simpan
-  const handleSavePenanganan = useCallback(async (id, formData) => {
-    try {
-      await update(ref(db, `pengaduan/${id}`), {
-        penanganan: formData.penanganan,
-        penangananLainnya:
-          formData.penanganan === "Lainnya"
-            ? formData.penangananLainnya
-            : "",
-        responOrangTua: formData.responOrangTua,
-        tindakanSanksi: formData.tindakanSanksi,
-        updatedAt: new Date().toISOString(),
-      });
-      showAlert("success", "Catatan Tersimpan", "Catatan penanganan kasus berhasil diperbarui!");
-    } catch (error) {
-      showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
-    }
-  }, [showAlert, handleCloseAlert]);
+          reader.onload = (e) => {
+            const img =
+              new Image();
 
-  // Hapus Laporan
-  const executeDelete = useCallback(async () => {
-    if (!deleteTargetId) return;
-    const id = deleteTargetId;
-    setDeleteTargetId(null);
+            img.onload = () => {
+              const canvas =
+                document.createElement(
+                  "canvas"
+                );
 
-    setLaporanList((prev) => prev.filter((item) => item.id !== id));
+              const max =
+                640;
 
-    try {
-      await remove(ref(db, `pengaduan/${id}`));
-      showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus.");
-    } catch (error) {
-      showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
-    }
-  }, [deleteTargetId, showAlert, handleCloseAlert]);
+              const scale =
+                Math.min(
+                  1,
+                  max /
+                    img.width,
+                  max /
+                    img.height
+                );
 
+              canvas.width =
+                Math.max(
+                  1,
+                  Math.round(
+                    img.width *
+                      scale
+                  )
+                );
 
-  const refreshPengaduan = useCallback(async () => {
-    try {
-      setRefreshing(true);
-      await loadPengaduan(false);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [loadPengaduan]);
+              canvas.height =
+                Math.max(
+                  1,
+                  Math.round(
+                    img.height *
+                      scale
+                  )
+                );
 
-  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
+              const ctx =
+                canvas.getContext(
+                  "2d"
+                );
 
-  const filteredLaporanList = laporanList.filter((item) => {
-    const matchesStatus =
-      statusFilter === "Semua" ||
-      (item.status || "Diproses (Guru/BK)") === statusFilter;
+              if (!ctx) {
+                reject(
+                  new Error(
+                    "Browser tidak mendukung kompresi foto."
+                  )
+                );
 
-    const namaSiswa = String(item.nama || "").toLowerCase();
-    const nisSiswa = String(item.nis || item.NIS || "").toLowerCase();
+                return;
+              }
 
-    const matchesStudent =
-      !normalizedStudentSearch ||
-      namaSiswa.includes(normalizedStudentSearch) ||
-      nisSiswa.includes(normalizedStudentSearch);
+              ctx.drawImage(
+                img,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
 
-    return matchesStatus && matchesStudent;
-  });
+              resolve(
+                canvas.toDataURL(
+                  "image/jpeg",
+                  0.55
+                )
+              );
+            };
+
+            img.onerror = () => {
+              reject(
+                new Error(
+                  "Foto tidak dapat diproses."
+                )
+              );
+            };
+
+            img.src =
+              e.target.result;
+          };
+
+          reader.readAsDataURL(
+            file
+          );
+        }
+      );
+    };
+
+  // ====================================================
+  // CLOUDINARY
+  // ====================================================
+
+  const uploadToCloudinary =
+    async (file) => {
+      try {
+        const formData =
+          new FormData();
+
+        formData.append(
+          "file",
+          file
+        );
+
+        formData.append(
+          "upload_preset",
+          UPLOAD_PRESET
+        );
+
+        const controller =
+          new AbortController();
+
+        const timeout =
+          setTimeout(
+            () =>
+              controller.abort(),
+            6000
+          );
+
+        const response =
+          await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            {
+              method: "POST",
+              body: formData,
+              signal:
+                controller.signal,
+            }
+          );
+
+        clearTimeout(timeout);
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error?.message ||
+              "Upload foto gagal."
+          );
+        }
+
+        return data.secure_url;
+      } catch (error) {
+        console.warn(
+          "Cloudinary gagal:",
+          error
+        );
+
+        return await compressImage(
+          file
+        );
+      }
+    };
+
+  // ====================================================
+  // SUBMIT
+  // ====================================================
+
+  const handleSubmit =
+    async (e) => {
+      e.preventDefault();
+
+      if (
+        loading ||
+        submitLockRef.current
+      ) {
+        return;
+      }
+
+      submitLockRef.current =
+        true;
+
+      const namaFinal =
+        nama.trim();
+
+      const nisFinal =
+        nis.trim();
+
+      const kelasFinal =
+        kelas.trim();
+
+      const ceritaFinal =
+        cerita.trim();
+
+      const pelakuFinal =
+        pelaku.trim();
+
+      const lokasiFinal =
+        lokasi === "Lainnya"
+          ? lokasiLainnya.trim()
+          : lokasi.trim();
+
+      const jenisFinal =
+        jenis === "Lainnya"
+          ? jenisLainnya.trim()
+          : jenis.trim();
+
+      // ==================================================
+      // VALIDASI
+      // ==================================================
+
+      if (!namaFinal) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "Nama Belum Ada",
+          "Silakan login ulang sebagai siswa."
+        );
+
+        return;
+      }
+
+      if (!nisFinal) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "NIS Belum Ada",
+          "Silakan login ulang sebagai siswa."
+        );
+
+        return;
+      }
+
+      if (!kelasFinal) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "Pilih Kelas",
+          "Yuk pilih kelasmu terlebih dahulu."
+        );
+
+        return;
+      }
+
+      if (
+        !tanggal ||
+        !lokasiFinal ||
+        !jenisFinal ||
+        !ceritaFinal
+      ) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "Form Belum Lengkap",
+          "Yuk cek kembali tempat kejadian, jenis kejadian, dan ceritamu."
+        );
+
+        return;
+      }
+
+      if (!setujuJujur) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "Satu Langkah Lagi",
+          "Centang pernyataan bahwa cerita yang kamu tulis adalah benar."
+        );
+
+        return;
+      }
+
+      if (
+        saksi === "Ya" &&
+        !namaSaksi.trim()
+      ) {
+        submitLockRef.current =
+          false;
+
+        showAlert(
+          "warning",
+          "Nama Saksi Belum Diisi",
+          "Tuliskan nama teman yang melihat kejadian."
+        );
+
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        let imageUrl = "-";
+
+        if (foto) {
+          imageUrl =
+            await uploadToCloudinary(
+              foto
+            );
+        }
+
+        const laporan = {
+          nama: namaFinal,
+
+          nis: nisFinal,
+
+          kelas: kelasFinal,
+
+          peran,
+
+          tanggal,
+
+          lokasi:
+            lokasiFinal,
+
+          jenis:
+            jenisFinal,
+
+          cerita:
+            ceritaFinal,
+
+          pelaku:
+            pelakuFinal ||
+            "Tidak disebutkan",
+
+          saksi:
+            saksi || "Tidak",
+
+          namaSaksi:
+            saksi === "Ya"
+              ? namaSaksi.trim()
+              : "-",
+
+          kelasSaksi:
+            saksi === "Ya"
+              ? kelasSaksi.trim()
+              : "-",
+
+          fotoUrl:
+            imageUrl,
+
+          status:
+            "Diproses",
+
+          createdAt:
+            new Date().toISOString(),
+
+          createdAtMs:
+            Date.now(),
+        };
+
+        await push(
+          dbRef(
+            db,
+            "pengaduan"
+          ),
+          laporan
+        );
+
+        showAlert(
+          "success",
+          "Laporan Berhasil Terkirim 💚",
+          "Terima kasih sudah berani bercerita. Laporanmu sudah diterima oleh guru BK.",
+          () => {
+            navigate(
+              "/dashboard-siswa",
+              {
+                replace: true,
+              }
+            );
+          }
+        );
+      } catch (error) {
+        console.error(error);
+
+        showAlert(
+          "error",
+          "Belum Berhasil Terkirim",
+          error?.message ||
+            "Ada masalah dengan jaringan. Silakan coba lagi."
+        );
+      } finally {
+        setLoading(false);
+
+        submitLockRef.current =
+          false;
+      }
+    };
+
+  // ====================================================
+  // RENDER
+  // ====================================================
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <div>
-          <div style={styles.title}>Daftar Laporan Pengaduan</div>
+      {/* HEADER */}
 
-          <p
-            style={{
-              color: "#fff",
-              margin: "4px 0 0 0",
-              fontSize: "13px",
-              opacity: 0.95,
-            }}
-          >
-            Total Laporan Masuk:{" "}
-            <strong>{laporanList.length}</strong>
-          </p>
-        </div>
+      <div style={styles.header}>
+        <h1 style={styles.title}>
+          🛡️ Ceritakan Yuk!
+        </h1>
+
+        <p style={styles.subtitle}>
+          Kamu boleh bercerita tentang
+          hal yang membuatmu tidak nyaman.
+          Kami akan mendengarkanmu. 💚
+        </p>
 
         <div
           style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
+            marginTop: "12px",
           }}
         >
           <button
             type="button"
-            onClick={refreshPengaduan}
-            disabled={refreshing}
-            style={{
-              ...styles.backButton,
-              opacity: refreshing ? 0.6 : 1,
-              cursor: refreshing ? "not-allowed" : "pointer",
+            style={
+              isSpeaking
+                ? styles.speakingButton
+                : styles.speakButton
+            }
+            onClick={() => {
+              if (isSpeaking) {
+                stopAudio();
+              } else {
+                speakText(
+                  "Ceritakan yuk. Kamu boleh bercerita tentang hal yang membuatmu tidak nyaman. Kami akan mendengarkanmu."
+                );
+              }
             }}
           >
-            {refreshing ? "Memuat..." : " Refresh"}
-          </button>
-
-          <button
-            type="button"
-            style={styles.backButton}
-            onClick={() => navigate("/dashboard-admin")}
-          >
-            Kembali ke Dashboard
+            {isSpeaking
+              ? "⏹️ Berhenti"
+              : "🔊 Dengarkan"}
           </button>
         </div>
       </div>
 
-      {!loading && laporanList.length > 0 && (
-        <div style={styles.filterBox}>
-          <div style={styles.filterLabel}>Status:</div>
+      {/* HOTLINE */}
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={styles.filterSelect}
-            aria-label="Filter status pengaduan"
-          >
-            <option value="Semua">Semua Status ({laporanList.length})</option>
+      <div style={styles.hotlineBox}>
+        <div style={styles.hotlineText}>
+          <strong>
+            🆘 Butuh bantuan?
+          </strong>{" "}
+          Kamu juga bisa langsung
+          berbicara dengan Guru BK.
+        </div>
 
-            {statusOptions.map((opt) => {
-              const jumlah = laporanList.filter(
-                (item) =>
-                  (item.status || "Diproses (Guru/BK)") === opt.label
-              ).length;
+        <a
+          href={`https://wa.me/${NOMOR_WA_GURU}?text=Halo%20Bapak/Ibu%20Guru,%20saya%20ingin%20berkonsultasi.`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.hotlineBtn}
+        >
+          💬 Chat Guru
+        </a>
+      </div>
 
-              return (
-                <option key={opt.label} value={opt.label}>
-                  {opt.label} ({jumlah})
-                </option>
-              );
-            })}
-          </select>
+      {/* FORM */}
 
-          <div style={styles.filterLabel}>Cari Siswa:</div>
-
-          <input
-            type="text"
-            value={studentSearch}
-            onChange={(e) => setStudentSearch(e.target.value)}
-            placeholder="Ketik nama siswa atau NIS..."
-            style={styles.studentSearch}
-            aria-label="Cari siswa berdasarkan nama atau NIS"
-          />
-
-          {(studentSearch || statusFilter !== "Semua") && (
-            <button
-              type="button"
-              onClick={() => {
-                setStudentSearch("");
-                setStatusFilter("Semua");
-              }}
-              style={{
-                height: "42px",
-                padding: "0 14px",
-                borderRadius: "10px",
-                border: "1px solid #C8E6C9",
-                background: "#fff",
-                color: "#2E7D32",
-                fontWeight: "800",
-                fontSize: "12px",
-                cursor: "pointer",
-                boxSizing: "border-box",
-              }}
-            >
-              Reset Filter
-            </button>
-          )}
+      <div style={styles.container}>
+        <form
+          onSubmit={handleSubmit}
+        >
+          {/* INFO */}
 
           <div
-            style={{
-              width: "100%",
-              color: "#556B4D",
-              fontSize: "12px",
-              fontWeight: "600",
-              marginTop: "2px",
-            }}
+            style={
+              styles.childInfoBox
+            }
           >
-            Menampilkan {filteredLaporanList.length} dari {laporanList.length} laporan
-            {studentSearch.trim()
-              ? ` untuk "${studentSearch.trim()}"`
-              : ""}
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#1B5E20", fontWeight: "700" }}>
-          Memuat data laporan...
-        </div>
-      ) : laporanList.length === 0 ? (
-        <div
-          style={{
-            background: "#fff",
-            padding: "35px 20px",
-            borderRadius: "18px",
-            textAlign: "center",
-            color: "#556B4D",
-            border: "2px solid #C8E6C9",
-            fontWeight: "600",
-          }}
-        >
-          Belum ada laporan pengaduan yang masuk.
-        </div>
-      ) : filteredLaporanList.length === 0 ? (
-        <div
-          style={{
-            background: "#fff",
-            padding: "35px 20px",
-            borderRadius: "18px",
-            textAlign: "center",
-            color: "#556B4D",
-            border: "2px solid #C8E6C9",
-            fontWeight: "600",
-          }}
-        >
-          Tidak ada laporan dengan status "{statusFilter}".
-        </div>
-      ) : (
-        filteredLaporanList.slice(0, 100).map((item) => (
-          <ItemPengaduanCard
-            key={item.id}
-            item={item}
-            onStatusChange={handleStatusChange}
-            onSavePenanganan={handleSavePenanganan}
-            onDelete={setDeleteTargetId}
-            onFotoClick={setSelectedFoto}
-          />
-        ))
-      )}
-
-      {!loading &&
-        statusFilter === "Semua" &&
-        !studentSearch.trim() &&
-        laporanList.length > 100 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "12px",
-            marginBottom: "16px",
-            color: "#556B4D",
-            fontSize: "12px",
-            fontWeight: "700",
-          }}
-        >
-          Menampilkan 100 laporan terbaru dari {laporanList.length} laporan.
-          Gunakan filter status atau pencarian siswa untuk mempersempit daftar.
-        </div>
-      )}
-
-      {selectedFoto && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
-          <div
-            style={{
-              position: "relative",
-              maxWidth: "90%",
-              maxHeight: "90vh",
-              width: "100%",
-              textAlign: "center",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={selectedFoto}
-              alt="Bukti Besar"
-              style={{
-                width: "100%",
-                maxHeight: "75vh",
-                objectFit: "contain",
-                borderRadius: "12px",
-                background: "#fff",
-              }}
-            />
-
             <div
               style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "10px",
-                marginTop: "12px",
-                flexWrap: "wrap",
+                fontSize: "25px",
               }}
             >
-              <a
-                href={selectedFoto}
-                download={`bukti-pengaduan-${Date.now()}.jpg`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: "150px",
-                  height: "42px",
-                  padding: "0 16px",
-                  boxSizing: "border-box",
-                  borderRadius: "10px",
-                  background: "#2E7D32",
-                  color: "#fff",
-                  textDecoration: "none",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  boxShadow: "0 3px 0 #1B5E20",
-                }}
+              💚
+            </div>
+
+            <p
+              style={{
+                ...styles.helperText,
+                margin: 0,
+                color: "#1B5E20",
+                fontWeight: "600",
+              }}
+            >
+              Tidak perlu takut atau malu.
+              Isi sesuai yang kamu ingat.
+              Kalau sulit membaca, tekan
+              tombol 🔊 untuk mendengarkan.
+            </p>
+          </div>
+
+          {/* NAMA */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
               >
-                Download Foto
-              </a>
+                👤 Nama kamu
+              </label>
 
               <button
                 type="button"
-                onClick={() => setSelectedFoto(null)}
-                style={{
-                  minWidth: "150px",
-                  height: "42px",
-                  padding: "0 16px",
-                  boxSizing: "border-box",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: "#FFEB3B",
-                  color: "#1B5E20",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  boxShadow: "0 3px 0 #FBC02D",
-                }}
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Nama kamu."
+                  )
+                }
               >
-                Tutup
+                🔊
+              </button>
+            </div>
+
+            <input
+              value={nama}
+              readOnly
+              style={
+                styles.readonlyInput
+              }
+            />
+          </div>
+
+          {/* NIS */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                🪪 Nomor NIS
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Nomor NIS."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <input
+              value={nis}
+              readOnly
+              style={
+                styles.readonlyInput
+              }
+            />
+          </div>
+
+          {/* KELAS */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  🎒 Kamu kelas berapa?
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Pilih kelasmu.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Kamu kelas berapa? Pilih kelas satu sampai enam."
+                  )
+                }
+              >
+                🔊 Dengarkan
               </button>
             </div>
 
             <div
-              style={{
-                color: "#fff",
-                textAlign: "center",
-                marginTop: "10px",
-                fontSize: "12px",
-              }}
+              style={
+                styles.selectWrapper
+              }
             >
-              Klik di luar gambar untuk menutup
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteTargetId && (
-        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper("warning")}></div>
-            <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
-              Konfirmasi Hapus Laporan
-            </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
-              Apakah Anda yakin ingin menghapus laporan pengaduan ini secara permanen?
-            </p>
-            <div style={styles.modalBtnGroup}>
-              <button style={styles.confirmYesBtn} onClick={executeDelete}>
-                Ya, Hapus
-              </button>
-              <button style={styles.confirmNoBtn} onClick={() => setDeleteTargetId(null)}>
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {alertConfig.isOpen && (
-        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper(alertConfig.type)}>
               <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                🎒
+              </span>
+
+              <select
+                value={kelas}
+                onChange={(e) =>
+                  setKelas(
+                    e.target.value
+                  )
+                }
+                style={
+                  styles.childSelect
+                }
+                disabled={loading}
+              >
+                <option value="">
+                  Pilih kelas kamu
+                </option>
+
+                {listKelas.map(
+                  (item) => (
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      🎒 Kelas {item}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* PERAN */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                👀 Kamu mengalami atau
+                melihat?
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Kamu mengalami atau melihat? Pilih saya yang mengalami, atau saya melihat teman."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <div
+              style={
+                styles.gridTwo
+              }
+            >
+              {listPeran.map(
+                (item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    style={
+                      styles.choiceButton(
+                        peran ===
+                          item.id
+                      )
+                    }
+                    onClick={() =>
+                      setPeran(
+                        item.id
+                      )
+                    }
+                    disabled={loading}
+                  >
+                    {item.label}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+
+          {/* TANGGAL */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                📅 Kapan kejadiannya?
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Kapan kejadiannya? Pilih tanggal kejadian."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <input
+              type="date"
+              value={tanggal}
+              onChange={(e) =>
+                setTanggal(
+                  e.target.value
+                )
+              }
+              style={styles.input}
+              disabled={loading}
+            />
+          </div>
+
+          {/* LOKASI */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  📍 Kejadiannya di mana?
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Pilih tempat kejadian.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Kejadiannya di mana? Pilih tempat kejadian."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <div
+              style={
+                styles.selectWrapper
+              }
+            >
+              <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                📍
+              </span>
+
+              <select
+                value={lokasi}
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
+
+                  setLokasi(value);
+
+                  if (
+                    value !==
+                    "Lainnya"
+                  ) {
+                    setLokasiLainnya(
+                      ""
+                    );
+                  }
+                }}
+                style={
+                  styles.childSelect
+                }
+                disabled={loading}
+              >
+                <option value="">
+                  Pilih tempat kejadian
+                </option>
+
+                {listLokasi.map(
+                  (item) => (
+                    <option
+                      key={
+                        item.value
+                      }
+                      value={
+                        item.value
+                      }
+                    >
+                      {item.label}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {lokasi ===
+              "Lainnya" && (
+              <div
+                style={
+                  styles.otherInputBox
+                }
+              >
+                <input
+                  value={
+                    lokasiLainnya
+                  }
+                  onChange={(e) =>
+                    setLokasiLainnya(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Tulis tempatnya..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          {/* JENIS */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  😟 Apa yang terjadi?
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Pilih kejadian yang paling
+                  sesuai.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Apa yang terjadi? Pilih kejadian yang paling sesuai."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <div
+              style={
+                styles.selectWrapper
+              }
+            >
+              <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                😟
+              </span>
+
+              <select
+                value={jenis}
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
+
+                  setJenis(value);
+
+                  if (
+                    value !==
+                    "Lainnya"
+                  ) {
+                    setJenisLainnya(
+                      ""
+                    );
+                  }
+                }}
+                style={
+                  styles.childSelect
+                }
+                disabled={loading}
+              >
+                <option value="">
+                  Pilih apa yang terjadi
+                </option>
+
+                {listJenisBullying.map(
+                  (item) => (
+                    <option
+                      key={
+                        item.value
+                      }
+                      value={
+                        item.value
+                      }
+                    >
+                      {item.label}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {jenis &&
+              jenis !==
+                "Lainnya" && (
+              <div
+                style={
+                  styles.voiceHelp
+                }
+              >
+                💡{" "}
+                {
+                  listJenisBullying.find(
+                    (item) =>
+                      item.value ===
+                      jenis
+                  )?.sub
+                }
+              </div>
+            )}
+
+            {jenis ===
+              "Lainnya" && (
+              <div
+                style={
+                  styles.otherInputBox
+                }
+              >
+                <input
+                  value={
+                    jenisLainnya
+                  }
+                  onChange={(e) =>
+                    setJenisLainnya(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Ceritakan jenis kejadian..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          {/* CERITA */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  🗣️ Ceritakan dengan
+                  kata-katamu
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Tidak perlu panjang.
+                  Tulis apa yang kamu ingat.
+                </div>
+              </div>
+
+              <div
                 style={{
-                  fontSize: "34px",
-                  fontWeight: "900",
-                  lineHeight: 1,
+                  display: "flex",
+                  gap: "6px",
                 }}
               >
-                {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "×" : "!"}
-              </span>
+                <button
+                  type="button"
+                  style={
+                    isSpeaking
+                      ? styles.speakingButton
+                      : styles.speakButton
+                  }
+                  onClick={() => {
+                    if (isSpeaking) {
+                      stopAudio();
+                    } else {
+                      speakText(
+                        "Ceritakan dengan kata-katamu. Tidak perlu panjang. Tulis apa yang kamu ingat."
+                      );
+                    }
+                  }}
+                >
+                  {isSpeaking
+                    ? "⏹️"
+                    : "🔊"}
+                </button>
+
+                <button
+                  type="button"
+                  style={
+                    isListening
+                      ? styles.listeningButton
+                      : styles.voiceButton
+                  }
+                  onClick={
+                    startVoiceInput
+                  }
+                  disabled={loading}
+                >
+                  {isListening
+                    ? "⏹️ Stop"
+                    : "🎤 Bicara"}
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              value={cerita}
+              onChange={(e) =>
+                setCerita(
+                  e.target.value
+                )
+              }
+              placeholder="Contoh: Tadi saya diejek teman di kantin..."
+              style={
+                styles.textarea
+              }
+              disabled={loading}
+            />
+
+            <div
+              style={
+                styles.voiceHelp
+              }
+            >
+              💡 Kalau sulit mengetik,
+              tekan <strong>🎤 Bicara</strong>{" "}
+              lalu ceritakan dengan suaramu.
+            </div>
+          </div>
+
+          {/* PELAKU */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                👤 Siapa yang melakukan?
+                <span
+                  style={{
+                    color: "#667C5E",
+                    fontWeight: "600",
+                  }}
+                >
+                  {" "}
+                  (boleh dikosongkan)
+                </span>
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Siapa yang melakukan? Kalau kamu tahu namanya, boleh ditulis. Bagian ini boleh dikosongkan."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <input
+              value={pelaku}
+              onChange={(e) =>
+                setPelaku(
+                  e.target.value
+                )
+              }
+              placeholder="Nama teman atau orangnya..."
+              style={styles.input}
+              disabled={loading}
+            />
+          </div>
+
+          {/* SAKSI */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                👀 Ada teman yang melihat?
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Ada teman yang melihat? Pilih ada teman atau tidak ada teman."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <div
+              style={
+                styles.gridTwo
+              }
+            >
+              <button
+                type="button"
+                style={
+                  styles.choiceButton(
+                    saksi ===
+                      "Tidak"
+                  )
+                }
+                onClick={() =>
+                  setSaksi(
+                    "Tidak"
+                  )
+                }
+                disabled={loading}
+              >
+                🙅 Tidak ada
+              </button>
+
+              <button
+                type="button"
+                style={
+                  styles.choiceButton(
+                    saksi === "Ya"
+                  )
+                }
+                onClick={() =>
+                  setSaksi("Ya")
+                }
+                disabled={loading}
+              >
+                👀 Ada teman
+              </button>
+            </div>
+          </div>
+
+          {/* DATA SAKSI */}
+
+          {saksi === "Ya" && (
+            <div
+              style={{
+                background: "#FAFAFA",
+                padding: "14px",
+                borderRadius: "12px",
+                marginBottom: "18px",
+              }}
+            >
+              <div
+                style={{
+                  marginBottom: "12px",
+                }}
+              >
+                <div
+                  style={
+                    styles.labelRow
+                  }
+                >
+                  <label
+                    style={
+                      styles.label
+                    }
+                  >
+                    👧 Nama teman yang
+                    melihat
+                  </label>
+
+                  <button
+                    type="button"
+                    style={
+                      styles.speakButton
+                    }
+                    onClick={() =>
+                      speakText(
+                        "Nama teman yang melihat."
+                      )
+                    }
+                  >
+                    🔊
+                  </button>
+                </div>
+
+                <input
+                  value={
+                    namaSaksi
+                  }
+                  onChange={(e) =>
+                    setNamaSaksi(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Nama teman..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
+              </div>
+
+              <div>
+                <div
+                  style={
+                    styles.labelRow
+                  }
+                >
+                  <label
+                    style={
+                      styles.label
+                    }
+                  >
+                    🎒 Kelas teman
+                  </label>
+                </div>
+
+                <select
+                  value={
+                    kelasSaksi
+                  }
+                  onChange={(e) =>
+                    setKelasSaksi(
+                      e.target.value
+                    )
+                  }
+                  style={
+                    styles.childSelect
+                  }
+                  disabled={
+                    loading
+                  }
+                >
+                  <option value="">
+                    Pilih kelas
+                  </option>
+
+                  {listKelas.map(
+                    (item) => (
+                      <option
+                        key={item}
+                        value={item}
+                      >
+                        🎒 Kelas {item}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* FOTO */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                📷 Foto bukti
+                <span
+                  style={{
+                    color: "#667C5E",
+                    fontWeight: "600",
+                  }}
+                >
+                  {" "}
+                  (boleh dikosongkan)
+                </span>
+              </label>
+
+              <button
+                type="button"
+                style={
+                  styles.speakButton
+                }
+                onClick={() =>
+                  speakText(
+                    "Foto bukti. Kalau punya foto, kamu boleh memasukkannya. Bagian ini boleh dikosongkan."
+                  )
+                }
+              >
+                🔊
+              </button>
+            </div>
+
+            <div
+              style={
+                styles.fileBox
+              }
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setFoto(
+                    e.target
+                      .files?.[0] ||
+                      null
+                  )
+                }
+                style={styles.input}
+                disabled={loading}
+              />
+
+              {foto && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    color: "#2E7D32",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                  }}
+                >
+                  ✅ Foto sudah dipilih
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* PERNYATAAN */}
+
+          <div
+            style={
+              styles.antiFitnahBox
+            }
+          >
+            <input
+              type="checkbox"
+              id="jujurCheck"
+              checked={
+                setujuJujur
+              }
+              onChange={(e) =>
+                setSetujuJujur(
+                  e.target.checked
+                )
+              }
+              style={{
+                width: "20px",
+                height: "20px",
+              }}
+              disabled={loading}
+            />
+
+            <label
+              htmlFor="jujurCheck"
+              style={{
+                fontSize: "12.5px",
+                color: "#1B5E20",
+                lineHeight: "1.5",
+                fontWeight: "600",
+                flex: 1,
+              }}
+            >
+              <strong>
+                💚 Saya jujur
+              </strong>
+              <br />
+              Saya menyatakan bahwa cerita
+              ini benar sesuai yang saya ingat.
+            </label>
+
+            <button
+              type="button"
+              style={
+                styles.speakButton
+              }
+              onClick={() =>
+                speakText(
+                  "Saya jujur. Saya menyatakan bahwa cerita ini benar sesuai yang saya ingat."
+                )
+              }
+            >
+              🔊
+            </button>
+          </div>
+
+          {/* BUTTON */}
+
+          <div
+            style={
+              styles.btnContainer
+            }
+          >
+            <button
+              type="submit"
+              style={
+                styles.submitBtn(
+                  loading ||
+                    !setujuJujur
+                )
+              }
+              disabled={
+                loading ||
+                !setujuJujur
+              }
+            >
+              {loading
+                ? "⏳ Mengirim..."
+                : "💚 Kirim Laporan"}
+            </button>
+
+            <button
+              type="button"
+              style={
+                styles.backBtn
+              }
+              onClick={() =>
+                navigate(
+                  "/dashboard-siswa"
+                )
+              }
+              disabled={loading}
+            >
+              ← Kembali
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ALERT */}
+
+      {alertConfig.isOpen && (
+        <div
+          style={
+            styles.modalOverlay
+          }
+          onClick={closeAlert}
+        >
+          <div
+            style={
+              styles.modalCard
+            }
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div
+              style={{
+                fontSize: "38px",
+                marginBottom: "8px",
+              }}
+            >
+              {alertConfig.type ===
+              "success"
+                ? "🎉"
+                : alertConfig.type ===
+                  "error"
+                ? "😟"
+                : "💡"}
             </div>
 
             <h3
-              style={{
-                fontSize: "18px",
-                fontWeight: "800",
-                marginBottom: "8px",
-                color:
-                  alertConfig.type === "success"
-                    ? "#1B5E20"
-                    : alertConfig.type === "error"
-                    ? "#C62828"
-                    : "#E65100",
-              }}
+              style={
+                styles.modalTitle
+              }
             >
-              {alertConfig.title}
+              {
+                alertConfig.title
+              }
             </h3>
 
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
-              {alertConfig.message}
+            <p
+              style={
+                styles.modalMsg
+              }
+            >
+              {
+                alertConfig.message
+              }
             </p>
 
+            <button
+              type="button"
+              style={
+                styles.alertBtn(
+                  alertConfig.type
+                )
+              }
+              onClick={
+                closeAlert
+              }
+            >
+              Mengerti
+            </button>
           </div>
         </div>
       )}
@@ -1125,4 +2674,4 @@ function DaftarPengaduan() {
   );
 }
 
-export default DaftarPengaduan;
+export default FormPengaduan;

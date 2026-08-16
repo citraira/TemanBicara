@@ -621,6 +621,18 @@ function DaftarPengaduan() {
     });
   }, []);
 
+  // Semua popup notifikasi tertutup otomatis tanpa perlu menekan tombol.
+  // Popup konfirmasi hapus dan preview foto tetap membutuhkan tindakan pengguna.
+  useEffect(() => {
+    if (!alertConfig.isOpen) return;
+
+    const timer = setTimeout(() => {
+      handleCloseAlert();
+    }, 1600);
+
+    return () => clearTimeout(timer);
+  }, [alertConfig.isOpen, handleCloseAlert]);
+
   // Memuat pengaduan hanya saat halaman dibuka.
   // Tidak memakai onValue() agar halaman daftar tidak terus menerima
   // seluruh data pengaduan setiap ada perubahan di Firebase.
@@ -714,7 +726,6 @@ function DaftarPengaduan() {
         updatedAt: new Date().toISOString(),
       });
       showAlert("success", "Catatan Tersimpan", "Catatan penanganan kasus berhasil diperbarui!");
-      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
     }
@@ -731,7 +742,6 @@ function DaftarPengaduan() {
     try {
       await remove(ref(db, `pengaduan/${id}`));
       showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus.");
-      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
     }
@@ -958,14 +968,94 @@ function DaftarPengaduan() {
 
       {selectedFoto && (
         <div style={styles.modalOverlay} onClick={() => setSelectedFoto(null)}>
-          <div style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }}>
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "90%",
+              maxHeight: "90vh",
+              width: "100%",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={selectedFoto}
               alt="Bukti Besar"
-              style={{ width: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "12px" }}
+              style={{
+                width: "100%",
+                maxHeight: "75vh",
+                objectFit: "contain",
+                borderRadius: "12px",
+                background: "#fff",
+              }}
             />
-            <div style={{ color: "#fff", textAlign: "center", marginTop: "10px", fontSize: "13px" }}>
-              Klik di mana saja untuk menutup gambar
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "10px",
+                marginTop: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <a
+                href={selectedFoto}
+                download={`bukti-pengaduan-${Date.now()}.jpg`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "150px",
+                  height: "42px",
+                  padding: "0 16px",
+                  boxSizing: "border-box",
+                  borderRadius: "10px",
+                  background: "#2E7D32",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontWeight: "800",
+                  fontSize: "13px",
+                  boxShadow: "0 3px 0 #1B5E20",
+                }}
+              >
+                Download Foto
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setSelectedFoto(null)}
+                style={{
+                  minWidth: "150px",
+                  height: "42px",
+                  padding: "0 16px",
+                  boxSizing: "border-box",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#FFEB3B",
+                  color: "#1B5E20",
+                  fontWeight: "800",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  boxShadow: "0 3px 0 #FBC02D",
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+
+            <div
+              style={{
+                color: "#fff",
+                textAlign: "center",
+                marginTop: "10px",
+                fontSize: "12px",
+              }}
+            >
+              Klik di luar gambar untuk menutup
             </div>
           </div>
         </div>
@@ -1028,9 +1118,6 @@ function DaftarPengaduan() {
               {alertConfig.message}
             </p>
 
-            <button style={styles.alertBtn(alertConfig.type)} onClick={handleCloseAlert}>
-              Mengerti
-            </button>
           </div>
         </div>
       )}
