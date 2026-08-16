@@ -12,6 +12,11 @@ import {
   push,
 } from "firebase/database";
 
+import {
+  getFunctions,
+  httpsCallable,
+} from "firebase/functions";
+
 import { db } from "../firebase";
 
 // ======================================================
@@ -49,7 +54,6 @@ const styles = {
     fontSize: "14px",
     lineHeight: "1.5",
     margin: 0,
-    opacity: 0.96,
   },
 
   hotlineBox: {
@@ -58,13 +62,12 @@ const styles = {
     borderRadius: "14px",
     padding: "12px 14px",
     maxWidth: "750px",
-    margin: "0 auto 14px auto",
+    margin: "0 auto 14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     flexWrap: "wrap",
     gap: "10px",
-    boxSizing: "border-box",
   },
 
   hotlineText: {
@@ -82,7 +85,6 @@ const styles = {
     textDecoration: "none",
     fontWeight: "700",
     fontSize: "13px",
-    whiteSpace: "nowrap",
   },
 
   container: {
@@ -142,7 +144,6 @@ const styles = {
     border: "1.5px solid #C8E6C9",
     fontSize: "16px",
     boxSizing: "border-box",
-    outline: "none",
     background: "#F1F8E9",
     color: "#33691E",
     fontWeight: "700",
@@ -164,16 +165,11 @@ const styles = {
       "'Segoe UI', Roboto, sans-serif",
   },
 
-  // ====================================================
-  // DROPDOWN
-  // ====================================================
-
   selectWrapper: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
     width: "100%",
-    boxSizing: "border-box",
   },
 
   selectEmoji: {
@@ -191,7 +187,6 @@ const styles = {
 
   childSelect: {
     flex: 1,
-    width: "100%",
     minWidth: 0,
     padding: "12px 13px",
     borderRadius: "12px",
@@ -201,13 +196,7 @@ const styles = {
     fontSize: "16px",
     fontWeight: "700",
     boxSizing: "border-box",
-    outline: "none",
-    cursor: "pointer",
   },
-
-  // ====================================================
-  // BUTTON SUARA
-  // ====================================================
 
   speakButton: {
     border: "none",
@@ -280,9 +269,16 @@ const styles = {
     lineHeight: "1.5",
   },
 
-  // ====================================================
-  // PERAN / SAKSI
-  // ====================================================
+  childInfoBox: {
+    background:
+      "linear-gradient(135deg,#E8F5E9,#F1F8E9)",
+    border: "1.5px solid #A5D6A7",
+    borderRadius: "14px",
+    padding: "13px 14px",
+    marginBottom: "18px",
+    display: "flex",
+    gap: "10px",
+  },
 
   gridTwo: {
     display: "grid",
@@ -309,39 +305,6 @@ const styles = {
     minHeight: "52px",
   }),
 
-  // ====================================================
-  // INFO ANAK
-  // ====================================================
-
-  childInfoBox: {
-    background:
-      "linear-gradient(135deg, #E8F5E9, #F1F8E9)",
-    border: "1.5px solid #A5D6A7",
-    borderRadius: "14px",
-    padding: "13px 14px",
-    marginBottom: "18px",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "10px",
-  },
-
-  childInfoIcon: {
-    fontSize: "25px",
-    flexShrink: 0,
-  },
-
-  childInfoText: {
-    fontSize: "13px",
-    lineHeight: "1.5",
-    color: "#1B5E20",
-    fontWeight: "600",
-    margin: 0,
-  },
-
-  // ====================================================
-  // LAINNYA
-  // ====================================================
-
   otherInputBox: {
     marginTop: "9px",
     padding: "10px",
@@ -350,20 +313,12 @@ const styles = {
     border: "1.5px dashed #A5D6A7",
   },
 
-  // ====================================================
-  // FOTO
-  // ====================================================
-
   fileBox: {
     background: "#FAFAFA",
     border: "1.5px dashed #A5D6A7",
     borderRadius: "12px",
     padding: "12px",
   },
-
-  // ====================================================
-  // PERNYATAAN
-  // ====================================================
 
   antiFitnahBox: {
     background: "#FFFDE7",
@@ -375,10 +330,6 @@ const styles = {
     alignItems: "flex-start",
     gap: "10px",
   },
-
-  // ====================================================
-  // BUTTON
-  // ====================================================
 
   btnContainer: {
     display: "flex",
@@ -400,9 +351,6 @@ const styles = {
       : "pointer",
     fontSize: "14px",
     fontWeight: "800",
-    boxShadow: disabled
-      ? "none"
-      : "0 3px 0 #1B5E20",
   }),
 
   backBtn: {
@@ -415,26 +363,17 @@ const styles = {
     cursor: "pointer",
     fontSize: "14px",
     fontWeight: "800",
-    boxShadow: "0 3px 0 #FBC02D",
   },
-
-  // ====================================================
-  // MODAL
-  // ====================================================
 
   modalOverlay: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    inset: 0,
     background: "rgba(0,0,0,0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
     padding: "15px",
-    boxSizing: "border-box",
   },
 
   modalCard: {
@@ -444,23 +383,19 @@ const styles = {
     maxWidth: "360px",
     width: "100%",
     textAlign: "center",
-    boxShadow:
-      "0 8px 24px rgba(0,0,0,0.12)",
-    border: "1.5px solid #C8E6C9",
-    boxSizing: "border-box",
   },
 
   modalTitle: {
     fontSize: "18px",
     fontWeight: "800",
-    margin: "0 0 8px 0",
+    margin: "0 0 8px",
   },
 
   modalMsg: {
     fontSize: "13px",
     color: "#556B4D",
     lineHeight: "1.5",
-    margin: "0 0 18px 0",
+    margin: "0 0 18px",
   },
 
   alertBtn: (type) => ({
@@ -469,39 +404,29 @@ const styles = {
     border: "none",
     borderRadius: "10px",
     fontWeight: "800",
-    fontSize: "13px",
     cursor: "pointer",
-
-    color:
-      type === "warning"
-        ? "#1B5E20"
-        : "#fff",
-
     background:
       type === "success"
         ? "#2E7D32"
         : type === "error"
         ? "#D32F2F"
         : "#FFEB3B",
-
-    boxShadow:
-      type === "success"
-        ? "0 3px 0 #1B5E20"
-        : type === "error"
-        ? "0 3px 0 #9A0007"
-        : "0 3px 0 #FBC02D",
+    color:
+      type === "warning"
+        ? "#1B5E20"
+        : "#fff",
   }),
 };
 
 // ======================================================
-// FORM PENGADUAN
+// COMPONENT
 // ======================================================
 
 function FormPengaduan() {
   const navigate = useNavigate();
 
   // ====================================================
-  // CONFIG
+  // CLOUDINARY
   // ====================================================
 
   const CLOUD_NAME = "r61tomq9";
@@ -512,7 +437,7 @@ function FormPengaduan() {
     "6281234567890";
 
   // ====================================================
-  // IDENTITAS
+  // FORM STATE
   // ====================================================
 
   const [nama, setNama] =
@@ -523,10 +448,6 @@ function FormPengaduan() {
 
   const [kelas, setKelas] =
     useState("");
-
-  // ====================================================
-  // FORM
-  // ====================================================
 
   const [peran, setPeran] =
     useState("Korban");
@@ -581,6 +502,33 @@ function FormPengaduan() {
     useState(false);
 
   // ====================================================
+  // TTS
+  // ====================================================
+
+  const [
+    isSpeaking,
+    setIsSpeaking,
+  ] = useState(false);
+
+  const audioRef =
+    useRef(null);
+
+  const audioUrlRef =
+    useRef(null);
+
+  // ====================================================
+  // SPEECH TO TEXT
+  // ====================================================
+
+  const [
+    isListening,
+    setIsListening,
+  ] = useState(false);
+
+  const recognitionRef =
+    useRef(null);
+
+  // ====================================================
   // ALERT
   // ====================================================
 
@@ -595,118 +543,11 @@ function FormPengaduan() {
     onCloseCallback: null,
   });
 
-  // ====================================================
-  // VOICE
-  // ====================================================
-
-  const [
-    isSpeakingText,
-    setIsSpeakingText,
-  ] = useState(false);
-
-  const [
-    isListening,
-    setIsListening,
-  ] = useState(false);
-
-  const recognitionRef =
-    useRef(null);
-
-  const speechTimeoutRef =
-    useRef(null);
-
-  // ====================================================
-  // SUBMIT LOCK
-  // ====================================================
-
   const submitLockRef =
     useRef(false);
 
   // ====================================================
-  // ALERT
-  // ====================================================
-
-  const showAlert =
-    useCallback(
-      (
-        type,
-        title,
-        message,
-        onCloseCallback = null
-      ) => {
-        setAlertConfig({
-          isOpen: true,
-          type,
-          title,
-          message,
-          onCloseCallback,
-        });
-      },
-      []
-    );
-
-  const handleCloseAlert =
-    useCallback(() => {
-      const callback =
-        alertConfig.onCloseCallback;
-
-      setAlertConfig(
-        (prev) => ({
-          ...prev,
-          isOpen: false,
-          onCloseCallback: null,
-        })
-      );
-
-      if (callback) {
-        callback();
-      }
-    }, [
-      alertConfig.onCloseCallback,
-    ]);
-
-  // ====================================================
-  // LOAD IDENTITAS
-  // ====================================================
-
-  useEffect(() => {
-    const namaSaved =
-      localStorage.getItem(
-        "namaSiswa"
-      ) || "";
-
-    const nisSaved =
-      localStorage.getItem(
-        "nisSiswa"
-      ) || "";
-
-    const kelasSaved =
-      localStorage.getItem(
-        "kelasSiswa"
-      ) || "";
-
-    setNama(
-      namaSaved.trim()
-    );
-
-    setNis(
-      nisSaved.trim()
-    );
-
-    setKelas(
-      kelasSaved.trim()
-    );
-
-    const today =
-      new Date()
-        .toISOString()
-        .split("T")[0];
-
-    setTanggal(today);
-  }, []);
-
-  // ====================================================
-  // DATA PILIHAN
+  // DATA
   // ====================================================
 
   const listKelas = [
@@ -766,17 +607,6 @@ function FormPengaduan() {
     },
   ];
 
-  /*
-   * value TETAP sama dengan data lama.
-   *
-   * Jadi Firebase tetap menyimpan:
-   * Kekerasan Fisik
-   * Kekerasan Verbal
-   * Pengucilan Sosial
-   * Pemalakan / Ancaman
-   * Cyberbullying
-   * Lainnya
-   */
   const listJenisBullying = [
     {
       value: "Kekerasan Fisik",
@@ -797,7 +627,7 @@ function FormPengaduan() {
       label:
         "🙁 Dijauhi teman",
       sub:
-        "Dijauhi teman, disebarkan fitnah",
+        "Dijauhi teman atau disebarkan fitnah",
     },
     {
       value:
@@ -812,7 +642,7 @@ function FormPengaduan() {
       label:
         "📱 Diganggu lewat HP",
       sub:
-        "Melalui pesan chat / media sosial",
+        "Melalui chat atau media sosial",
     },
     {
       value: "Lainnya",
@@ -824,278 +654,279 @@ function FormPengaduan() {
   ];
 
   // ====================================================
-  // CARI VOICE BAHASA INDONESIA
+  // ALERT
   // ====================================================
 
-  const findIndonesianVoice =
+  const showAlert =
+    useCallback(
+      (
+        type,
+        title,
+        message,
+        onCloseCallback = null
+      ) => {
+        setAlertConfig({
+          isOpen: true,
+          type,
+          title,
+          message,
+          onCloseCallback,
+        });
+      },
+      []
+    );
+
+  const closeAlert =
     useCallback(() => {
-      if (
-        typeof window ===
-          "undefined" ||
-        !("speechSynthesis" in
-          window)
-      ) {
-        return null;
+      const callback =
+        alertConfig.onCloseCallback;
+
+      setAlertConfig(
+        (prev) => ({
+          ...prev,
+          isOpen: false,
+          onCloseCallback: null,
+        })
+      );
+
+      if (callback) {
+        callback();
       }
-
-      const voices =
-        window.speechSynthesis.getVoices();
-
-      /*
-       * PRIORITAS 1
-       * Voice yang benar-benar id-ID.
-       */
-      const exactVoice =
-        voices.find(
-          (voice) =>
-            String(
-              voice.lang || ""
-            ).toLowerCase() ===
-            "id-id"
-        );
-
-      if (exactVoice) {
-        return exactVoice;
-      }
-
-      /*
-       * PRIORITAS 2
-       * Semua voice yang dimulai dengan id.
-       */
-      const indonesianVoice =
-        voices.find(
-          (voice) =>
-            String(
-              voice.lang || ""
-            )
-              .toLowerCase()
-              .startsWith("id")
-        );
-
-      if (indonesianVoice) {
-        return indonesianVoice;
-      }
-
-      /*
-       * PRIORITAS 3
-       * Beberapa perangkat memberi nama voice
-       * seperti "Indonesian".
-       */
-      const namedVoice =
-        voices.find((voice) =>
-          String(
-            voice.name || ""
-          )
-            .toLowerCase()
-            .includes(
-              "indonesia"
-            )
-        );
-
-      return namedVoice || null;
-    }, []);
+    }, [
+      alertConfig.onCloseCallback,
+    ]);
 
   // ====================================================
-  // TEXT TO SPEECH INDONESIA
+  // IDENTITAS SISWA
   // ====================================================
 
-  const speakText = useCallback(
-    (text) => {
-      if (
-        typeof window ===
-          "undefined" ||
-        !("speechSynthesis" in
-          window)
-      ) {
-        showAlert(
-          "warning",
-          "Suara Belum Tersedia",
-          "Browser ini belum mendukung fitur suara."
+  useEffect(() => {
+    const savedNama =
+      localStorage.getItem(
+        "namaSiswa"
+      ) || "";
+
+    const savedNis =
+      localStorage.getItem(
+        "nisSiswa"
+      ) || "";
+
+    const savedKelas =
+      localStorage.getItem(
+        "kelasSiswa"
+      ) || "";
+
+    setNama(
+      savedNama.trim()
+    );
+
+    setNis(
+      savedNis.trim()
+    );
+
+    setKelas(
+      savedKelas.trim()
+    );
+
+    setTanggal(
+      new Date()
+        .toISOString()
+        .split("T")[0]
+    );
+  }, []);
+
+  // ====================================================
+  // TTS BAHASA INDONESIA
+  // ====================================================
+
+  const speakText = async (
+    text
+  ) => {
+    /*
+     * Hentikan audio sebelumnya.
+     */
+
+    stopAudio();
+
+    setIsSpeaking(true);
+
+    try {
+      /*
+       * Ambil Cloud Function.
+       *
+       * Region harus sama dengan region function.
+       */
+
+      const functions =
+        getFunctions(
+          undefined,
+          "asia-southeast1"
         );
 
-        return;
+      const generateSpeech =
+        httpsCallable(
+          functions,
+          "generateIndonesianSpeech"
+        );
+
+      const result =
+        await generateSpeech({
+          text: String(text),
+        });
+
+      const data =
+        result?.data || {};
+
+      if (!data.audioContent) {
+        throw new Error(
+          "Audio Bahasa Indonesia tidak diterima dari server."
+        );
       }
 
       /*
-       * Hentikan suara sebelumnya.
+       * Google TTS mengembalikan base64.
+       * Kita ubah menjadi Blob audio.
        */
-      window.speechSynthesis.cancel();
 
-      setIsSpeakingText(false);
+      const binaryString =
+        window.atob(
+          data.audioContent
+        );
 
-      const speakNow = () => {
-        const voice =
-          findIndonesianVoice();
+      const len =
+        binaryString.length;
 
-        /*
-         * PENTING:
-         *
-         * Kita TIDAK menggunakan voice Inggris
-         * sebagai fallback.
-         *
-         * Kalau tidak ada voice Indonesia,
-         * tampilkan pesan.
-         */
-        if (!voice) {
-          setIsSpeakingText(
-            false
+      const bytes =
+        new Uint8Array(len);
+
+      for (
+        let i = 0;
+        i < len;
+        i++
+      ) {
+        bytes[i] =
+          binaryString.charCodeAt(
+            i
+          );
+      }
+
+      const blob =
+        new Blob(
+          [bytes],
+          {
+            type: "audio/mpeg",
+          }
+        );
+
+      const audioUrl =
+        URL.createObjectURL(
+          blob
+        );
+
+      audioUrlRef.current =
+        audioUrl;
+
+      const audio =
+        new Audio(audioUrl);
+
+      audioRef.current =
+        audio;
+
+      audio.volume = 1;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+
+        if (
+          audioUrlRef.current
+        ) {
+          URL.revokeObjectURL(
+            audioUrlRef.current
           );
 
-          showAlert(
-            "warning",
-            "Suara Indonesia Tidak Ditemukan",
-            "Perangkat ini belum menyediakan suara Bahasa Indonesia. Silakan tambahkan Bahasa Indonesia pada pengaturan suara perangkat."
-          );
-
-          return;
+          audioUrlRef.current =
+            null;
         }
 
-        const utterance =
-          new SpeechSynthesisUtterance(
-            text
+        audioRef.current =
+          null;
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+
+        if (
+          audioUrlRef.current
+        ) {
+          URL.revokeObjectURL(
+            audioUrlRef.current
           );
 
-        /*
-         * Bahasa Indonesia.
-         */
-        utterance.lang =
-          "id-ID";
+          audioUrlRef.current =
+            null;
+        }
 
-        /*
-         * Paksa voice Indonesia.
-         */
-        utterance.voice =
-          voice;
+        audioRef.current =
+          null;
 
-        /*
-         * Kecepatan sedikit lebih lambat
-         * supaya anak SD lebih mudah mengikuti.
-         */
-        utterance.rate = 0.85;
-
-        utterance.pitch = 1;
-
-        utterance.volume = 1;
-
-        utterance.onstart = () => {
-          setIsSpeakingText(
-            true
-          );
-        };
-
-        utterance.onend = () => {
-          setIsSpeakingText(
-            false
-          );
-        };
-
-        utterance.onerror = (
-          event
-        ) => {
-          console.warn(
-            "Speech synthesis:",
-            event
-          );
-
-          setIsSpeakingText(
-            false
-          );
-        };
-
-        window.speechSynthesis.speak(
-          utterance
+        showAlert(
+          "error",
+          "Suara Gagal Diputar",
+          "Audio Bahasa Indonesia berhasil dibuat, tetapi tidak dapat diputar."
         );
       };
 
-      /*
-       * Pada Chrome/Android daftar voice kadang
-       * baru muncul setelah voiceschanged.
-       */
-      const voices =
-        window.speechSynthesis.getVoices();
-
-      if (voices.length > 0) {
-        speakNow();
-
-        return;
-      }
-
-      let finished = false;
-
-      const handleVoicesChanged =
-        () => {
-          if (finished) {
-            return;
-          }
-
-          finished = true;
-
-          if (
-            speechTimeoutRef.current
-          ) {
-            clearTimeout(
-              speechTimeoutRef.current
-            );
-          }
-
-          window.speechSynthesis.onvoiceschanged =
-            null;
-
-          speakNow();
-        };
-
-      window.speechSynthesis.onvoiceschanged =
-        handleVoicesChanged;
-
-      speechTimeoutRef.current =
-        setTimeout(() => {
-          if (finished) {
-            return;
-          }
-
-          finished = true;
-
-          window.speechSynthesis.onvoiceschanged =
-            null;
-
-          speakNow();
-        }, 800);
-    },
-    [
-      findIndonesianVoice,
-      showAlert,
-    ]
-  );
-
-  // ====================================================
-  // STOP TEXT TO SPEECH
-  // ====================================================
-
-  const stopSpeaking = () => {
-    if (
-      typeof window !==
-        "undefined" &&
-      "speechSynthesis" in
-        window
-    ) {
-      window.speechSynthesis.cancel();
-
-      window.speechSynthesis.onvoiceschanged =
-        null;
-    }
-
-    if (
-      speechTimeoutRef.current
-    ) {
-      clearTimeout(
-        speechTimeoutRef.current
+      await audio.play();
+    } catch (error) {
+      console.error(
+        "TTS Bahasa Indonesia:",
+        error
       );
 
-      speechTimeoutRef.current =
+      setIsSpeaking(false);
+
+      showAlert(
+        "error",
+        "Suara Belum Berhasil",
+        error?.message ||
+          "Tidak dapat mengambil suara Bahasa Indonesia. Periksa koneksi internet."
+      );
+    }
+  };
+
+  // ====================================================
+  // STOP AUDIO
+  // ====================================================
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+
+        audioRef.current.currentTime =
+          0;
+      } catch (error) {
+        console.warn(error);
+      }
+
+      audioRef.current =
         null;
     }
 
-    setIsSpeakingText(false);
+    if (audioUrlRef.current) {
+      try {
+        URL.revokeObjectURL(
+          audioUrlRef.current
+        );
+      } catch (error) {
+        console.warn(error);
+      }
+
+      audioUrlRef.current =
+        null;
+    }
+
+    setIsSpeaking(false);
   };
 
   // ====================================================
@@ -1103,13 +934,6 @@ function FormPengaduan() {
   // ====================================================
 
   const startVoiceInput = () => {
-    if (
-      typeof window ===
-      "undefined"
-    ) {
-      return;
-    }
-
     const SpeechRecognition =
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
@@ -1117,8 +941,8 @@ function FormPengaduan() {
     if (!SpeechRecognition) {
       showAlert(
         "warning",
-        "Fitur Bicara Belum Tersedia",
-        "Browser ini belum mendukung fitur bicara. Kamu masih bisa mengetik ceritamu."
+        "Fitur Bicara Tidak Tersedia",
+        "Browser ini belum mendukung input suara. Kamu masih bisa mengetik ceritamu."
       );
 
       return;
@@ -1130,19 +954,15 @@ function FormPengaduan() {
       return;
     }
 
-    /*
-     * Hentikan text-to-speech jika sedang aktif.
-     */
-    stopSpeaking();
-
     try {
       const recognition =
         new SpeechRecognition();
 
       /*
-       * PENTING:
-       * Bahasa Indonesia.
+       * Input suara tetap diarahkan
+       * ke Bahasa Indonesia.
        */
+
       recognition.lang =
         "id-ID";
 
@@ -1172,15 +992,15 @@ function FormPengaduan() {
 
         setCerita(
           (previous) => {
-            const previousText =
+            const oldText =
               previous.trim();
 
-            if (!previousText) {
+            if (!oldText) {
               return transcript.trim();
             }
 
             return (
-              previousText +
+              oldText +
               " " +
               transcript.trim()
             );
@@ -1192,7 +1012,7 @@ function FormPengaduan() {
         event
       ) => {
         console.warn(
-          "Speech recognition error:",
+          "Speech recognition:",
           event.error
         );
 
@@ -1205,16 +1025,7 @@ function FormPengaduan() {
           showAlert(
             "warning",
             "Mikrofon Belum Diizinkan",
-            "Izinkan akses mikrofon pada browser agar kamu bisa bercerita dengan suara."
-          );
-        } else if (
-          event.error ===
-          "no-speech"
-        ) {
-          showAlert(
-            "warning",
-            "Suara Belum Terdengar",
-            "Coba tekan 🎤 Bicara lagi lalu ceritakan dengan suara yang lebih jelas."
+            "Izinkan akses mikrofon agar kamu bisa bercerita dengan suara."
           );
         }
       };
@@ -1231,21 +1042,11 @@ function FormPengaduan() {
 
       recognition.start();
     } catch (error) {
-      console.error(
-        "Gagal memulai voice input:",
-        error
-      );
+      console.error(error);
 
       setIsListening(false);
-
-      recognitionRef.current =
-        null;
     }
   };
-
-  // ====================================================
-  // STOP SPEECH TO TEXT
-  // ====================================================
 
   const stopVoiceInput = () => {
     try {
@@ -1258,40 +1059,19 @@ function FormPengaduan() {
           null;
       }
     } catch (error) {
-      console.warn(
-        "Gagal menghentikan voice input:",
-        error
-      );
+      console.warn(error);
     }
 
     setIsListening(false);
   };
 
   // ====================================================
-  // CLEANUP SUARA
+  // CLEANUP
   // ====================================================
 
   useEffect(() => {
     return () => {
-      if (
-        typeof window !==
-          "undefined" &&
-        "speechSynthesis" in
-          window
-      ) {
-        window.speechSynthesis.cancel();
-
-        window.speechSynthesis.onvoiceschanged =
-          null;
-      }
-
-      if (
-        speechTimeoutRef.current
-      ) {
-        clearTimeout(
-          speechTimeoutRef.current
-        );
-      }
+      stopAudio();
 
       try {
         if (
@@ -1300,7 +1080,7 @@ function FormPengaduan() {
           recognitionRef.current.stop();
         }
       } catch (error) {
-        // Tidak perlu ditampilkan.
+        console.warn(error);
       }
     };
   }, []);
@@ -1319,7 +1099,7 @@ function FormPengaduan() {
           reader.onerror = () => {
             reject(
               new Error(
-                "Gagal membaca file gambar."
+                "Gagal membaca foto."
               )
             );
           };
@@ -1328,32 +1108,21 @@ function FormPengaduan() {
             const img =
               new Image();
 
-            img.onerror = () => {
-              reject(
-                new Error(
-                  "File gambar tidak dapat diproses."
-                )
-              );
-            };
-
             img.onload = () => {
               const canvas =
                 document.createElement(
                   "canvas"
                 );
 
-              const MAX_WIDTH =
-                640;
-
-              const MAX_HEIGHT =
+              const max =
                 640;
 
               const scale =
                 Math.min(
                   1,
-                  MAX_WIDTH /
+                  max /
                     img.width,
-                  MAX_HEIGHT /
+                  max /
                     img.height
                 );
 
@@ -1383,7 +1152,7 @@ function FormPengaduan() {
               if (!ctx) {
                 reject(
                   new Error(
-                    "Browser tidak mendukung pemrosesan gambar."
+                    "Browser tidak mendukung kompresi foto."
                   )
                 );
 
@@ -1402,6 +1171,14 @@ function FormPengaduan() {
                 canvas.toDataURL(
                   "image/jpeg",
                   0.55
+                )
+              );
+            };
+
+            img.onerror = () => {
+              reject(
+                new Error(
+                  "Foto tidak dapat diproses."
                 )
               );
             };
@@ -1440,12 +1217,14 @@ function FormPengaduan() {
         const controller =
           new AbortController();
 
-        const timeoutId =
-          setTimeout(() => {
-            controller.abort();
-          }, 6000);
+        const timeout =
+          setTimeout(
+            () =>
+              controller.abort(),
+            6000
+          );
 
-        const res =
+        const response =
           await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
             {
@@ -1456,24 +1235,22 @@ function FormPengaduan() {
             }
           );
 
-        clearTimeout(
-          timeoutId
-        );
+        clearTimeout(timeout);
 
         const data =
-          await res.json();
+          await response.json();
 
-        if (!res.ok) {
+        if (!response.ok) {
           throw new Error(
             data.error?.message ||
-              "Gagal upload"
+              "Upload foto gagal."
           );
         }
 
         return data.secure_url;
       } catch (error) {
         console.warn(
-          "Upload Cloudinary gagal/lambat. Menggunakan kompresi lokal:",
+          "Cloudinary gagal:",
           error
         );
 
@@ -1537,7 +1314,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Nama Belum Ada",
-          "Nama siswa belum tersedia. Silakan login ulang sebagai siswa."
+          "Silakan login ulang sebagai siswa."
         );
 
         return;
@@ -1550,7 +1327,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "NIS Belum Ada",
-          "NIS siswa tidak ditemukan. Silakan login ulang."
+          "Silakan login ulang sebagai siswa."
         );
 
         return;
@@ -1562,7 +1339,7 @@ function FormPengaduan() {
 
         showAlert(
           "warning",
-          "Kelas Belum Dipilih",
+          "Pilih Kelas",
           "Yuk pilih kelasmu terlebih dahulu."
         );
 
@@ -1570,7 +1347,7 @@ function FormPengaduan() {
       }
 
       if (
-        tanggal === "" ||
+        !tanggal ||
         !lokasiFinal ||
         !jenisFinal ||
         !ceritaFinal
@@ -1581,7 +1358,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Form Belum Lengkap",
-          "Yuk cek lagi. Pastikan tempat kejadian, kejadian, dan ceritamu sudah diisi."
+          "Yuk cek kembali tempat kejadian, jenis kejadian, dan ceritamu."
         );
 
         return;
@@ -1610,7 +1387,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Nama Saksi Belum Diisi",
-          "Kalau ada saksi, tuliskan nama teman yang melihat kejadian."
+          "Tuliskan nama teman yang melihat kejadian."
         );
 
         return;
@@ -1619,10 +1396,6 @@ function FormPengaduan() {
       setLoading(true);
 
       try {
-        // ==================================================
-        // FOTO
-        // ==================================================
-
         let imageUrl = "-";
 
         if (foto) {
@@ -1631,11 +1404,6 @@ function FormPengaduan() {
               foto
             );
         }
-
-        // ==================================================
-        // DATA LAPORAN
-        // Struktur tetap sama dengan file asli.
-        // ==================================================
 
         const laporan = {
           nama: namaFinal,
@@ -1687,10 +1455,6 @@ function FormPengaduan() {
             Date.now(),
         };
 
-        // ==================================================
-        // SIMPAN FIREBASE
-        // ==================================================
-
         await push(
           dbRef(
             db,
@@ -1699,14 +1463,10 @@ function FormPengaduan() {
           laporan
         );
 
-        // ==================================================
-        // SUKSES
-        // ==================================================
-
         showAlert(
           "success",
           "Laporan Berhasil Terkirim 💚",
-          "Laporanmu sudah diterima oleh guru BK. Terima kasih sudah berani bercerita.",
+          "Terima kasih sudah berani bercerita. Laporanmu sudah diterima oleh guru BK.",
           () => {
             navigate(
               "/dashboard-siswa",
@@ -1717,10 +1477,7 @@ function FormPengaduan() {
           }
         );
       } catch (error) {
-        console.error(
-          "Gagal mengirim laporan:",
-          error
-        );
+        console.error(error);
 
         showAlert(
           "error",
@@ -1742,9 +1499,7 @@ function FormPengaduan() {
 
   return (
     <div style={styles.page}>
-      {/* ==================================================
-          HEADER
-      ================================================== */}
+      {/* HEADER */}
 
       <div style={styles.header}>
         <h1 style={styles.title}>
@@ -1765,13 +1520,13 @@ function FormPengaduan() {
           <button
             type="button"
             style={
-              isSpeakingText
+              isSpeaking
                 ? styles.speakingButton
                 : styles.speakButton
             }
             onClick={() => {
-              if (isSpeakingText) {
-                stopSpeaking();
+              if (isSpeaking) {
+                stopAudio();
               } else {
                 speakText(
                   "Ceritakan yuk. Kamu boleh bercerita tentang hal yang membuatmu tidak nyaman. Kami akan mendengarkanmu."
@@ -1779,16 +1534,14 @@ function FormPengaduan() {
               }
             }}
           >
-            {isSpeakingText
+            {isSpeaking
               ? "⏹️ Berhenti"
               : "🔊 Dengarkan"}
           </button>
         </div>
       </div>
 
-      {/* ==================================================
-          HOTLINE
-      ================================================== */}
+      {/* HOTLINE */}
 
       <div style={styles.hotlineBox}>
         <div style={styles.hotlineText}>
@@ -1809,17 +1562,13 @@ function FormPengaduan() {
         </a>
       </div>
 
-      {/* ==================================================
-          FORM
-      ================================================== */}
+      {/* FORM */}
 
       <div style={styles.container}>
         <form
           onSubmit={handleSubmit}
         >
-          {/* ==================================================
-              PETUNJUK
-          ================================================== */}
+          {/* INFO */}
 
           <div
             style={
@@ -1827,29 +1576,29 @@ function FormPengaduan() {
             }
           >
             <div
-              style={
-                styles.childInfoIcon
-              }
+              style={{
+                fontSize: "25px",
+              }}
             >
               💚
             </div>
 
             <p
-              style={
-                styles.childInfoText
-              }
+              style={{
+                ...styles.helperText,
+                margin: 0,
+                color: "#1B5E20",
+                fontWeight: "600",
+              }}
             >
-              Tidak perlu takut atau
-              malu. Isi sesuai yang kamu
-              ingat. Kalau sulit membaca,
-              tekan tombol 🔊 untuk
-              mendengarkan.
+              Tidak perlu takut atau malu.
+              Isi sesuai yang kamu ingat.
+              Kalau sulit membaca, tekan
+              tombol 🔊 untuk mendengarkan.
             </p>
           </div>
 
-          {/* ==================================================
-              NAMA
-          ================================================== */}
+          {/* NAMA */}
 
           <div style={styles.group}>
             <div
@@ -1879,20 +1628,15 @@ function FormPengaduan() {
             </div>
 
             <input
-              type="text"
               value={nama}
+              readOnly
               style={
                 styles.readonlyInput
               }
-              disabled={loading}
-              readOnly
-              autoComplete="name"
             />
           </div>
 
-          {/* ==================================================
-              NIS
-          ================================================== */}
+          {/* NIS */}
 
           <div style={styles.group}>
             <div
@@ -1922,20 +1666,15 @@ function FormPengaduan() {
             </div>
 
             <input
-              type="text"
               value={nis}
+              readOnly
               style={
                 styles.readonlyInput
               }
-              disabled={loading}
-              readOnly
-              inputMode="numeric"
             />
           </div>
 
-          {/* ==================================================
-              KELAS - DROPDOWN
-          ================================================== */}
+          {/* KELAS */}
 
           <div style={styles.group}>
             <div
@@ -1945,9 +1684,7 @@ function FormPengaduan() {
             >
               <div>
                 <label
-                  style={
-                    styles.label
-                  }
+                  style={styles.label}
                 >
                   🎒 Kamu kelas berapa?
                 </label>
@@ -1996,10 +1733,10 @@ function FormPengaduan() {
                     e.target.value
                   )
                 }
-                disabled={loading}
                 style={
                   styles.childSelect
                 }
+                disabled={loading}
               >
                 <option value="">
                   Pilih kelas kamu
@@ -2019,9 +1756,7 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* ==================================================
-              PERAN
-          ================================================== */}
+          {/* PERAN */}
 
           <div style={styles.group}>
             <div
@@ -2029,24 +1764,12 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <div>
-                <label
-                  style={
-                    styles.label
-                  }
-                >
-                  👀 Kamu mengalami atau
-                  melihat?
-                </label>
-
-                <div
-                  style={
-                    styles.helperText
-                  }
-                >
-                  Pilih yang sesuai.
-                </div>
-              </div>
+              <label
+                style={styles.label}
+              >
+                👀 Kamu mengalami atau
+                melihat?
+              </label>
 
               <button
                 type="button"
@@ -2084,9 +1807,7 @@ function FormPengaduan() {
                         item.id
                       )
                     }
-                    disabled={
-                      loading
-                    }
+                    disabled={loading}
                   >
                     {item.label}
                   </button>
@@ -2095,9 +1816,7 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* ==================================================
-              TANGGAL
-          ================================================== */}
+          {/* TANGGAL */}
 
           <div style={styles.group}>
             <div
@@ -2139,9 +1858,7 @@ function FormPengaduan() {
             />
           </div>
 
-          {/* ==================================================
-              LOKASI - DROPDOWN
-          ================================================== */}
+          {/* LOKASI */}
 
           <div style={styles.group}>
             <div
@@ -2151,9 +1868,7 @@ function FormPengaduan() {
             >
               <div>
                 <label
-                  style={
-                    styles.label
-                  }
+                  style={styles.label}
                 >
                   📍 Kejadiannya di mana?
                 </label>
@@ -2178,7 +1893,7 @@ function FormPengaduan() {
                   )
                 }
               >
-                🔊 Dengarkan
+                🔊
               </button>
             </div>
 
@@ -2212,10 +1927,10 @@ function FormPengaduan() {
                     );
                   }
                 }}
-                disabled={loading}
                 style={
                   styles.childSelect
                 }
+                disabled={loading}
               >
                 <option value="">
                   Pilih tempat kejadian
@@ -2246,7 +1961,6 @@ function FormPengaduan() {
                 }
               >
                 <input
-                  type="text"
                   value={
                     lokasiLainnya
                   }
@@ -2255,7 +1969,7 @@ function FormPengaduan() {
                       e.target.value
                     )
                   }
-                  placeholder="Tulis tempatnya di sini..."
+                  placeholder="Tulis tempatnya..."
                   style={
                     styles.input
                   }
@@ -2267,9 +1981,7 @@ function FormPengaduan() {
             )}
           </div>
 
-          {/* ==================================================
-              JENIS - DROPDOWN
-          ================================================== */}
+          {/* JENIS */}
 
           <div style={styles.group}>
             <div
@@ -2279,9 +1991,7 @@ function FormPengaduan() {
             >
               <div>
                 <label
-                  style={
-                    styles.label
-                  }
+                  style={styles.label}
                 >
                   😟 Apa yang terjadi?
                 </label>
@@ -2291,8 +2001,8 @@ function FormPengaduan() {
                     styles.helperText
                   }
                 >
-                  Pilih kejadian yang
-                  paling sesuai.
+                  Pilih kejadian yang paling
+                  sesuai.
                 </div>
               </div>
 
@@ -2307,7 +2017,7 @@ function FormPengaduan() {
                   )
                 }
               >
-                🔊 Dengarkan
+                🔊
               </button>
             </div>
 
@@ -2341,10 +2051,10 @@ function FormPengaduan() {
                     );
                   }
                 }}
-                disabled={loading}
                 style={
                   styles.childSelect
                 }
+                disabled={loading}
               >
                 <option value="">
                   Pilih apa yang terjadi
@@ -2394,7 +2104,6 @@ function FormPengaduan() {
                 }
               >
                 <input
-                  type="text"
                   value={
                     jenisLainnya
                   }
@@ -2415,22 +2124,13 @@ function FormPengaduan() {
             )}
           </div>
 
-          {/* ==================================================
-              CERITA
-          ================================================== */}
+          {/* CERITA */}
 
           <div style={styles.group}>
             <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                alignItems:
-                  "flex-start",
-                gap: "8px",
-                marginBottom:
-                  "8px",
-              }}
+              style={
+                styles.labelRow
+              }
             >
               <div>
                 <label
@@ -2446,8 +2146,7 @@ function FormPengaduan() {
                   }
                 >
                   Tidak perlu panjang.
-                  Tulis apa yang kamu
-                  ingat.
+                  Tulis apa yang kamu ingat.
                 </div>
               </div>
 
@@ -2455,21 +2154,18 @@ function FormPengaduan() {
                 style={{
                   display: "flex",
                   gap: "6px",
-                  flexShrink: 0,
                 }}
               >
                 <button
                   type="button"
                   style={
-                    isSpeakingText
+                    isSpeaking
                       ? styles.speakingButton
                       : styles.speakButton
                   }
                   onClick={() => {
-                    if (
-                      isSpeakingText
-                    ) {
-                      stopSpeaking();
+                    if (isSpeaking) {
+                      stopAudio();
                     } else {
                       speakText(
                         "Ceritakan dengan kata-katamu. Tidak perlu panjang. Tulis apa yang kamu ingat."
@@ -2477,7 +2173,7 @@ function FormPengaduan() {
                     }
                   }}
                 >
-                  {isSpeakingText
+                  {isSpeaking
                     ? "⏹️"
                     : "🔊"}
                 </button>
@@ -2492,9 +2188,7 @@ function FormPengaduan() {
                   onClick={
                     startVoiceInput
                   }
-                  disabled={
-                    loading
-                  }
+                  disabled={loading}
                 >
                   {isListening
                     ? "⏹️ Stop"
@@ -2517,40 +2211,18 @@ function FormPengaduan() {
               disabled={loading}
             />
 
-            {isListening ? (
-              <div
-                style={
-                  styles.voiceHelp
-                }
-              >
-                🎤 <strong>
-                  Silakan bicara...
-                </strong>
-                <br />
-                Ceritakan dengan pelan.
-                Setelah selesai, ucapanmu
-                akan masuk ke kotak cerita.
-              </div>
-            ) : (
-              <div
-                style={
-                  styles.voiceHelp
-                }
-              >
-                💡 Sulit mengetik?
-                Tekan{" "}
-                <strong>
-                  🎤 Bicara
-                </strong>{" "}
-                lalu ceritakan dengan
-                suaramu.
-              </div>
-            )}
+            <div
+              style={
+                styles.voiceHelp
+              }
+            >
+              💡 Kalau sulit mengetik,
+              tekan <strong>🎤 Bicara</strong>{" "}
+              lalu ceritakan dengan suaramu.
+            </div>
           </div>
 
-          {/* ==================================================
-              PELAKU
-          ================================================== */}
+          {/* PELAKU */}
 
           <div style={styles.group}>
             <div
@@ -2558,36 +2230,20 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <div>
-                <label
-                  style={
-                    styles.label
-                  }
+              <label
+                style={styles.label}
+              >
+                👤 Siapa yang melakukan?
+                <span
+                  style={{
+                    color: "#667C5E",
+                    fontWeight: "600",
+                  }}
                 >
-                  👤 Siapa yang melakukan?
-                  <span
-                    style={{
-                      fontWeight:
-                        "600",
-                      color:
-                        "#667C5E",
-                      marginLeft:
-                        "5px",
-                    }}
-                  >
-                    (boleh dikosongkan)
-                  </span>
-                </label>
-
-                <div
-                  style={
-                    styles.helperText
-                  }
-                >
-                  Kalau kamu tahu namanya,
-                  boleh ditulis.
-                </div>
-              </div>
+                  {" "}
+                  (boleh dikosongkan)
+                </span>
+              </label>
 
               <button
                 type="button"
@@ -2605,22 +2261,19 @@ function FormPengaduan() {
             </div>
 
             <input
-              type="text"
               value={pelaku}
               onChange={(e) =>
                 setPelaku(
                   e.target.value
                 )
               }
-              placeholder="Nama teman atau pihak yang melakukan..."
+              placeholder="Nama teman atau orangnya..."
               style={styles.input}
               disabled={loading}
             />
           </div>
 
-          {/* ==================================================
-              SAKSI
-          ================================================== */}
+          {/* SAKSI */}
 
           <div style={styles.group}>
             <div
@@ -2628,24 +2281,11 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <div>
-                <label
-                  style={
-                    styles.label
-                  }
-                >
-                  👀 Ada teman yang
-                  melihat?
-                </label>
-
-                <div
-                  style={
-                    styles.helperText
-                  }
-                >
-                  Pilih ada atau tidak.
-                </div>
-              </div>
+              <label
+                style={styles.label}
+              >
+                👀 Ada teman yang melihat?
+              </label>
 
               <button
                 type="button"
@@ -2702,28 +2342,20 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* ==================================================
-              DATA SAKSI
-          ================================================== */}
+          {/* DATA SAKSI */}
 
           {saksi === "Ya" && (
             <div
               style={{
-                background:
-                  "#FAFAFA",
+                background: "#FAFAFA",
                 padding: "14px",
-                borderRadius:
-                  "12px",
-                border:
-                  "1.5px dashed #C8E6C9",
-                marginBottom:
-                  "18px",
+                borderRadius: "12px",
+                marginBottom: "18px",
               }}
             >
               <div
                 style={{
-                  marginBottom:
-                    "12px",
+                  marginBottom: "12px",
                 }}
               >
                 <div
@@ -2756,7 +2388,6 @@ function FormPengaduan() {
                 </div>
 
                 <input
-                  type="text"
                   value={
                     namaSaksi
                   }
@@ -2765,7 +2396,7 @@ function FormPengaduan() {
                       e.target.value
                     )
                   }
-                  placeholder="Nama teman yang melihat..."
+                  placeholder="Nama teman..."
                   style={
                     styles.input
                   }
@@ -2787,22 +2418,7 @@ function FormPengaduan() {
                     }
                   >
                     🎒 Kelas teman
-                    (boleh dikosongkan)
                   </label>
-
-                  <button
-                    type="button"
-                    style={
-                      styles.speakButton
-                    }
-                    onClick={() =>
-                      speakText(
-                        "Kelas teman. Bagian ini boleh dikosongkan."
-                      )
-                    }
-                  >
-                    🔊
-                  </button>
                 </div>
 
                 <select
@@ -2822,7 +2438,7 @@ function FormPengaduan() {
                   }
                 >
                   <option value="">
-                    Pilih kelas teman
+                    Pilih kelas
                   </option>
 
                   {listKelas.map(
@@ -2840,9 +2456,7 @@ function FormPengaduan() {
             </div>
           )}
 
-          {/* ==================================================
-              FOTO
-          ================================================== */}
+          {/* FOTO */}
 
           <div style={styles.group}>
             <div
@@ -2850,36 +2464,20 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <div>
-                <label
-                  style={
-                    styles.label
-                  }
+              <label
+                style={styles.label}
+              >
+                📷 Foto bukti
+                <span
+                  style={{
+                    color: "#667C5E",
+                    fontWeight: "600",
+                  }}
                 >
-                  📷 Foto bukti
-                  <span
-                    style={{
-                      fontWeight:
-                        "600",
-                      color:
-                        "#667C5E",
-                      marginLeft:
-                        "5px",
-                    }}
-                  >
-                    (boleh dikosongkan)
-                  </span>
-                </label>
-
-                <div
-                  style={
-                    styles.helperText
-                  }
-                >
-                  Kalau punya foto, kamu
-                  boleh memasukkannya.
-                </div>
-              </div>
+                  {" "}
+                  (boleh dikosongkan)
+                </span>
+              </label>
 
               <button
                 type="button"
@@ -2903,7 +2501,7 @@ function FormPengaduan() {
             >
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/*"
+                accept="image/*"
                 onChange={(e) =>
                   setFoto(
                     e.target
@@ -2911,27 +2509,17 @@ function FormPengaduan() {
                       null
                   )
                 }
-                style={{
-                  ...styles.input,
-                  background:
-                    "#fff",
-                }}
-                disabled={
-                  loading
-                }
+                style={styles.input}
+                disabled={loading}
               />
 
               {foto && (
                 <div
                   style={{
-                    marginTop:
-                      "8px",
-                    fontSize:
-                      "12px",
-                    color:
-                      "#2E7D32",
-                    fontWeight:
-                      "700",
+                    marginTop: "8px",
+                    color: "#2E7D32",
+                    fontSize: "12px",
+                    fontWeight: "700",
                   }}
                 >
                   ✅ Foto sudah dipilih
@@ -2940,9 +2528,7 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* ==================================================
-              PERNYATAAN
-          ================================================== */}
+          {/* PERNYATAAN */}
 
           <div
             style={
@@ -2963,9 +2549,6 @@ function FormPengaduan() {
               style={{
                 width: "20px",
                 height: "20px",
-                cursor: "pointer",
-                marginTop: "2px",
-                flexShrink: 0,
               }}
               disabled={loading}
             />
@@ -2973,16 +2556,10 @@ function FormPengaduan() {
             <label
               htmlFor="jujurCheck"
               style={{
-                fontSize:
-                  "12.5px",
-                color:
-                  "#1B5E20",
-                cursor:
-                  "pointer",
-                lineHeight:
-                  "1.5",
-                fontWeight:
-                  "600",
+                fontSize: "12.5px",
+                color: "#1B5E20",
+                lineHeight: "1.5",
+                fontWeight: "600",
                 flex: 1,
               }}
             >
@@ -2990,9 +2567,8 @@ function FormPengaduan() {
                 💚 Saya jujur
               </strong>
               <br />
-              Saya menyatakan bahwa
-              cerita ini benar sesuai
-              yang saya ingat.
+              Saya menyatakan bahwa cerita
+              ini benar sesuai yang saya ingat.
             </label>
 
             <button
@@ -3010,9 +2586,7 @@ function FormPengaduan() {
             </button>
           </div>
 
-          {/* ==================================================
-              BUTTON
-          ================================================== */}
+          {/* BUTTON */}
 
           <div
             style={
@@ -3055,27 +2629,19 @@ function FormPengaduan() {
         </form>
       </div>
 
-      {/* ==================================================
-          ALERT
-      ================================================== */}
+      {/* ALERT */}
 
       {alertConfig.isOpen && (
         <div
           style={
             styles.modalOverlay
           }
-          role="presentation"
-          onClick={
-            handleCloseAlert
-          }
+          onClick={closeAlert}
         >
           <div
             style={
               styles.modalCard
             }
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pengaduan-alert-title"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -3096,18 +2662,9 @@ function FormPengaduan() {
             </div>
 
             <h3
-              id="pengaduan-alert-title"
-              style={{
-                ...styles.modalTitle,
-                color:
-                  alertConfig.type ===
-                  "success"
-                    ? "#1B5E20"
-                    : alertConfig.type ===
-                      "error"
-                    ? "#C62828"
-                    : "#E65100",
-              }}
+              style={
+                styles.modalTitle
+              }
             >
               {
                 alertConfig.title
@@ -3132,7 +2689,7 @@ function FormPengaduan() {
                 )
               }
               onClick={
-                handleCloseAlert
+                closeAlert
               }
             >
               Mengerti
