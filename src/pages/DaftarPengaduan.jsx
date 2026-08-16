@@ -82,23 +82,53 @@ const styles = {
     background: "#FFFDE7",
     border: "2px solid #FFF59D",
     borderRadius: "14px",
-    padding: "16px",
+    padding: "18px",
     marginTop: "16px",
     marginBottom: "16px",
   },
+  interventionGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "16px",
+    alignItems: "start",
+  },
+  interventionField: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+  fieldLabel: {
+    display: "block",
+    minHeight: "30px",
+    fontSize: "12px",
+    fontWeight: "700",
+    lineHeight: "1.3",
+    color: "#1B5E20",
+    marginBottom: "6px",
+  },
+  fieldControl: {
+    width: "100%",
+    minHeight: "42px",
+    boxSizing: "border-box",
+  },
   inputSmall: {
     width: "100%",
-    padding: "10px 12px",
+    height: "42px",
+    padding: "9px 12px",
     borderRadius: "10px",
     border: "1.5px solid #C8E6C9",
     fontSize: "14px",
-    marginTop: "6px",
     boxSizing: "border-box",
     outline: "none",
     background: "#fff",
+    color: "#263238",
+    fontFamily: "inherit",
+    boxShadow: "0 1px 3px rgba(46,125,50,0.08)",
   },
   saveBtn: {
-    padding: "10px 16px",
+    width: "100%",
+    height: "42px",
+    padding: "0 16px",
     background: "#2E7D32",
     color: "#fff",
     border: "none",
@@ -106,7 +136,7 @@ const styles = {
     cursor: "pointer",
     fontWeight: "800",
     fontSize: "13px",
-    marginTop: "14px",
+    boxSizing: "border-box",
     boxShadow: "0 3px 0 #1B5E20",
     textTransform: "uppercase",
   },
@@ -129,24 +159,48 @@ const styles = {
   }),
   actionArea: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
     flexDirection: "column",
-    gap: "12px",
-    marginTop: "15px",
-    paddingTop: "14px",
+    gap: "14px",
+    marginTop: "16px",
+    paddingTop: "16px",
     borderTop: "1px solid #E8F5E9",
   },
+  actionButtons: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "10px",
+    width: "100%",
+  },
+  statusField: {
+    width: "100%",
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+  actionMeta: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    minHeight: "20px",
+  },
+  reportedAt: {
+    fontSize: "12px",
+    color: "#556B4D",
+    lineHeight: "1.4",
+  },
   deleteBtn: {
-    padding: "8px 14px",
+    width: "100%",
+    height: "42px",
+    padding: "0 16px",
     background: "#D32F2F",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "800",
-    fontSize: "12px",
-    boxShadow: "0 2px 0 #9A0007",
+    fontSize: "13px",
+    boxSizing: "border-box",
+    boxShadow: "0 3px 0 #9A0007",
   },
   thumbFoto: {
     width: "80px",
@@ -362,21 +416,9 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           Modul Penanganan & Intervensi Kasus
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "14px",
-          }}
-        >
-          <div>
-            <label
-              style={{
-                fontSize: "12px",
-                fontWeight: "700",
-                color: "#1B5E20",
-              }}
-            >
+        <div style={styles.interventionGrid}>
+          <div style={styles.interventionField}>
+            <label style={styles.fieldLabel}>
               Penanganan Pelaku & Korban:
             </label>
 
@@ -392,7 +434,7 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
               }}
               style={{
                 ...styles.inputSmall,
-                marginTop: "0px",
+                ...styles.fieldControl,
               }}
             >
               {metodePenanganan.map((m) => (
@@ -413,14 +455,8 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
             )}
           </div>
 
-          <div>
-            <label
-              style={{
-                fontSize: "12px",
-                fontWeight: "700",
-                color: "#1B5E20",
-              }}
-            >
+          <div style={styles.interventionField}>
+            <label style={styles.fieldLabel}>
               Konfirmasi & Respon Orang Tua:
             </label>
             <input
@@ -432,14 +468,8 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
             />
           </div>
 
-          <div>
-            <label
-              style={{
-                fontSize: "12px",
-                fontWeight: "700",
-                color: "#1B5E20",
-              }}
-            >
+          <div style={styles.interventionField}>
+            <label style={styles.fieldLabel}>
               Tahapan Hukuman / Ganti Rugi:
             </label>
             <input
@@ -455,28 +485,15 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
       </div>
 
       <div style={styles.actionArea}>
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-          }}
-        >
-          <label
-            style={{
-              fontSize: "13px",
-              fontWeight: "800",
-              color: "#1B5E20",
-            }}
-          >
+        <div style={styles.statusField}>
+          <label style={styles.fieldLabel}>
             Ubah Status Kasus:
           </label>
 
           <select
             value={item.status || "Diproses (Guru/BK)"}
             onChange={(e) => onStatusChange(item.id, e.target.value)}
-            style={styles.inputSmall}
+            style={{ ...styles.inputSmall, ...styles.fieldControl }}
           >
             {statusOptions.map((opt) => (
               <option key={opt.label} value={opt.label}>
@@ -486,57 +503,36 @@ const ItemPengaduanCard = memo(({ item, onStatusChange, onSavePenanganan, onDele
           </select>
         </div>
 
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#556B4D",
-            }}
-          >
+        <div style={styles.actionMeta}>
+          <div style={styles.reportedAt}>
             Dilaporkan pada:{" "}
             {item.createdAt
               ? new Date(item.createdAt).toLocaleString("id-ID")
               : "-"}
           </div>
+        </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
+        <div style={styles.actionButtons}>
+          <button
+            style={styles.saveBtn}
+            onClick={() =>
+              onSavePenanganan(item.id, {
+                penanganan,
+                penangananLainnya,
+                responOrangTua,
+                tindakanSanksi,
+              })
+            }
           >
-            <button
-              style={styles.saveBtn}
-              onClick={() =>
-                onSavePenanganan(item.id, {
-                  penanganan,
-                  penangananLainnya,
-                  responOrangTua,
-                  tindakanSanksi,
-                })
-              }
-            >
-              Simpan Catatan Penanganan
-            </button>
+            Simpan
+          </button>
 
-            <button
-              style={styles.deleteBtn}
-              onClick={() => onDelete(item.id)}
-            >
-              Hapus
-            </button>
-          </div>
+          <button
+            style={styles.deleteBtn}
+            onClick={() => onDelete(item.id)}
+          >
+            Hapus
+          </button>
         </div>
       </div>
     </div>
@@ -649,7 +645,7 @@ function DaftarPengaduan() {
     }
   }, [showAlert]);
 
-  // Simpan Catatan Penanganan
+  // Simpan
   const handleSavePenanganan = useCallback(async (id, formData) => {
     try {
       await update(ref(db, `pengaduan/${id}`), {
