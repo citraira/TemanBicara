@@ -659,10 +659,11 @@ function DaftarPengaduan() {
         updatedAt: new Date().toISOString(),
       });
       showAlert("success", "Catatan Tersimpan", "Catatan penanganan kasus berhasil diperbarui!");
+      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menyimpan", error.message || "Terjadi kesalahan saat menyimpan catatan.");
     }
-  }, [showAlert]);
+  }, [showAlert, handleCloseAlert]);
 
   // Hapus Laporan
   const executeDelete = useCallback(async () => {
@@ -675,10 +676,11 @@ function DaftarPengaduan() {
     try {
       await remove(ref(db, `pengaduan/${id}`));
       showAlert("success", "Berhasil Dihapus", "Laporan pengaduan berhasil dihapus.");
+      setTimeout(() => handleCloseAlert(), 1600);
     } catch (error) {
       showAlert("error", "Gagal Menghapus", error.message || "Terjadi kesalahan saat menghapus laporan.");
     }
-  }, [deleteTargetId, showAlert]);
+  }, [deleteTargetId, showAlert, handleCloseAlert]);
 
 
   const refreshPengaduan = useCallback(async () => {
@@ -827,7 +829,15 @@ function DaftarPengaduan() {
         <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={handleCloseAlert}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.alertIconWrapper(alertConfig.type)}>
-              {alertConfig.type === "success" ? "" : alertConfig.type === "error" ? "" : ""}
+              <span
+                style={{
+                  fontSize: "34px",
+                  fontWeight: "900",
+                  lineHeight: 1,
+                }}
+              >
+                {alertConfig.type === "success" ? "✓" : alertConfig.type === "error" ? "×" : "!"}
+              </span>
             </div>
 
             <h3
