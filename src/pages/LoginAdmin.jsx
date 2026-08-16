@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
@@ -253,6 +253,9 @@ function LoginAdmin() {
   const passwordRef = useRef(null);
   const resetEmailRef = useRef(null);
 
+  // Menyimpan input yang terakhir aktif
+  const lastFocusedInputRef = useRef(null);
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -265,6 +268,10 @@ function LoginAdmin() {
     message: "",
     onCloseCallback: null,
   });
+
+  const rememberFocus = (ref) => {
+    lastFocusedInputRef.current = ref;
+  };
 
   const showAlert = (type, title, message, onCloseCallback = null) => {
     setAlertConfig({
@@ -376,14 +383,16 @@ function LoginAdmin() {
 
         <form onSubmit={handleLogin}>
           <label style={styles.label}>Email Admin</label>
-          <input
-            ref={emailRef}
-            type="email"
-            placeholder="Masukkan email admin"
-            style={styles.input}
-            disabled={loading}
-            autoComplete="email"
-          />
+        <input
+          ref={emailRef}
+          type="email"
+          placeholder="Masukkan email admin"
+          style={styles.input}
+          disabled={loading}
+          autoComplete="email"
+          inputMode="email"
+          onFocus={() => rememberFocus(emailRef)}
+        />
 
           <label style={styles.label}>Kata Sandi</label>
 
@@ -395,11 +404,19 @@ function LoginAdmin() {
               style={styles.passwordInput}
               disabled={loading}
               autoComplete="current-password"
+              onFocus={() => rememberFocus(passwordRef)}
             />
             <button
               type="button"
               style={styles.eyeBtn}
-              onClick={() => setShowPassword(!showPassword)}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setShowPassword((prev) => !prev);
+
+                setTimeout(() => {
+                  passwordRef.current?.focus();
+                }, 0);
+              }}
               aria-label="Tampilkan atau sembunyikan kata sandi"
             >
               {showPassword ? (

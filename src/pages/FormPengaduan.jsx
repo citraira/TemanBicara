@@ -292,8 +292,9 @@ function FormPengaduan() {
   useEffect(() => {
     const namaSaved = localStorage.getItem("namaSiswa");
     const kelasSaved = localStorage.getItem("kelasSiswa");
-    if (namaSaved) setNama(namaSaved);
-    if (kelasSaved) setKelas(kelasSaved);
+
+    setNama((current) => current || namaSaved || "");
+    setKelas((current) => current || kelasSaved || "");
   }, []);
 
   const listKelas = ["1", "2", "3", "4", "5", "6"];

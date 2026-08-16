@@ -5,6 +5,7 @@ import { db } from "../firebase";
 
 function EditSiswa() {
   const navigate = useNavigate();
+
   const { id } = useParams();
 
   const [nama, setNama] = useState("");

@@ -219,9 +219,10 @@ const styles = {
 function LoginSiswa() {
   const navigate = useNavigate();
 
-  // Menggunakan Ref agar ketikan tidak memicu re-render
   const namaRef = useRef(null);
   const nisRef = useRef(null);
+  const lastFocusedInputRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
@@ -337,14 +338,17 @@ function LoginSiswa() {
 
           <form onSubmit={handleLogin}>
             <label style={styles.label}>Nama Lengkap</label>
-            <input
-              ref={namaRef}
-              type="text"
-              placeholder="Ketik nama lengkapmu"
-              style={styles.input}
-              disabled={loading}
-              autoComplete="name"
-            />
+          <input
+            ref={namaRef}
+            type="text"
+            placeholder="Ketik nama lengkapmu"
+            style={styles.input}
+            disabled={loading}
+            autoComplete="name"
+            onFocus={() => {
+              lastFocusedInputRef.current = namaRef;
+            }}
+          />
 
             <label style={styles.label}>Nomor Induk Siswa (NIS)</label>
             <input
@@ -354,6 +358,9 @@ function LoginSiswa() {
               style={styles.input}
               disabled={loading}
               inputMode="numeric"
+              onFocus={() => {
+                lastFocusedInputRef.current = nisRef;
+              }}
             />
 
             <button

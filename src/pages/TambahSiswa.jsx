@@ -387,13 +387,14 @@ function TambahSiswa() {
 
           {/* Tombol Aksi */}
           <div style={styles.buttonGroup}>
-            <button
-              type="submit"
-              style={styles.saveButton}
-              disabled={loading}
-            >
-              {loading ? "Menyimpan..." : "Simpan Data"}
-            </button>
+          <button
+            type="submit"
+            style={styles.saveButton}
+            disabled={loading}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {loading ? "Menyimpan..." : "Simpan Data"}
+          </button>
 
             <button
               type="button"

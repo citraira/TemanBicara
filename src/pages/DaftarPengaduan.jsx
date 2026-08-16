@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, onValue, update, remove } from "firebase/database";
+import { ref, get, update, remove } from "firebase/database";
 import { db } from "../firebase";
 
 const styles = {
@@ -456,6 +456,7 @@ function DaftarPengaduan() {
   const navigate = useNavigate();
   const [laporanList, setLaporanList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedFoto, setSelectedFoto] = useState(null);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
@@ -478,38 +479,58 @@ function DaftarPengaduan() {
     });
   }, []);
 
-  // Listener Database Stabil (Hanya ambil snapshot, tanpa looping)
+  // Ambil data pengaduan satu kali saat halaman dibuka
   useEffect(() => {
-    const pengaduanRef = ref(db, "pengaduan");
+    let mounted = true;
 
-    const unsubscribe = onValue(
-      pengaduanRef,
-      (snapshot) => {
+    const loadPengaduan = async () => {
+      try {
+        const pengaduanRef = ref(db, "pengaduan");
+        const snapshot = await get(pengaduanRef);
+
+        if (!mounted) return;
+
         if (snapshot.exists()) {
           const data = snapshot.val();
+
           const formattedList = Object.keys(data).map((key) => ({
             id: key,
             ...data[key],
           }));
 
           formattedList.sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            (a, b) =>
+              new Date(b.createdAt || 0) -
+              new Date(a.createdAt || 0)
           );
 
           setLaporanList(formattedList);
         } else {
           setLaporanList([]);
         }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Gagal mengambil data:", error);
-        setLoading(false);
-      }
-    );
+      } catch (error) {
+        console.error("Gagal mengambil data pengaduan:", error);
 
-    return () => unsubscribe();
-  }, []);
+        if (mounted) {
+          showAlert(
+            "error",
+            "Gagal Memuat Data",
+            error.message || "Terjadi kesalahan saat mengambil data pengaduan."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPengaduan();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showAlert]);
 
   // Update Status Instan (Optimistic)
   const handleStatusChange = useCallback(async (id, statusBaru) => {
@@ -561,18 +582,91 @@ function DaftarPengaduan() {
     }
   }, [deleteTargetId, showAlert]);
 
+
+  const refreshPengaduan = async () => {
+  try {
+    setRefreshing(true);
+
+    const snapshot = await get(ref(db, "pengaduan"));
+
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+
+      const formattedList = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
+
+      formattedList.sort(
+        (a, b) =>
+          new Date(b.createdAt || 0) -
+          new Date(a.createdAt || 0)
+      );
+
+      setLaporanList(formattedList);
+    } else {
+      setLaporanList([]);
+    }
+  } catch (error) {
+    console.error("Gagal refresh pengaduan:", error);
+
+    showAlert(
+      "error",
+      "Refresh Gagal",
+      error.message || "Tidak dapat memperbarui daftar pengaduan."
+    );
+  } finally {
+    setRefreshing(false);
+  }
+};
+
   return (
     <div style={styles.page}>
       <div style={styles.header}>
         <div>
           <div style={styles.title}>Daftar Laporan Pengaduan</div>
-          <p style={{ color: "#fff", margin: "4px 0 0 0", fontSize: "13px", opacity: 0.95 }}>
-            Total Laporan Masuk: <strong>{laporanList.length}</strong>
+
+          <p
+            style={{
+              color: "#fff",
+              margin: "4px 0 0 0",
+              fontSize: "13px",
+              opacity: 0.95,
+            }}
+          >
+            Total Laporan Masuk:{" "}
+            <strong>{laporanList.length}</strong>
           </p>
         </div>
-        <button style={styles.backButton} onClick={() => navigate("/dashboard-admin")}>
-          Kembali ke Dashboard
-        </button>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            type="button"
+            onClick={refreshPengaduan}
+            disabled={refreshing}
+            style={{
+              ...styles.backButton,
+              opacity: refreshing ? 0.6 : 1,
+              cursor: refreshing ? "not-allowed" : "pointer",
+            }}
+          >
+            {refreshing ? "Memuat..." : "↻ Refresh"}
+          </button>
+
+          <button
+            type="button"
+            style={styles.backButton}
+            onClick={() => navigate("/dashboard-admin")}
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
       </div>
 
       {loading ? (

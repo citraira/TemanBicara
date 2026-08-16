@@ -80,6 +80,98 @@ function DataSiswa() {
     }
   };
 
+  const downloadQRCode = (format = "png") => {
+  if (!selectedQr) return;
+
+  const svg = document.getElementById("qr-code-download");
+
+  if (!svg) {
+    showAlert(
+      "error",
+      "QR Tidak Ditemukan",
+      "QR Code belum siap untuk diunduh."
+    );
+    return;
+  }
+
+  try {
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+
+    const svgBlob = new Blob(
+      [svgString],
+      { type: "image/svg+xml;charset=utf-8" }
+    );
+
+    const url = URL.createObjectURL(svgBlob);
+    const image = new Image();
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+
+      const size = 800;
+      canvas.width = size;
+      canvas.height = size;
+
+      const context = canvas.getContext("2d");
+
+      // Background putih agar JPG tidak transparan
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(0, 0, size, size);
+
+      context.drawImage(
+        image,
+        0,
+        0,
+        size,
+        size
+      );
+
+      const extension = format === "jpg" ? "jpg" : "png";
+      const mimeType =
+        format === "jpg"
+          ? "image/jpeg"
+          : "image/png";
+
+      const dataUrl = canvas.toDataURL(
+        mimeType,
+        0.95
+      );
+
+      const link = document.createElement("a");
+
+      link.download = `QR-${selectedQr.nis || selectedQr.id}.${extension}`;
+      link.href = dataUrl;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+
+      showAlert(
+        "error",
+        "Gagal Download",
+        "QR Code tidak dapat dikonversi menjadi gambar."
+      );
+    };
+
+    image.src = url;
+  } catch (error) {
+    console.error("Gagal download QR:", error);
+
+    showAlert(
+      "error",
+      "Gagal Download",
+      "Terjadi kesalahan saat membuat file QR."
+    );
+  }
+};
+
   const hasilPencarian = dataSiswa.filter((item) => {
     const keyword = search.toLowerCase();
 
@@ -453,14 +545,44 @@ function DataSiswa() {
               Kelas: {selectedQr.kelas} | NIS: {selectedQr.nis || selectedQr.id}
             </p>
 
-            <div style={{ background: "#fff", padding: "15px", borderRadius: "12px", border: "1px solid #C8E6C9", display: "inline-block" }}>
-              <QRCode value={selectedQr.id || selectedQr.nis} size={160} />
+            <div
+              style={{
+                background: "#fff",
+                padding: "15px",
+                borderRadius: "12px",
+                border: "1px solid #C8E6C9",
+                display: "inline-block"
+              }}
+            >
+              <QRCode
+                id="qr-code-download"
+                value={selectedQr.id || selectedQr.nis}
+                size={300}
+              />
             </div>
 
-            <button style={styles.printBtn} onClick={() => window.print()}>
-              Cetak Kartu QR
+            <button
+              style={styles.printBtn}
+              onClick={() => downloadQRCode("png")}
+            >
+              Download PNG
             </button>
-            <button style={styles.closeBtn} onClick={() => setSelectedQr(null)}>
+
+            <button
+              style={{
+                ...styles.printBtn,
+                background: "#1565C0",
+                boxShadow: "0 3px 0 #0D47A1",
+              }}
+              onClick={() => downloadQRCode("jpg")}
+            >
+              Download JPG
+            </button>
+
+            <button
+              style={styles.closeBtn}
+              onClick={() => setSelectedQr(null)}
+            >
               Tutup
             </button>
           </div>
