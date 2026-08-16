@@ -117,7 +117,7 @@ function DashboardAdmin() {
         setAduanList(list);
 
         // Jumlah laporan yang masih berstatus Diproses.
-        // Ini hanya untuk kebutuhan statistik, bukan badge "belum dibaca".
+        // Angka ini ditampilkan pada kartu "Daftar Pengaduan".
         const aduanDiproses = list.reduce((total, item) => {
           return (
             total +
@@ -253,6 +253,35 @@ function DashboardAdmin() {
   const handleConfirmLogout = () => {
     navigate("/");
   };
+
+  // Ringkasan status untuk kartu Daftar Pengaduan.
+  // Status "Selesai" sengaja tidak ditampilkan pada kartu.
+  const statusCounts = useMemo(() => {
+    let diproses = 0;
+    let kepalaSekolah = 0;
+    let dinas = 0;
+
+    for (const item of aduanList) {
+      const status = String(item.status || "Diproses").trim();
+
+      if (
+        status === "Diproses" ||
+        status === "Diproses (Guru/BK)" ||
+        !status
+      ) {
+        diproses += 1;
+      } else if (status === "Eskalasi: Kepala Sekolah") {
+        kepalaSekolah += 1;
+      } else if (status === "Eskalasi: Dinas/Pengawas") {
+        dinas += 1;
+    }
+
+    return {
+      diproses,
+      kepalaSekolah,
+      dinas,
+    };
+  }, [aduanList]);
 
   // Perhitungan statistik dimemoisasi agar tidak dihitung ulang
   // pada render yang hanya berkaitan dengan modal/notifikasi.
@@ -654,16 +683,91 @@ function DashboardAdmin() {
       {/* GRID MENU ADMIN */}
       <div style={styles.grid}>
         <div style={styles.card}>
-          {unreadCount > 0 && (
-            <div style={styles.badgeNotifCard}>{unreadCount}</div>
-          )}
           <div style={styles.iconBadge}>DP</div>
+
           <div style={styles.cardTitle}>Daftar Pengaduan</div>
-          <div style={styles.desc}>Lihat seluruh laporan bullying dari siswa.</div>
+
+          <div style={styles.desc}>
+            Lihat seluruh laporan bullying dari siswa.
+          </div>
+
+          {/* Ringkasan status. Semua status selain Selesai ditampilkan angkanya. */}
+          <div
+            style={{
+              width: "100%",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "8px",
+              marginBottom: "16px",
+            }}
+          >
+            {[
+              {
+                label: "Diproses",
+                value: statusCounts.diproses,
+                color: "#F57F17",
+                bg: "#FFF8E1",
+                border: "#FFE082",
+              },
+              {
+                label: "Kepala Sekolah",
+                value: statusCounts.kepalaSekolah,
+                color: "#512DA8",
+                bg: "#F3E5F5",
+                border: "#B39DDB",
+              },
+              {
+                label: "Dinas/Pengawas",
+                value: statusCounts.dinas,
+                color: "#8E24AA",
+                bg: "#F3E5F5",
+                border: "#CE93D8",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  background: item.bg,
+                  border: `1.5px solid ${item.border}`,
+                  borderRadius: "12px",
+                  padding: "8px 6px",
+                  boxSizing: "border-box",
+                  minHeight: "58px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: "900",
+                    color: item.color,
+                    lineHeight: 1,
+                  }}
+                >
+                  {item.value}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "5px",
+                    fontSize: "10px",
+                    fontWeight: "800",
+                    color: item.color,
+                    textAlign: "center",
+                    lineHeight: "1.2",
+                  }}
+                >
+                  {item.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
           <button style={styles.button} onClick={handleBukaLaporan}>
-            {unreadCount > 0
-              ? `Buka (${unreadCount} Baru)`
-              : "Buka"}
+            Buka
           </button>
         </div>
 
