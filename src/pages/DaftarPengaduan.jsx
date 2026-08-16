@@ -759,6 +759,17 @@ function DaftarPengaduan() {
 
   const normalizedStudentSearch = studentSearch.trim().toLowerCase();
 
+  const getFotoDownloadUrl = (url) => {
+    if (!url) return "";
+
+    // Cloudinary: gunakan fl_attachment agar browser benar-benar mengunduh file.
+    if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
+      return url.replace("/upload/", "/upload/fl_attachment/");
+    }
+
+    return url;
+  };
+
   const filteredLaporanList = laporanList.filter((item) => {
     const matchesStatus =
       statusFilter === "Semua" ||
@@ -1000,10 +1011,8 @@ function DaftarPengaduan() {
               }}
             >
               <a
-                href={selectedFoto}
+                href={getFotoDownloadUrl(selectedFoto)}
                 download={`bukti-pengaduan-${Date.now()}.jpg`}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   display: "inline-flex",
