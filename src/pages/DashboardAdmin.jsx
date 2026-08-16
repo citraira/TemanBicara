@@ -116,33 +116,39 @@ function DashboardAdmin() {
         // Satu kali update state untuk data pengaduan.
         setAduanList(list);
 
-        // Hitung jumlah pengaduan yang masih diproses.
+        // Jumlah laporan yang masih berstatus Diproses.
+        // Ini hanya untuk kebutuhan statistik, bukan badge "belum dibaca".
         const aduanDiproses = list.reduce((total, item) => {
-          return total +
-            (!item.status || item.status.includes("Diproses") ? 1 : 0);
+          return (
+            total +
+            (!item.status ||
+            item.status.includes("Diproses")
+              ? 1
+              : 0)
+          );
         }, 0);
 
         setJumlahAduanBaru(aduanDiproses);
 
-        // Hitung notifikasi yang belum dibaca.
+        // Hitung notifikasi yang benar-benar belum dibaca.
+        // Hanya laporan baru yang dibuat setelah lastReadAdminNotif
+        // yang dianggap belum dibaca oleh badge dashboard.
         const lastReadTime =
           localStorage.getItem("lastReadAdminNotif");
 
-        if (lastReadTime) {
-          const lastRead = new Date(lastReadTime).getTime();
+        const lastRead = lastReadTime
+          ? new Date(lastReadTime).getTime()
+          : 0;
 
-          const unread = list.reduce((total, item) => {
-            const created = new Date(
-              item.createdAt || 0
-            ).getTime();
+        const unread = list.reduce((total, item) => {
+          const created = new Date(
+            item.createdAt || 0
+          ).getTime();
 
-            return total + (created > lastRead ? 1 : 0);
-          }, 0);
+          return total + (created > lastRead ? 1 : 0);
+        }, 0);
 
-          setUnreadCount(unread);
-        } else {
-          setUnreadCount(0);
-        }
+        setUnreadCount(unread);
 
         // Jangan menampilkan notifikasi untuk data yang sudah ada
         // ketika dashboard pertama kali dibuka.
@@ -648,14 +654,16 @@ function DashboardAdmin() {
       {/* GRID MENU ADMIN */}
       <div style={styles.grid}>
         <div style={styles.card}>
-          {jumlahAduanBaru > 0 && (
-            <div style={styles.badgeNotifCard}>{jumlahAduanBaru}</div>
+          {unreadCount > 0 && (
+            <div style={styles.badgeNotifCard}>{unreadCount}</div>
           )}
           <div style={styles.iconBadge}>DP</div>
           <div style={styles.cardTitle}>Daftar Pengaduan</div>
           <div style={styles.desc}>Lihat seluruh laporan bullying dari siswa.</div>
           <button style={styles.button} onClick={handleBukaLaporan}>
-            Buka ({jumlahAduanBaru} Baru)
+            {unreadCount > 0
+              ? `Buka (${unreadCount} Baru)`
+              : "Buka"}
           </button>
         </div>
 
