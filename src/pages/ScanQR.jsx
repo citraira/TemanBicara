@@ -7,6 +7,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ref, get, query, orderByChild, equalTo } from "firebase/database";
 import { db } from "../firebase";
+import jsQR from "jsqr";
 
 const styles = {
   page: {
@@ -866,11 +867,105 @@ function ScanQR() {
   ]);
 
   // =========================================================
+  // BACA QR DARI GAMBAR DENGAN FALLBACK CANVAS + jsQR
+  // =========================================================
+  const readQrFromImageFile = useCallback(async (file) => {
+    const imageUrl = URL.createObjectURL(file);
+
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = () => resolve(img);
+        img.onerror = () =>
+          reject(
+            new Error(
+              "Gambar QR tidak dapat dibuka oleh browser."
+            )
+          );
+
+        img.src = imageUrl;
+      });
+
+      const maxSize = 1600;
+      const scale = Math.min(
+        1,
+        maxSize /
+          Math.max(
+            image.naturalWidth || image.width,
+            image.naturalHeight || image.height
+          )
+      );
+
+      const width = Math.max(
+        1,
+        Math.round(
+          (image.naturalWidth || image.width) * scale
+        )
+      );
+
+      const height = Math.max(
+        1,
+        Math.round(
+          (image.naturalHeight || image.height) * scale
+        )
+      );
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+
+      if (!ctx) {
+        throw new Error(
+          "Browser tidak mendukung pembacaan gambar."
+        );
+      }
+
+      // Putih sebagai dasar agar gambar transparan tetap terbaca.
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+      );
+
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        width,
+        height
+      );
+
+      const result = jsQR(
+        imageData.data,
+        imageData.width,
+        imageData.height,
+        {
+          inversionAttempts: "attemptBoth",
+        }
+      );
+
+      return result?.data || null;
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }, []);
+
+  // =========================================================
   // UPLOAD QR IMAGE
   // =========================================================
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
 
+    // Agar gambar yang sama bisa dipilih lagi.
     e.target.value = "";
 
     if (!file) return;
@@ -878,44 +973,84 @@ function ScanQR() {
     try {
       setLoadingManual(true);
       setErrorMsg("");
+      setScanResult(null);
 
+      let decodedText = null;
+
+      // ======================================================
+      // METODE 1: BarcodeDetector
+      // ======================================================
       if ("BarcodeDetector" in window) {
-        const barcodeDetector =
-          new window.BarcodeDetector({
-            formats: ["qr_code"],
-          });
+        try {
+          const barcodeDetector =
+            new window.BarcodeDetector({
+              formats: ["qr_code"],
+            });
 
-        const img =
-          await createImageBitmap(file);
+          // Coba ImageBitmap terlebih dahulu.
+          try {
+            const img =
+              await createImageBitmap(file);
 
-        const barcodes =
-          await barcodeDetector.detect(img);
+            const barcodes =
+              await barcodeDetector.detect(img);
 
-        img.close?.();
+            img.close?.();
 
-        if (
-          barcodes.length > 0 &&
-          barcodes[0]?.rawValue
-        ) {
-          await handleDetectedQR(
-            barcodes[0].rawValue
+            if (
+              barcodes.length > 0 &&
+              barcodes[0]?.rawValue
+            ) {
+              decodedText =
+                barcodes[0].rawValue;
+            }
+          } catch (bitmapError) {
+            console.warn(
+              "BarcodeDetector + ImageBitmap gagal:",
+              bitmapError
+            );
+          }
+        } catch (detectorError) {
+          console.warn(
+            "BarcodeDetector gambar tidak dapat digunakan:",
+            detectorError
           );
-
-          return;
         }
       }
 
+      // ======================================================
+      // METODE 2: FALLBACK jsQR
+      // Ini yang membuat upload gambar tetap bisa dibaca
+      // walaupun BarcodeDetector tidak tersedia/gagal.
+      // ======================================================
+      if (!decodedText) {
+        try {
+          decodedText =
+            await readQrFromImageFile(file);
+        } catch (fallbackError) {
+          console.error(
+            "Fallback jsQR gagal:",
+            fallbackError
+          );
+        }
+      }
+
+      if (decodedText) {
+        await handleDetectedQR(decodedText);
+        return;
+      }
+
       setErrorMsg(
-        "Tidak dapat membaca QR Code dari gambar. Coba scan langsung dengan kamera atau ketik NIS."
+        "QR Code pada gambar belum terbaca. Gunakan gambar QR yang jelas, tidak miring, tidak buram, dan seluruh kotak QR terlihat."
       );
     } catch (err) {
       console.error(
-        "Gagal baca gambar QR:",
+        "Gagal membaca gambar QR:",
         err
       );
 
       setErrorMsg(
-        "Format gambar QR tidak terbaca."
+        "Gambar QR tidak dapat diproses. Coba pilih gambar PNG/JPG yang jelas."
       );
     } finally {
       setLoadingManual(false);
