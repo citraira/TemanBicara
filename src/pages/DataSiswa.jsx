@@ -25,46 +25,31 @@ function DataSiswa() {
   const navigate = useNavigate();
 
   // ====================================================
-  // STATE DATA
+  // STATE
   // ====================================================
 
-  const [dataSiswa, setDataSiswa] =
-    useState([]);
+  const [dataSiswa, setDataSiswa] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [search, setSearch] =
-    useState("");
+  // QR yang sedang dibuka
+  const [selectedQr, setSelectedQr] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  // Siswa yang akan dihapus
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const [refreshing, setRefreshing] =
-    useState(false);
-
-  const [selectedQr, setSelectedQr] =
-    useState(null);
-
-  // ====================================================
-  // DELETE
-  // ====================================================
-
-  const [deleteTarget, setDeleteTarget] =
-    useState(null);
+  // Alert
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
 
   // ====================================================
   // ALERT
-  // ====================================================
-
-  const [alertConfig, setAlertConfig] =
-    useState({
-      isOpen: false,
-      type: "success",
-      title: "",
-      message: "",
-      onCloseCallback: null,
-    });
-
-  // ====================================================
-  // SHOW ALERT
   // ====================================================
 
   const showAlert = useCallback(
@@ -85,88 +70,70 @@ function DataSiswa() {
     []
   );
 
-  // ====================================================
-  // CLOSE ALERT
-  // ====================================================
+  const handleCloseAlert = useCallback(() => {
+    const callback =
+      alertConfig.onCloseCallback;
 
-  const handleCloseAlert =
-    useCallback(() => {
-      const callback =
-        alertConfig.onCloseCallback;
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+      onCloseCallback: null,
+    }));
 
-      setAlertConfig((prev) => ({
-        ...prev,
-        isOpen: false,
-        onCloseCallback: null,
-      }));
-
-      if (callback) {
-        callback();
-      }
-    }, [
-      alertConfig.onCloseCallback,
-    ]);
+    if (callback) {
+      callback();
+    }
+  }, [alertConfig.onCloseCallback]);
 
   // ====================================================
   // LOAD DATA SISWA
-  //
-  // Menggunakan get() satu kali.
-  // Tidak menggunakan onValue() / listener realtime.
   // ====================================================
 
-  const loadDataSiswa =
-    useCallback(
-      async (
-        showInitialLoading = false
-      ) => {
-        try {
-          if (showInitialLoading) {
-            setLoading(true);
-          }
-
-          const siswaRef =
-            ref(db, "siswa");
-
-          const snapshot =
-            await get(siswaRef);
-
-          if (!snapshot.exists()) {
-            setDataSiswa([]);
-            return;
-          }
-
-          const data =
-            snapshot.val();
-
-          const list =
-            Object.entries(data).map(
-              ([key, value]) => ({
-                id: key,
-                ...value,
-              })
-            );
-
-          setDataSiswa(list);
-        } catch (error) {
-          console.error(
-            "Gagal mengambil data siswa:",
-            error
-          );
-
-          showAlert(
-            "error",
-            "Gagal Memuat Data",
-            error?.message ||
-              "Terjadi kesalahan saat mengambil data siswa."
-          );
-        } finally {
-          if (showInitialLoading) {
-            setLoading(false);
-          }
+  const loadDataSiswa = useCallback(
+    async (showInitialLoading = false) => {
+      try {
+        if (showInitialLoading) {
+          setLoading(true);
         }
-      },
-      [showAlert]
-    );
+
+        const siswaRef = ref(db, "siswa");
+        const snapshot = await get(siswaRef);
+
+        if (!snapshot.exists()) {
+          setDataSiswa([]);
+          return;
+        }
+
+        const data = snapshot.val();
+
+        const list = Object.entries(data).map(
+          ([key, value]) => ({
+            id: key,
+            ...(value || {}),
+          })
+        );
+
+        setDataSiswa(list);
+      } catch (error) {
+        console.error(
+          "Gagal mengambil data siswa:",
+          error
+        );
+
+        showAlert(
+          "error",
+          "Gagal Memuat Data",
+          error?.message ||
+            "Terjadi kesalahan saat mengambil data siswa."
+        );
+      } finally {
+        if (showInitialLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    [showAlert]
+  );
 
   // ====================================================
   // LOAD SAAT HALAMAN DIBUKA
@@ -177,34 +144,29 @@ function DataSiswa() {
   }, [loadDataSiswa]);
 
   // ====================================================
-  // REFRESH MANUAL
+  // REFRESH
   // ====================================================
 
-  const refreshDataSiswa =
-    useCallback(async () => {
-      if (refreshing) {
-        return;
-      }
+  const refreshDataSiswa = useCallback(async () => {
+    if (refreshing) {
+      return;
+    }
 
-      try {
-        setRefreshing(true);
-
-        await loadDataSiswa(false);
-      } catch (error) {
-        console.error(
-          "Gagal refresh data siswa:",
-          error
-        );
-      } finally {
-        setRefreshing(false);
-      }
-    }, [
-      loadDataSiswa,
-      refreshing,
-    ]);
+    try {
+      setRefreshing(true);
+      await loadDataSiswa(false);
+    } catch (error) {
+      console.error(
+        "Gagal refresh data siswa:",
+        error
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadDataSiswa, refreshing]);
 
   // ====================================================
-  // CONFIRM DELETE
+  // BUKA KONFIRMASI HAPUS
   // ====================================================
 
   const confirmDelete = (student) => {
@@ -216,21 +178,32 @@ function DataSiswa() {
   };
 
   // ====================================================
-  // EXECUTE DELETE
+  // EKSEKUSI HAPUS
+  //
+  // hapusLaporan = true
+  // -> siswa + seluruh laporan siswa
+  //
+  // hapusLaporan = false
+  // -> hanya siswa
   // ====================================================
 
-  const executeDelete = async (hapusLaporan = false) => {
+  const executeDelete = async (
+    hapusLaporan = false
+  ) => {
     const student = deleteTarget;
 
     if (!student?.id) {
       return;
     }
 
+    // Tutup modal terlebih dahulu
     setDeleteTarget(null);
 
     try {
       const nisSiswa = String(
-        student.nis || student.id || ""
+        student.nis ||
+          student.id ||
+          ""
       ).trim();
 
       const namaSiswa = String(
@@ -239,40 +212,61 @@ function DataSiswa() {
         .trim()
         .toLowerCase();
 
+      // ==================================================
+      // HAPUS SEMUA LAPORAN MILIK SISWA
+      // ==================================================
+
       if (hapusLaporan) {
-        const pengaduanSnapshot = await get(
-          ref(db, "pengaduan")
-        );
+        const pengaduanRef =
+          ref(db, "pengaduan");
+
+        const pengaduanSnapshot =
+          await get(pengaduanRef);
 
         if (pengaduanSnapshot.exists()) {
           const dataPengaduan =
             pengaduanSnapshot.val();
 
           const laporanMilikSiswa =
-            Object.entries(dataPengaduan).filter(
+            Object.entries(
+              dataPengaduan
+            ).filter(
               ([, laporan]) => {
-                const nisLaporan = String(
-                  laporan?.nis || ""
-                ).trim();
+                const nisLaporan =
+                  String(
+                    laporan?.nis || ""
+                  ).trim();
 
-                const namaLaporan = String(
-                  laporan?.nama || ""
-                )
-                  .trim()
-                  .toLowerCase();
+                const namaLaporan =
+                  String(
+                    laporan?.nama || ""
+                  )
+                    .trim()
+                    .toLowerCase();
 
-                if (nisSiswa && nisLaporan) {
-                  return nisLaporan === nisSiswa;
+                // Prioritas pencocokan NIS
+                if (
+                  nisSiswa &&
+                  nisLaporan
+                ) {
+                  return (
+                    nisLaporan ===
+                    nisSiswa
+                  );
                 }
 
+                // Fallback nama jika laporan
+                // tidak mempunyai NIS
                 return (
                   !nisLaporan &&
                   namaSiswa &&
-                  namaLaporan === namaSiswa
+                  namaLaporan ===
+                    namaSiswa
                 );
               }
             );
 
+          // Hapus seluruh laporan
           await Promise.all(
             laporanMilikSiswa.map(
               ([laporanId]) =>
@@ -287,6 +281,10 @@ function DataSiswa() {
         }
       }
 
+      // ==================================================
+      // HAPUS DATA SISWA
+      // ==================================================
+
       await remove(
         ref(
           db,
@@ -294,13 +292,17 @@ function DataSiswa() {
         )
       );
 
-      setDataSiswa(
-        (prev) =>
-          prev.filter(
-            (item) =>
-              item.id !== student.id
-          )
+      // Update tampilan tanpa reload
+      setDataSiswa((prev) =>
+        prev.filter(
+          (item) =>
+            item.id !== student.id
+        )
       );
+
+      // ==================================================
+      // NOTIFIKASI
+      // ==================================================
 
       showAlert(
         "success",
@@ -326,233 +328,164 @@ function DataSiswa() {
 
   // ====================================================
   // DOWNLOAD QR CODE
-  //
-  // format:
-  // "png" atau "jpg"
+  // PNG / JPG
   // ====================================================
 
-  const downloadQRCode =
-    useCallback(
-      (format = "png") => {
-        if (!selectedQr) {
-          return;
-        }
+  const downloadQRCode = useCallback(
+    (format = "png") => {
+      if (!selectedQr) {
+        return;
+      }
 
-        const svg =
-          document.getElementById(
-            "qr-code-download"
+      const svg =
+        document.getElementById(
+          "qr-code-download"
+        );
+
+      if (!svg) {
+        showAlert(
+          "error",
+          "QR Tidak Ditemukan",
+          "QR Code belum siap untuk diunduh."
+        );
+
+        return;
+      }
+
+      try {
+        const serializer =
+          new XMLSerializer();
+
+        const svgString =
+          serializer.serializeToString(
+            svg
           );
 
-        if (!svg) {
-          showAlert(
-            "error",
-            "QR Tidak Ditemukan",
-            "QR Code belum siap untuk diunduh."
+        const svgBlob = new Blob(
+          [svgString],
+          {
+            type:
+              "image/svg+xml;charset=utf-8",
+          }
+        );
+
+        const url =
+          URL.createObjectURL(
+            svgBlob
           );
 
-          return;
-        }
+        const image = new Image();
 
-        try {
-          // ==========================================
-          // Ambil SVG QR
-          // ==========================================
-
-          const serializer =
-            new XMLSerializer();
-
-          const svgString =
-            serializer.serializeToString(
-              svg
-            );
-
-          // ==========================================
-          // Ubah SVG menjadi Blob
-          // ==========================================
-
-          const svgBlob =
-            new Blob(
-              [svgString],
-              {
-                type:
-                  "image/svg+xml;charset=utf-8",
-              }
-            );
-
-          const url =
-            URL.createObjectURL(
-              svgBlob
-            );
-
-          const image =
-            new Image();
-
-          // ==========================================
-          // Setelah SVG berhasil dimuat
-          // ==========================================
-
-          image.onload = () => {
-            try {
-              const canvas =
-                document.createElement(
-                  "canvas"
-                );
-
-              const size = 1000;
-
-              canvas.width =
-                size;
-
-              canvas.height =
-                size;
-
-              const context =
-                canvas.getContext(
-                  "2d"
-                );
-
-              if (!context) {
-                throw new Error(
-                  "Canvas tidak tersedia."
-                );
-              }
-
-              // ========================================
-              // Background putih
-              // Penting untuk JPG
-              // ========================================
-
-              context.fillStyle =
-                "#FFFFFF";
-
-              context.fillRect(
-                0,
-                0,
-                size,
-                size
+        image.onload = () => {
+          try {
+            const canvas =
+              document.createElement(
+                "canvas"
               );
 
-              // ========================================
-              // Gambar QR ke canvas
-              // ========================================
+            const size = 1000;
 
-              context.drawImage(
-                image,
-                0,
-                0,
-                size,
-                size
+            canvas.width = size;
+            canvas.height = size;
+
+            const context =
+              canvas.getContext(
+                "2d"
               );
 
-              // ========================================
-              // Tentukan format
-              // ========================================
-
-              const isJpg =
-                format === "jpg";
-
-              const extension =
-                isJpg
-                  ? "jpg"
-                  : "png";
-
-              const mimeType =
-                isJpg
-                  ? "image/jpeg"
-                  : "image/png";
-
-              // ========================================
-              // Buat Data URL
-              // ========================================
-
-              const dataUrl =
-                canvas.toDataURL(
-                  mimeType,
-                  0.95
-                );
-
-              // ========================================
-              // Nama file
-              //
-              // Prioritas NIS.
-              // ========================================
-
-              const nis =
-                String(
-                  selectedQr.nis ||
-                    selectedQr.id ||
-                    "siswa"
-                ).trim();
-
-              const nama =
-                String(
-                  selectedQr.nama ||
-                    "siswa"
-                )
-                  .trim()
-                  .replace(
-                    /[^a-zA-Z0-9_-]/g,
-                    "_"
-                  );
-
-              const fileName =
-                `QR-${nama}-${nis}.${extension}`;
-
-              // ========================================
-              // Download
-              // ========================================
-
-              const link =
-                document.createElement(
-                  "a"
-                );
-
-              link.download =
-                fileName;
-
-              link.href =
-                dataUrl;
-
-              document.body.appendChild(
-                link
-              );
-
-              link.click();
-
-              document.body.removeChild(
-                link
-              );
-
-              // ========================================
-              // Bersihkan object URL
-              // ========================================
-
-              URL.revokeObjectURL(
-                url
-              );
-            } catch (error) {
-              console.error(
-                "Gagal membuat file QR:",
-                error
-              );
-
-              URL.revokeObjectURL(
-                url
-              );
-
-              showAlert(
-                "error",
-                "Gagal Download",
-                "QR Code tidak dapat dikonversi menjadi gambar."
+            if (!context) {
+              throw new Error(
+                "Canvas tidak tersedia."
               );
             }
-          };
 
-          // ==========================================
-          // Jika gambar gagal dimuat
-          // ==========================================
+            // Background putih
+            context.fillStyle =
+              "#FFFFFF";
 
-          image.onerror = () => {
+            context.fillRect(
+              0,
+              0,
+              size,
+              size
+            );
+
+            // QR
+            context.drawImage(
+              image,
+              0,
+              0,
+              size,
+              size
+            );
+
+            const isJpg =
+              format === "jpg";
+
+            const extension =
+              isJpg
+                ? "jpg"
+                : "png";
+
+            const mimeType =
+              isJpg
+                ? "image/jpeg"
+                : "image/png";
+
+            const dataUrl =
+              canvas.toDataURL(
+                mimeType,
+                0.95
+              );
+
+            const nis = String(
+              selectedQr.nis ||
+                selectedQr.id ||
+                "siswa"
+            ).trim();
+
+            const nama = String(
+              selectedQr.nama ||
+                "siswa"
+            )
+              .trim()
+              .replace(
+                /[^a-zA-Z0-9_-]/g,
+                "_"
+              );
+
+            const fileName =
+              `QR-${nama}-${nis}.${extension}`;
+
+            const link =
+              document.createElement(
+                "a"
+              );
+
+            link.download =
+              fileName;
+
+            link.href = dataUrl;
+
+            document.body.appendChild(
+              link
+            );
+
+            link.click();
+
+            document.body.removeChild(
+              link
+            );
+
+            URL.revokeObjectURL(
+              url
+            );
+          } catch (error) {
+            console.error(
+              "Gagal membuat file QR:",
+              error
+            );
+
             URL.revokeObjectURL(
               url
             );
@@ -562,67 +495,71 @@ function DataSiswa() {
               "Gagal Download",
               "QR Code tidak dapat dikonversi menjadi gambar."
             );
-          };
+          }
+        };
 
-          image.src = url;
-        } catch (error) {
-          console.error(
-            "Gagal download QR:",
-            error
+        image.onerror = () => {
+          URL.revokeObjectURL(
+            url
           );
 
           showAlert(
             "error",
             "Gagal Download",
-            "Terjadi kesalahan saat membuat file QR."
+            "QR Code tidak dapat dikonversi menjadi gambar."
           );
-        }
-      },
-      [selectedQr, showAlert]
-    );
+        };
 
-  // ====================================================
-  // SEARCH
-  // ====================================================
+        image.src = url;
+      } catch (error) {
+        console.error(
+          "Gagal download QR:",
+          error
+        );
 
-  const hasilPencarian =
-    useMemo(() => {
-      const keyword =
-        search
-          .trim()
-          .toLowerCase();
-
-      if (!keyword) {
-        return dataSiswa;
+        showAlert(
+          "error",
+          "Gagal Download",
+          "Terjadi kesalahan saat membuat file QR."
+        );
       }
+    },
+    [selectedQr, showAlert]
+  );
 
-      return dataSiswa.filter(
-        (item) => {
-          return (
-            String(
-              item.nama || ""
-            )
-              .toLowerCase()
-              .includes(keyword) ||
+  // ====================================================
+  // PENCARIAN
+  // ====================================================
 
-            String(
-              item.nis || ""
-            )
-              .toLowerCase()
-              .includes(keyword) ||
+  const hasilPencarian = useMemo(() => {
+    const keyword =
+      search.trim().toLowerCase();
 
-            String(
-              item.kelas || ""
-            )
-              .toLowerCase()
-              .includes(keyword)
-          );
-        }
-      );
-    }, [
-      dataSiswa,
-      search,
-    ]);
+    if (!keyword) {
+      return dataSiswa;
+    }
+
+    return dataSiswa.filter(
+      (item) =>
+        String(
+          item.nama || ""
+        )
+          .toLowerCase()
+          .includes(keyword) ||
+
+        String(
+          item.nis || ""
+        )
+          .toLowerCase()
+          .includes(keyword) ||
+
+        String(
+          item.kelas || ""
+        )
+          .toLowerCase()
+          .includes(keyword)
+    );
+  }, [dataSiswa, search]);
 
   // ====================================================
   // STYLE
@@ -648,16 +585,22 @@ function DataSiswa() {
       justifyContent:
         "space-between",
       alignItems: "center",
-      boxShadow:
-        "0 4px 12px rgba(0,0,0,0.06)",
       flexWrap: "wrap",
       gap: "12px",
+      boxShadow:
+        "0 4px 12px rgba(0,0,0,0.06)",
     },
 
     title: {
       fontSize: "22px",
       fontWeight: "800",
       margin: 0,
+    },
+
+    headerButtons: {
+      display: "flex",
+      gap: "8px",
+      flexWrap: "wrap",
     },
 
     topButton: {
@@ -787,8 +730,7 @@ function DataSiswa() {
       background:
         "rgba(0,0,0,0.6)",
       display: "flex",
-      justifyContent:
-        "center",
+      justifyContent: "center",
       alignItems: "center",
       zIndex: 1000,
       padding: "15px",
@@ -843,12 +785,6 @@ function DataSiswa() {
         "0 3px 0 #FBC02D",
     },
 
-    modalBtnGroup: {
-      display: "flex",
-      gap: "10px",
-      marginTop: "20px",
-    },
-
     confirmYesBtn: {
       flex: 1,
       background: "#D32F2F",
@@ -861,8 +797,6 @@ function DataSiswa() {
       cursor: "pointer",
       boxShadow:
         "0 3px 0 #9A0007",
-      textTransform:
-        "uppercase",
     },
 
     confirmNoBtn: {
@@ -877,8 +811,6 @@ function DataSiswa() {
       cursor: "pointer",
       boxShadow:
         "0 3px 0 #FBC02D",
-      textTransform:
-        "uppercase",
     },
 
     alertIconWrapper: (type) => ({
@@ -888,8 +820,7 @@ function DataSiswa() {
       margin:
         "0 auto 12px auto",
       display: "flex",
-      justifyContent:
-        "center",
+      justifyContent: "center",
       alignItems: "center",
       fontSize: "28px",
 
@@ -900,13 +831,14 @@ function DataSiswa() {
           ? "#FFEBEE"
           : "#FFFDE7",
 
-      border: `2px solid ${
-        type === "success"
-          ? "#2E7D32"
-          : type === "error"
-          ? "#D32F2F"
-          : "#FBC02D"
-      }`,
+      border:
+        `2px solid ${
+          type === "success"
+            ? "#2E7D32"
+            : type === "error"
+            ? "#D32F2F"
+            : "#FBC02D"
+        }`,
 
       color:
         type === "success"
@@ -955,9 +887,9 @@ function DataSiswa() {
   return (
     <div style={styles.page}>
 
-      {/* ==============================================
+      {/* =================================================
           HEADER
-      =============================================== */}
+      ================================================= */}
 
       <div style={styles.header}>
 
@@ -965,13 +897,7 @@ function DataSiswa() {
           Data Siswa
         </h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={styles.headerButtons}>
 
           {/* REFRESH */}
 
@@ -979,12 +905,8 @@ function DataSiswa() {
             type="button"
             style={{
               ...styles.topButton,
-
               opacity:
-                refreshing
-                  ? 0.6
-                  : 1,
-
+                refreshing ? 0.6 : 1,
               cursor:
                 refreshing
                   ? "not-allowed"
@@ -993,9 +915,7 @@ function DataSiswa() {
             onClick={
               refreshDataSiswa
             }
-            disabled={
-              refreshing
-            }
+            disabled={refreshing}
           >
             {refreshing
               ? "Memuat..."
@@ -1017,12 +937,13 @@ function DataSiswa() {
           >
             Tambah Siswa
           </button>
+
         </div>
       </div>
 
-      {/* ==============================================
+      {/* =================================================
           SEARCH
-      =============================================== */}
+      ================================================= */}
 
       <input
         type="text"
@@ -1037,9 +958,9 @@ function DataSiswa() {
         autoComplete="off"
       />
 
-      {/* ==============================================
+      {/* =================================================
           TABLE
-      =============================================== */}
+      ================================================= */}
 
       {loading ? (
         <div
@@ -1068,69 +989,55 @@ function DataSiswa() {
           >
             <thead>
               <tr>
+
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   No
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   Nama Lengkap
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   NIS
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   Kelas
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   Jenis Kelamin
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   No HP Orang Tua
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   QR Code
                 </th>
 
                 <th
-                  style={
-                    styles.th
-                  }
+                  style={styles.th}
                 >
                   Aksi
                 </th>
+
               </tr>
             </thead>
 
@@ -1161,6 +1068,7 @@ function DataSiswa() {
                         item.id
                       }
                     >
+
                       <td
                         style={
                           styles.td
@@ -1244,6 +1152,7 @@ function DataSiswa() {
                           styles.td
                         }
                       >
+
                         <button
                           type="button"
                           style={
@@ -1264,12 +1173,16 @@ function DataSiswa() {
                             styles.deleteButton
                           }
                           onClick={() =>
-                            confirmDelete(item)
+                            confirmDelete(
+                              item
+                            )
                           }
                         >
                           Hapus
                         </button>
+
                       </td>
+
                     </tr>
                   )
                 )
@@ -1280,9 +1193,9 @@ function DataSiswa() {
         </div>
       )}
 
-      {/* ==============================================
+      {/* =================================================
           MODAL QR CODE
-      =============================================== */}
+      ================================================= */}
 
       {selectedQr && (
         <div
@@ -1290,11 +1203,10 @@ function DataSiswa() {
             styles.modalOverlay
           }
           onClick={() =>
-            setSelectedQr(
-              null
-            )
+            setSelectedQr(null)
           }
         >
+
           <div
             style={
               styles.modalCard
@@ -1351,60 +1263,41 @@ function DataSiswa() {
                 "-"}
             </p>
 
-            {/* ========================================
-                QR CODE
-                ========================================
-
-                PENTING:
-                QR SEKARANG BERISI NIS,
-                BUKAN FIREBASE PUSH KEY.
-            */}
+            {/* QR */}
 
             <div
               style={{
                 background:
                   "#fff",
-
                 padding:
                   "15px",
-
                 borderRadius:
                   "12px",
-
                 border:
                   "1px solid #C8E6C9",
-
                 display:
                   "inline-block",
-
                 maxWidth:
                   "100%",
-
                 boxSizing:
                   "border-box",
               }}
             >
               <QRCode
                 id="qr-code-download"
-
                 value={String(
                   selectedQr.nis ||
+                    selectedQr.id ||
                     ""
                 )}
-
                 size={300}
-
                 bgColor="#FFFFFF"
-
                 fgColor="#000000"
-
                 level="H"
               />
             </div>
 
-            {/* ========================================
-                DOWNLOAD PNG
-            ======================================== */}
+            {/* DOWNLOAD PNG */}
 
             <button
               type="button"
@@ -1420,9 +1313,7 @@ function DataSiswa() {
               Download PNG
             </button>
 
-            {/* ========================================
-                DOWNLOAD JPG
-            ======================================== */}
+            {/* DOWNLOAD JPG */}
 
             <button
               type="button"
@@ -1442,9 +1333,7 @@ function DataSiswa() {
               Download JPG
             </button>
 
-            {/* ========================================
-                TUTUP
-            ======================================== */}
+            {/* TUTUP */}
 
             <button
               type="button"
@@ -1464,58 +1353,102 @@ function DataSiswa() {
         </div>
       )}
 
-      {/* ==============================================
+      {/* =================================================
           MODAL KONFIRMASI HAPUS
-      =============================================== */}
+          
+          PENTING:
+          Gunakan deleteTarget,
+          BUKAN deleteTargetId.
+      ================================================= */}
 
-      {deleteTargetId && (
-        <div style={{ ...styles.modalOverlay, background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteTargetId(null)}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.alertIconWrapper("warning")}></div>
-              <div
-                style={
-                  styles.alertIconWrapper(
-                    "warning"
-                  )
-                }
+      {deleteTarget && (
+        <div
+          style={
+            styles.modalOverlay
+          }
+          onClick={() =>
+            setDeleteTarget(null)
+          }
+        >
+
+          <div
+            style={
+              styles.modalCard
+            }
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            {/* ICON */}
+
+            <div
+              style={
+                styles.alertIconWrapper(
+                  "warning"
+                )
+              }
             >
-                ⚠️
+              ⚠️
             </div>
+
+            {/* JUDUL */}
+
             <h3
               style={{
-                color: "#C62828",
-                fontSize: "18px",
-                fontWeight: "800",
-                marginBottom: "8px",
+                color:
+                  "#C62828",
+                fontSize:
+                  "18px",
+                fontWeight:
+                  "800",
+                marginBottom:
+                  "8px",
               }}
             >
               Hapus Data Siswa?
             </h3>
 
+            {/* NAMA SISWA */}
+
             <p
               style={{
-                color: "#556B4D",
-                fontSize: "13px",
-                marginBottom: "10px",
-                lineHeight: "1.5",
+                color:
+                  "#556B4D",
+                fontSize:
+                  "13px",
+                marginBottom:
+                  "10px",
+                lineHeight:
+                  "1.5",
               }}
             >
               Hapus data siswa{" "}
               <strong>
-                {deleteTarget.nama || "Siswa"}
+                {deleteTarget.nama ||
+                  "Siswa"}
               </strong>
+
               {deleteTarget.nis
                 ? ` (NIS ${deleteTarget.nis})`
-                : ""}?
+                : ""}
+              ?
             </p>
+
+            {/* PILIH TINDAKAN */}
 
             <p
               style={{
-                color: "#556B4D",
-                fontSize: "13px",
-                marginBottom: "6px",
-                lineHeight: "1.5",
-                fontWeight: "700",
+                color:
+                  "#556B4D",
+                fontSize:
+                  "13px",
+                marginBottom:
+                  "6px",
+                lineHeight:
+                  "1.5",
+                fontWeight:
+                  "700",
               }}
             >
               Pilih tindakan:
@@ -1523,77 +1456,114 @@ function DataSiswa() {
 
             <p
               style={{
-                color: "#7A7A7A",
-                fontSize: "12px",
-                margin: "0",
-                lineHeight: "1.5",
+                color:
+                  "#7A7A7A",
+                fontSize:
+                  "12px",
+                margin: 0,
+                lineHeight:
+                  "1.5",
               }}
             >
-              Jika laporan ikut dihapus, semua laporan milik
-              siswa ini akan ikut terhapus.
+              Jika laporan ikut
+              dihapus, semua
+              laporan milik
+              siswa ini akan
+              ikut terhapus.
             </p>
+
+            {/* BUTTON */}
 
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display:
+                  "flex",
+                flexDirection:
+                  "column",
                 gap: "10px",
-                marginTop: "20px",
+                marginTop:
+                  "20px",
               }}
             >
+
+              {/* HAPUS SISWA + LAPORAN */}
+
               <button
                 type="button"
                 style={{
                   ...styles.confirmYesBtn,
-                  width: "100%",
+                  width:
+                    "100%",
                 }}
                 onClick={() =>
-                  executeDelete(true)
+                  executeDelete(
+                    true
+                  )
                 }
               >
                 HAPUS SISWA + LAPORAN
               </button>
 
+              {/* HAPUS SISWA SAJA */}
+
               <button
                 type="button"
                 style={{
                   ...styles.confirmNoBtn,
-                  width: "100%",
+                  width:
+                    "100%",
                 }}
                 onClick={() =>
-                  executeDelete(false)
+                  executeDelete(
+                    false
+                  )
                 }
               >
                 HAPUS SISWA SAJA
               </button>
 
+              {/* BATAL */}
+
               <button
                 type="button"
                 style={{
-                  width: "100%",
-                  background: "#F1F8E9",
-                  color: "#1B5E20",
-                  border: "1px solid #A5D6A7",
-                  padding: "11px",
-                  borderRadius: "10px",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  cursor: "pointer",
+                  width:
+                    "100%",
+                  background:
+                    "#F1F8E9",
+                  color:
+                    "#1B5E20",
+                  border:
+                    "1px solid #A5D6A7",
+                  padding:
+                    "11px",
+                  borderRadius:
+                    "10px",
+                  fontWeight:
+                    "800",
+                  fontSize:
+                    "13px",
+                  cursor:
+                    "pointer",
                 }}
                 onClick={() =>
-                  setDeleteTarget(null)
+                  setDeleteTarget(
+                    null
+                  )
                 }
               >
                 BATAL
               </button>
+
             </div>
+
           </div>
         </div>
       )}
 
-      {/* ==============================================
+      {/* =================================================
           ALERT
-      =============================================== */}
+      ================================================= */}
 
       {alertConfig.isOpen && (
         <div
@@ -1601,7 +1571,11 @@ function DataSiswa() {
             styles.modalOverlay
           }
           role="presentation"
+          onClick={
+            handleCloseAlert
+          }
         >
+
           <div
             style={
               styles.modalCard
@@ -1609,7 +1583,12 @@ function DataSiswa() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="data-siswa-alert-title"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
+
+            {/* ICON */}
 
             <div
               style={
@@ -1626,6 +1605,8 @@ function DataSiswa() {
                 ? "✕"
                 : "ℹ"}
             </div>
+
+            {/* TITLE */}
 
             <h3
               id="data-siswa-alert-title"
@@ -1647,10 +1628,10 @@ function DataSiswa() {
                     : "#E65100",
               }}
             >
-              {
-                alertConfig.title
-              }
+              {alertConfig.title}
             </h3>
+
+            {/* MESSAGE */}
 
             <p
               style={{
@@ -1668,6 +1649,8 @@ function DataSiswa() {
                 alertConfig.message
               }
             </p>
+
+            {/* MENGERTI */}
 
             <button
               type="button"
@@ -1687,9 +1670,9 @@ function DataSiswa() {
         </div>
       )}
 
-      {/* ==============================================
+      {/* =================================================
           KEMBALI KE DASHBOARD
-      =============================================== */}
+      ================================================= */}
 
       <button
         type="button"
