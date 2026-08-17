@@ -505,21 +505,6 @@ function FormPengaduan() {
     useState(false);
 
   // ====================================================
-  // TTS
-  // ====================================================
-
-  const [
-    isSpeaking,
-    setIsSpeaking,
-  ] = useState(false);
-
-  const audioRef =
-    useRef(null);
-
-  const audioUrlRef =
-    useRef(null);
-
-  // ====================================================
   // SPEECH TO TEXT
   // ====================================================
 
@@ -744,178 +729,6 @@ function FormPengaduan() {
   // TTS BAHASA INDONESIA - TANPA API / TANPA AUDIO FILE
   // ====================================================
 
-  const getIndonesianVoice = useCallback(() => {
-    if (!("speechSynthesis" in window)) {
-      return null;
-    }
-
-    const voices =
-      window.speechSynthesis.getVoices() || [];
-
-    if (!voices.length) {
-      return null;
-    }
-
-    // Prioritas utama: voice Indonesia yang benar-benar id-ID.
-    const exactId = voices.find(
-      (voice) =>
-        String(voice.lang || "")
-          .toLowerCase()
-          .replace(/_/g, "-") === "id-id"
-    );
-
-    if (exactId) {
-      return exactId;
-    }
-
-    // Cadangan: semua voice yang diawali id-
-    const indonesiaVoice = voices.find(
-      (voice) =>
-        String(voice.lang || "")
-          .toLowerCase()
-          .replace(/_/g, "-")
-          .startsWith("id-")
-    );
-
-    return indonesiaVoice || null;
-  }, []);
-
-  const speakText = useCallback(
-    (text) => {
-      if (!("speechSynthesis" in window)) {
-        showAlert(
-          "warning",
-          "Suara Tidak Tersedia",
-          "Browser ini belum mendukung fitur suara. Silakan gunakan Chrome atau Edge terbaru."
-        );
-        return;
-      }
-
-      const cleanText = String(text || "").trim();
-
-      if (!cleanText) {
-        return;
-      }
-
-      // Hentikan bacaan sebelumnya.
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-
-      const startSpeaking = () => {
-        const voice = getIndonesianVoice();
-
-        // Jangan diam-diam menggunakan voice Inggris.
-        if (!voice) {
-          setIsSpeaking(false);
-
-          showAlert(
-            "warning",
-            "Suara Bahasa Indonesia Tidak Ditemukan",
-            "Perangkat atau browser ini belum menyediakan voice Bahasa Indonesia (id-ID). Coba buka aplikasi di Chrome atau Edge dan pastikan voice Bahasa Indonesia tersedia di perangkat."
-          );
-
-          return;
-        }
-
-        const utterance =
-          new SpeechSynthesisUtterance(
-            cleanText
-          );
-
-        utterance.lang = "id-ID";
-        utterance.voice = voice;
-
-        // Kecepatan sedikit diperlambat agar lebih mudah
-        // dipahami oleh anak SD.
-        utterance.rate = 0.88;
-        utterance.pitch = 1.05;
-        utterance.volume = 1;
-
-        utterance.onstart = () => {
-          setIsSpeaking(true);
-        };
-
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-
-        utterance.onerror = (event) => {
-          console.warn(
-            "Speech synthesis error:",
-            event.error
-          );
-
-          setIsSpeaking(false);
-        };
-
-        window.speechSynthesis.speak(
-          utterance
-        );
-      };
-
-      // Pada beberapa browser, getVoices() kosong pada pemanggilan pertama.
-      // Beri kesempatan browser memuat daftar voice terlebih dahulu.
-      const voices =
-        window.speechSynthesis.getVoices();
-
-      if (voices.length > 0) {
-        startSpeaking();
-        return;
-      }
-
-      let finished = false;
-
-      const handleVoicesChanged = () => {
-        if (finished) return;
-
-        finished = true;
-
-        window.speechSynthesis.removeEventListener(
-          "voiceschanged",
-          handleVoicesChanged
-        );
-
-        startSpeaking();
-      };
-
-      window.speechSynthesis.addEventListener(
-        "voiceschanged",
-        handleVoicesChanged
-      );
-
-      // Fallback jika browser tidak menembakkan voiceschanged.
-      setTimeout(() => {
-        if (finished) return;
-
-        finished = true;
-
-        window.speechSynthesis.removeEventListener(
-          "voiceschanged",
-          handleVoicesChanged
-        );
-
-        startSpeaking();
-      }, 1000);
-    },
-    [getIndonesianVoice, showAlert]
-  );
-
-  // ====================================================
-  // STOP TTS
-  // ====================================================
-
-  const stopAudio = useCallback(() => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    setIsSpeaking(false);
-  }, []);
-
-  // ====================================================
-  // SPEECH TO TEXT
-  // ====================================================
-
   const startVoiceInput = (
     setValue,
     currentValue = ""
@@ -976,7 +789,6 @@ function FormPengaduan() {
           "Speech recognition:",
           event.error
         );
-
         setIsListening(false);
         recognitionRef.current = null;
 
@@ -990,14 +802,6 @@ function FormPengaduan() {
             "Mikrofon Belum Diizinkan",
             "Izinkan akses mikrofon pada browser agar fitur Bicara dapat digunakan."
           );
-        } else if (
-          event.error !== "aborted"
-        ) {
-          showAlert(
-            "error",
-            "Bicara Tidak Berhasil",
-            "Suara belum dapat dikenali. Silakan coba lagi."
-          );
         }
       };
 
@@ -1006,9 +810,7 @@ function FormPengaduan() {
         recognitionRef.current = null;
       };
 
-      recognitionRef.current =
-        recognition;
-
+      recognitionRef.current = recognition;
       recognition.start();
     } catch (error) {
       console.error(error);
@@ -1042,14 +844,20 @@ function FormPengaduan() {
     value,
     onChange,
     disabled = false,
+    textarea = false,
   }) => (
     <button
       type="button"
       disabled={disabled}
+      aria-label={
+        isListening
+          ? "Berhenti bicara"
+          : "Isi dengan suara"
+      }
       title={
         isListening
-          ? "Tekan untuk berhenti"
-          : "Tekan untuk bicara"
+          ? "Berhenti bicara"
+          : "Isi dengan suara"
       }
       onClick={() => {
         if (isListening) {
@@ -1063,12 +871,16 @@ function FormPengaduan() {
       }}
       style={{
         position: "absolute",
-        right: "8px",
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: "34px",
-        height: "34px",
-        borderRadius: "9px",
+        right: "10px",
+        top: textarea
+          ? "10px"
+          : "50%",
+        transform: textarea
+          ? "none"
+          : "translateY(-50%)",
+        width: "36px",
+        height: "36px",
+        borderRadius: "10px",
         border: "1px solid #A5D6A7",
         background: isListening
           ? "#FFEBEE"
@@ -1086,6 +898,7 @@ function FormPengaduan() {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 3,
+        padding: 0,
       }}
     >
       {isListening ? "■" : "🎤"}
@@ -1586,7 +1399,7 @@ function FormPengaduan() {
             marginTop: "12px",
           }}
         >
-        </div>
+</div>
       </div>
 
       {/* HOTLINE */}
@@ -1641,8 +1454,8 @@ function FormPengaduan() {
             >
               Tidak perlu takut atau malu.
               Isi sesuai yang kamu ingat.
-              Kalau sulit membaca, tekan
-              tombol 🔊 untuk mendengarkan.
+              Kalau sulit mengetik, gunakan
+              tombol 🎤 di dalam kolom yang tersedia.
             </p>
           </div>
 
@@ -1659,13 +1472,10 @@ function FormPengaduan() {
               >
                 👤 Nama kamu
               </label>
-            </div>
 
-            <div style={{ position: "relative" }}>
-                <div style={{ position: "relative" }}>
-                <div style={{ position: "relative" }}>
-                <div style={{ position: "relative" }}>
-                <input
+</div>
+
+            <input
               value={nama}
               readOnly
               style={
@@ -1687,7 +1497,8 @@ function FormPengaduan() {
               >
                 🪪 Nomor NIS
               </label>
-            </div>
+
+</div>
 
             <input
               value={nis}
@@ -1721,7 +1532,68 @@ function FormPengaduan() {
                   Pilih kelasmu.
                 </div>
               </div>
+
+</div>
+
+            <div
+              style={
+                styles.selectWrapper
+              }
+            >
+              <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                🎒
+              </span>
+
+              <select
+                value={kelas}
+                onChange={(e) =>
+                  setKelas(
+                    e.target.value
+                  )
+                }
+                style={
+                  styles.childSelect
+                }
+                disabled={loading}
+              >
+                <option value="">
+                  Pilih kelas kamu
+                </option>
+
+                {listKelas.map(
+                  (item) => (
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      🎒 Kelas {item}
+                    </option>
+                  )
+                )}
+              </select>
             </div>
+          </div>
+
+          {/* PERAN */}
+
+          <div style={styles.group}>
+            <div
+              style={
+                styles.labelRow
+              }
+            >
+              <label
+                style={styles.label}
+              >
+                👀 Kamu mengalami atau
+                melihat?
+              </label>
+
+</div>
 
             <div
               style={
@@ -1735,14 +1607,11 @@ function FormPengaduan() {
                     type="button"
                     style={
                       styles.choiceButton(
-                        peran ===
-                          item.id
+                        peran === item.id
                       )
                     }
                     onClick={() =>
-                      setPeran(
-                        item.id
-                      )
+                      setPeran(item.id)
                     }
                     disabled={loading}
                   >
@@ -1785,7 +1654,12 @@ function FormPengaduan() {
                 Tuliskan nama teman yang kamu lihat.
               </div>
 
-              <div style={{ position: "relative" }}>
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                }}
+              >
                 <input
                   type="text"
                   value={namaTemanDilihat}
@@ -1797,11 +1671,10 @@ function FormPengaduan() {
                   placeholder="Nama teman yang kamu lihat..."
                   style={{
                     ...styles.input,
-                    paddingRight: "50px",
+                    paddingRight: "58px",
                   }}
                   disabled={loading}
                 />
-
                 <VoiceButton
                   value={namaTemanDilihat}
                   onChange={setNamaTemanDilihat}
@@ -1834,7 +1707,8 @@ function FormPengaduan() {
                   Tulis berapa kali kejadian serupa terjadi.
                 </div>
               </div>
-            </div>
+
+</div>
 
             <div
               style={
@@ -1849,33 +1723,45 @@ function FormPengaduan() {
                 🔢
               </span>
 
-              <input
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                value={jumlahKejadian}
-                onChange={(e) => {
-                  const value =
-                    e.target.value;
-
-                  // Hanya izinkan angka bulat positif.
-                  if (
-                    value === "" ||
-                    /^\d+$/.test(value)
-                  ) {
-                    setJumlahKejadian(
-                      value
-                    );
-                  }
-                }}
-                placeholder=""
+              <div
                 style={{
-                  ...styles.input,
+                  position: "relative",
                   flex: 1,
                 }}
-                disabled={loading}
-              />
+              >
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  value={jumlahKejadian}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value;
+
+                    if (
+                      value === "" ||
+                      /^\d+$/.test(value)
+                    ) {
+                      setJumlahKejadian(
+                        value
+                      );
+                    }
+                  }}
+                  placeholder=""
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    paddingRight: "58px",
+                  }}
+                  disabled={loading}
+                />
+                <VoiceButton
+                  value={jumlahKejadian}
+                  onChange={setJumlahKejadian}
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <div
@@ -1943,7 +1829,8 @@ function FormPengaduan() {
                   Pilih tempat kejadian.
                 </div>
               </div>
-            </div>
+
+</div>
 
             <div
               style={
@@ -2008,23 +1895,32 @@ function FormPengaduan() {
                   styles.otherInputBox
                 }
               >
-                <input
-                  value={
-                    lokasiLainnya
-                  }
-                  onChange={(e) =>
-                    setLokasiLainnya(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Tulis tempatnya..."
-                  style={
-                    styles.input
-                  }
-                  disabled={
-                    loading
-                  }
-                />
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                  }}
+                >
+                  <input
+                    value={lokasiLainnya}
+                    onChange={(e) =>
+                      setLokasiLainnya(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Tulis tempatnya..."
+                    style={{
+                      ...styles.input,
+                      paddingRight: "58px",
+                    }}
+                    disabled={loading}
+                  />
+                  <VoiceButton
+                    value={lokasiLainnya}
+                    onChange={setLokasiLainnya}
+                    disabled={loading}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -2053,7 +1949,8 @@ function FormPengaduan() {
                   sesuai.
                 </div>
               </div>
-            </div>
+
+</div>
 
             <div
               style={
@@ -2137,23 +2034,32 @@ function FormPengaduan() {
                   styles.otherInputBox
                 }
               >
-                <input
-                  value={
-                    jenisLainnya
-                  }
-                  onChange={(e) =>
-                    setJenisLainnya(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Ceritakan jenis kejadian..."
-                  style={
-                    styles.input
-                  }
-                  disabled={
-                    loading
-                  }
-                />
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                  }}
+                >
+                  <input
+                    value={jenisLainnya}
+                    onChange={(e) =>
+                      setJenisLainnya(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Ceritakan jenis kejadian..."
+                    style={{
+                      ...styles.input,
+                      paddingRight: "58px",
+                    }}
+                    disabled={loading}
+                  />
+                  <VoiceButton
+                    value={jenisLainnya}
+                    onChange={setJenisLainnya}
+                    disabled={loading}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -2190,88 +2096,35 @@ function FormPengaduan() {
                   gap: "6px",
                 }}
               >
-                <button
-                  type="button"
-                  style={
-                    isSpeaking
-                      ? styles.speakingButton
-                      : styles.speakButton
-                  }
-                  onClick={() => {
-                    if (isSpeaking) {
-                      stopAudio();
-                    } else {
-                      speakText(
-                        "Ceritakan dengan kata-katamu. Tidak perlu panjang. Tulis apa yang kamu ingat."
-                      );
-                    }
-                  }}
-                >
-                  {isSpeaking
-                    ? "⏹️"
-                    : "🔊"}
-                </button>
-
-                <button
-                  type="button"
-                  style={
-                    isListening
-                      ? styles.listeningButton
-                      : styles.voiceButton
-                  }
-                  onClick={
-                    startVoiceInput
-                  }
-                  disabled={loading}
-                >
-                  {isListening
-                    ? "⏹️ Stop"
-                    : "🎤 Bicara"}
-                </button>
-              </div>
+</div>
             </div>
 
-            <div style={{ position: "relative" }}>
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+              }}
+            >
               <textarea
-              value={cerita}
-              onChange={(e) =>
-                setCerita(
-                  e.target.value
-                )
-              }
-              placeholder="Ceritakan apa yang kamu alami"
-              style={
-                styles.textarea
-              }
-              disabled={loading}
-            />
+                value={cerita}
+                onChange={(e) =>
+                  setCerita(
+                    e.target.value
+                  )
+                }
+                placeholder="Ceritakan apa yang kamu alami"
+                style={{
+                  ...styles.textarea,
+                  paddingRight: "58px",
+                }}
+                disabled={loading}
+              />
               <VoiceButton
                 value={cerita}
                 onChange={setCerita}
                 disabled={loading}
+                textarea
               />
-            </div>
-                <VoiceButton
-                  value={jenisLainnya}
-                  onChange={setJenisLainnya}
-                  disabled={loading}
-                />
-              </div>
-                <VoiceButton
-                  value={lokasiLainnya}
-                  onChange={setLokasiLainnya}
-                  disabled={loading}
-                />
-              </div>
-
-            <div
-              style={
-                styles.voiceHelp
-              }
-            >
-              💡 Kalau sulit mengetik,
-              tekan <strong>🎤 Bicara</strong>{" "}
-              lalu ceritakan dengan suaramu.
             </div>
           </div>
 
@@ -2297,25 +2150,35 @@ function FormPengaduan() {
                   *
                 </span>
               </label>
-            </div>
 
-            <input
-              value={pelaku}
-              onChange={(e) =>
-                setPelaku(
-                  e.target.value
-                )
-              }
-              placeholder="Nama teman atau orangnya..."
-              style={styles.input}
-              disabled={loading}
-            />
-                <VoiceButton
-                  value={pelaku}
-                  onChange={setPelaku}
-                  disabled={loading}
-                />
-              </div>
+</div>
+
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+              }}
+            >
+              <input
+                value={pelaku}
+                onChange={(e) =>
+                  setPelaku(
+                    e.target.value
+                  )
+                }
+                placeholder="Nama teman atau orangnya..."
+                style={{
+                  ...styles.input,
+                  paddingRight: "58px",
+                }}
+                disabled={loading}
+              />
+              <VoiceButton
+                value={pelaku}
+                onChange={setPelaku}
+                disabled={loading}
+              />
+            </div>
           </div>
 
           {/* SAKSI */}
@@ -2331,46 +2194,15 @@ function FormPengaduan() {
               >
                 👀 Ada teman yang melihat?
               </label>
-            </div>
+
+</div>
 
             <div
               style={
                 styles.gridTwo
               }
             >
-              <button
-                type="button"
-                style={
-                  styles.choiceButton(
-                    saksi ===
-                      "Tidak"
-                  )
-                }
-                onClick={() =>
-                  setSaksi(
-                    "Tidak"
-                  )
-                }
-                disabled={loading}
-              >
-                🙅 Tidak ada
-              </button>
-
-              <button
-                type="button"
-                style={
-                  styles.choiceButton(
-                    saksi === "Ya"
-                  )
-                }
-                onClick={() =>
-                  setSaksi("Ya")
-                }
-                disabled={loading}
-              >
-                👀 Ada teman
-              </button>
-            </div>
+</div>
           </div>
 
           {/* DATA SAKSI */}
@@ -2402,25 +2234,35 @@ function FormPengaduan() {
                     👧 Nama teman yang
                     melihat
                   </label>
-                </div>
 
-                <input
-                  value={
-                    namaSaksi
-                  }
-                  onChange={(e) =>
-                    setNamaSaksi(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Nama teman..."
-                  style={
-                    styles.input
-                  }
-                  disabled={
-                    loading
-                  }
-                />
+</div>
+
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                  }}
+                >
+                  <input
+                    value={namaSaksi}
+                    onChange={(e) =>
+                      setNamaSaksi(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Nama teman..."
+                    style={{
+                      ...styles.input,
+                      paddingRight: "58px",
+                    }}
+                    disabled={loading}
+                  />
+                  <VoiceButton
+                    value={namaSaksi}
+                    onChange={setNamaSaksi}
+                    disabled={loading}
+                  />
+                </div>
               </div>
 
               <div>
@@ -2495,7 +2337,8 @@ function FormPengaduan() {
                   (boleh dikosongkan)
                 </span>
               </label>
-            </div>
+
+</div>
 
             <div
               style={
@@ -2515,12 +2358,6 @@ function FormPengaduan() {
                 style={styles.input}
                 disabled={loading}
               />
-                <VoiceButton
-                  value={namaSaksi}
-                  onChange={setNamaSaksi}
-                  disabled={loading}
-                />
-              </div>
 
               {foto && (
                 <div
@@ -2579,7 +2416,8 @@ function FormPengaduan() {
               Saya menyatakan bahwa cerita
               ini benar sesuai yang saya ingat.
             </label>
-          </div>
+
+</div>
 
           {/* BUTTON */}
 
