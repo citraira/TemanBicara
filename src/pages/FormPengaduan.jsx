@@ -1591,11 +1591,6 @@ function FormPengaduan() {
               </select>
             </div>
 
-            {jenis &&
-              jenis !==
-                "Lainnya" && (
-)}
-
             {jenis ===
               "Lainnya" && (
               <div
@@ -1704,12 +1699,12 @@ function FormPengaduan() {
                 👤 Siapa yang melakukan?
                 <span
                   style={{
-                    color: "#667C5E",
-                    fontWeight: "600",
+                    color: "#D32F2F",
+                    marginLeft: "3px",
+                    fontWeight: "900",
                   }}
                 >
-                  {" "}
-                  (boleh dikosongkan)
+                  *
                 </span>
               </label>
             </div>
