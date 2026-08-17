@@ -1847,13 +1847,6 @@ function FormPengaduan() {
                       );
                     }
                   }}
-                  placeholder=""
-                  style={{
-                    ...styles.input,
-                    width: "100%",
-                    paddingRight: "58px",
-                  }}
-                  disabled={loading}
                 />
                 <input
                   type="number"
