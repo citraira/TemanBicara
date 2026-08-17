@@ -489,6 +489,99 @@ function FormPengaduan() {
   const [isListening, setIsListening] =
     useState(false);
 
+  // ====================================================
+  // ALERT / POPUP
+  // ====================================================
+
+  const [alertConfig, setAlertConfig] =
+    useState({
+      isOpen: false,
+      type: "success",
+      title: "",
+      message: "",
+      onClose: null,
+    });
+
+  const alertTimerRef =
+    useRef(null);
+
+  const submitLockRef =
+    useRef(false);
+
+  const closeAlert = useCallback(() => {
+    if (alertTimerRef.current) {
+      clearTimeout(alertTimerRef.current);
+      alertTimerRef.current = null;
+    }
+
+    const callback =
+      alertConfig.onClose;
+
+    setAlertConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
+
+    if (typeof callback === "function") {
+      callback();
+    }
+  }, [alertConfig.onClose]);
+
+  const showAlert = useCallback(
+    (
+      type,
+      title,
+      message,
+      onClose = null
+    ) => {
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+
+      setAlertConfig({
+        isOpen: true,
+        type,
+        title,
+        message,
+        onClose,
+      });
+
+      // Popup otomatis tertutup tanpa harus menekan "Mengerti".
+      // Beri waktu sedikit lebih lama untuk pesan error/warning.
+      const delay =
+        type === "success" ? 1600 : 2200;
+
+      alertTimerRef.current =
+        setTimeout(() => {
+          setAlertConfig((prev) => {
+            const callback =
+              prev.onClose;
+
+            if (typeof callback === "function") {
+              setTimeout(callback, 0);
+            }
+
+            return {
+              ...prev,
+              isOpen: false,
+              onClose: null,
+            };
+          });
+
+          alertTimerRef.current = null;
+        }, delay);
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+    };
+  }, []);
+
   const recognitionRef =
     useRef(null);
 
