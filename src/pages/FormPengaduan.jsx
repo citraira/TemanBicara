@@ -1847,18 +1847,11 @@ function FormPengaduan() {
                       );
                     }
                   }}
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={jumlahKejadian}
-                  onChange={(e) =>
-                    setJumlahKejadian(e.target.value)
-                  }
-                  placeholder="Berapa kali kejadian?"
+                  placeholder=""
                   style={{
                     ...styles.input,
                     width: "100%",
+                    paddingRight: "58px",
                   }}
                   disabled={loading}
                 />
