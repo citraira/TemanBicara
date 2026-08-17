@@ -447,7 +447,7 @@ function FormPengaduan() {
   const [peran, setPeran] =
     useState("Korban");
 
-  const [hariKejadian, setHariKejadian] =
+  const [jumlahKejadian, setJumlahKejadian] =
     useState("");
 
   const [tanggal, setTanggal] =
@@ -557,15 +557,8 @@ function FormPengaduan() {
     "6",
   ];
 
-  const listHari = [
-    "Senin",
-    "Selasa",
-    "Rabu",
-    "Kamis",
-    "Jumat",
-    "Sabtu",
-    "Minggu",
-  ];
+  // Jumlah kejadian menggunakan input angka agar siswa
+  // dapat menuliskan jumlah kejadian secara tepat.
 
   const listPeran = [
     {
@@ -736,9 +729,9 @@ function FormPengaduan() {
       savedKelas.trim()
     );
 
-    // Hari kejadian wajib dipilih dari dropdown.
+    // Jumlah kejadian wajib diisi.
     // Tanggal kalender sengaja dibiarkan kosong karena bersifat opsional.
-    setHariKejadian("");
+    setJumlahKejadian("");
     setTanggal("");
   }, []);
 
@@ -1332,7 +1325,8 @@ function FormPengaduan() {
       }
 
       if (
-        !hariKejadian ||
+        !jumlahKejadian ||
+        Number(jumlahKejadian) < 1 ||
         !lokasiFinal ||
         !jenisFinal ||
         !ceritaFinal
@@ -1343,7 +1337,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Form Belum Lengkap",
-          "Yuk pilih hari kejadian, tempat kejadian, jenis kejadian, dan ceritamu."
+          "Yuk isi berapa kali kejadian, tempat kejadian, jenis kejadian, dan ceritamu."
         );
 
         return;
@@ -1399,10 +1393,13 @@ function FormPengaduan() {
 
           peran,
 
-          hariKejadian,
+          jumlahKejadian: Number(
+            jumlahKejadian
+          ),
 
-          // Tanggal tetap disimpan agar data lama tetap kompatibel.
-          // Jika kalender tidak dipilih, nilainya "-".
+          // Tanggal bersifat opsional.
+          // Jika kalender tidak dipilih, nilainya tetap "-" agar
+          // data Firebase konsisten dan mudah dibaca di halaman admin.
           tanggal: tanggal || "-",
 
           lokasi:
@@ -1805,7 +1802,7 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* HARI & TANGGAL KEJADIAN */}
+          {/* JUMLAH & TANGGAL KEJADIAN */}
 
           <div style={styles.group}>
             <div
@@ -1817,7 +1814,7 @@ function FormPengaduan() {
                 <label
                   style={styles.label}
                 >
-                  📅 Kapan kejadiannya?
+                  🔢 Berapa kali kejadian?
                 </label>
 
                 <div
@@ -1825,7 +1822,7 @@ function FormPengaduan() {
                     styles.helperText
                   }
                 >
-                  Pilih hari kejadiannya. Tanggal kalender boleh diisi kalau kamu ingat.
+                  Tulis berapa kali kejadian serupa terjadi.
                 </div>
               </div>
 
@@ -1836,7 +1833,7 @@ function FormPengaduan() {
                 }
                 onClick={() =>
                   speakText(
-                    "Kapan kejadiannya? Pilih hari dari Senin sampai Minggu. Kalau kamu ingat tanggal tepatnya, kamu boleh memilih tanggal di kalender."
+                    "Berapa kali kejadian? Tulis berapa kali kejadian serupa terjadi. Contohnya, tiga kali."
                   )
                 }
               >
@@ -1854,36 +1851,36 @@ function FormPengaduan() {
                   styles.selectEmoji
                 }
               >
-                📅
+                🔢
               </span>
 
-              <select
-                value={hariKejadian}
-                onChange={(e) =>
-                  setHariKejadian(
-                    e.target.value
-                  )
-                }
-                style={
-                  styles.childSelect
-                }
-                disabled={loading}
-              >
-                <option value="">
-                  Pilih hari kejadian
-                </option>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={jumlahKejadian}
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
 
-                {listHari.map(
-                  (hari) => (
-                    <option
-                      key={hari}
-                      value={hari}
-                    >
-                      {hari}
-                    </option>
-                  )
-                )}
-              </select>
+                  // Hanya izinkan angka bulat positif.
+                  if (
+                    value === "" ||
+                    /^\d+$/.test(value)
+                  ) {
+                    setJumlahKejadian(
+                      value
+                    );
+                  }
+                }}
+                placeholder="Contoh: 3"
+                style={{
+                  ...styles.input,
+                  flex: 1,
+                }}
+                disabled={loading}
+              />
             </div>
 
             <div
