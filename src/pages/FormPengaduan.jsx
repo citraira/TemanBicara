@@ -1833,7 +1833,7 @@ function FormPengaduan() {
                 }
                 onClick={() =>
                   speakText(
-                    "Berapa kali kejadian? Tulis berapa kali kejadian serupa terjadi. Contohnya, tiga kali."
+                    "Berapa kali kejadian? Tulis berapa kali kejadian serupa terjadi."
                   )
                 }
               >
@@ -2271,7 +2271,7 @@ function FormPengaduan() {
                   e.target.value
                 )
               }
-              placeholder="Contoh: Tadi saya diejek teman di kantin..."
+              placeholder="Ceritakan apa yang kamu alami"
               style={
                 styles.textarea
               }
