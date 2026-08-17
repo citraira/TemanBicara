@@ -2202,7 +2202,36 @@ function FormPengaduan() {
                 styles.gridTwo
               }
             >
-</div>
+              <button
+                type="button"
+                style={
+                  styles.choiceButton(
+                    saksi === "Tidak"
+                  )
+                }
+                onClick={() =>
+                  setSaksi("Tidak")
+                }
+                disabled={loading}
+              >
+                🙅 Tidak ada
+              </button>
+
+              <button
+                type="button"
+                style={
+                  styles.choiceButton(
+                    saksi === "Ya"
+                  )
+                }
+                onClick={() =>
+                  setSaksi("Ya")
+                }
+                disabled={loading}
+              >
+                👀 Ada teman
+              </button>
+            </div>
           </div>
 
           {/* DATA SAKSI */}
