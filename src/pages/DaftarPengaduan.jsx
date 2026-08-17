@@ -586,10 +586,18 @@ const ItemPengaduanCard = memo(
         <div style={styles.grid}>
           <div>
             <strong style={{ color: "#1B5E20" }}>
+              Berapa Kali Kejadian:
+            </strong>
+            <br />
+            {item.jumlahKejadian || "-"} kali
+          </div>
+
+          <div>
+            <strong style={{ color: "#1B5E20" }}>
               Tanggal Kejadian:
             </strong>
             <br />
-            {item.tanggal || "-"}
+            {item.tanggal || "Tidak diisi"}
           </div>
 
           <div>
