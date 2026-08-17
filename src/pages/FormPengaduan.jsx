@@ -1807,7 +1807,7 @@ function FormPengaduan() {
                 </div>
               </div>
 
-</div>
+            </div>
 
             <div
               style={
@@ -1855,9 +1855,18 @@ function FormPengaduan() {
                   }}
                   disabled={loading}
                 />
-                <VoiceButton
+                <input
+                  type="number"
+                  min="1"
                   value={jumlahKejadian}
-                  onChange={setJumlahKejadian}
+                  onChange={(e) =>
+                    setJumlahKejadian(e.target.value)
+                  }
+                  placeholder="Berapa kali kejadian?"
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                  }}
                   disabled={loading}
                 />
               </div>
