@@ -193,6 +193,21 @@ const styles = {
     boxSizing: "border-box",
   },
 
+  speakButton: {
+    border: "none",
+    background: "#E8F5E9",
+    color: "#1B5E20",
+    borderRadius: "11px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    flexShrink: 0,
+  },
+
   speakingButton: {
     border: "none",
     background: "#FFEB3B",
@@ -437,6 +452,9 @@ function FormPengaduan() {
     setNamaTemanDilihat,
   ] = useState("");
 
+  const [jumlahKejadian, setJumlahKejadian] =
+    useState("");
+
   const [tanggal, setTanggal] =
     useState("");
 
@@ -486,243 +504,540 @@ function FormPengaduan() {
   const [loading, setLoading] =
     useState(false);
 
-  const [isListening, setIsListening] =
-    useState(false);
-
   // ====================================================
-  // ALERT / POPUP
+  // TTS
   // ====================================================
 
-  const [alertConfig, setAlertConfig] =
-    useState({
-      isOpen: false,
-      type: "success",
-      title: "",
-      message: "",
-      onClose: null,
-    });
+  const [
+    isSpeaking,
+    setIsSpeaking,
+  ] = useState(false);
 
-  const alertTimerRef =
+  const audioRef =
     useRef(null);
 
-  const submitLockRef =
-    useRef(false);
+  const audioUrlRef =
+    useRef(null);
 
-  const closeAlert = useCallback(() => {
-    if (alertTimerRef.current) {
-      clearTimeout(alertTimerRef.current);
-      alertTimerRef.current = null;
-    }
+  // ====================================================
+  // SPEECH TO TEXT
+  // ====================================================
 
-    const callback =
-      alertConfig.onClose;
-
-    setAlertConfig((prev) => ({
-      ...prev,
-      isOpen: false,
-    }));
-
-    if (typeof callback === "function") {
-      callback();
-    }
-  }, [alertConfig.onClose]);
-
-  const showAlert = useCallback(
-    (
-      type,
-      title,
-      message,
-      onClose = null
-    ) => {
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-
-      setAlertConfig({
-        isOpen: true,
-        type,
-        title,
-        message,
-        onClose,
-      });
-
-      // Popup otomatis tertutup tanpa harus menekan "Mengerti".
-      // Beri waktu sedikit lebih lama untuk pesan error/warning.
-      const delay =
-        type === "success" ? 1600 : 2200;
-
-      alertTimerRef.current =
-        setTimeout(() => {
-          setAlertConfig((prev) => {
-            const callback =
-              prev.onClose;
-
-            if (typeof callback === "function") {
-              setTimeout(callback, 0);
-            }
-
-            return {
-              ...prev,
-              isOpen: false,
-              onClose: null,
-            };
-          });
-
-          alertTimerRef.current = null;
-        }, delay);
-    },
-    []
-  );
-
-  useEffect(() => {
-    return () => {
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-    };
-  }, []);
+  const [
+    isListening,
+    setIsListening,
+  ] = useState(false);
 
   const recognitionRef =
     useRef(null);
 
   // ====================================================
-  // SPEECH TO TEXT - BICARA UNTUK ISIAN
+  // ALERT
   // ====================================================
 
-  const startVoiceInput = useCallback(
-    (setValue, currentValue = "") => {
-      const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
+  const [
+    alertConfig,
+    setAlertConfig,
+  ] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    onCloseCallback: null,
+  });
 
-      if (!SpeechRecognition) {
+  const submitLockRef =
+    useRef(false);
+
+  // ====================================================
+  // DATA
+  // ====================================================
+
+  const listKelas = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ];
+
+  // Jumlah kejadian menggunakan input angka agar siswa
+  // dapat menuliskan jumlah kejadian secara tepat.
+
+  const listPeran = [
+    {
+      id: "Korban",
+      label:
+        "😟 Saya yang mengalami",
+    },
+    {
+      id: "Saksi / Teman",
+      label:
+        "👀 Saya melihat teman",
+    },
+  ];
+
+  const listLokasi = [
+    {
+      value: "Ruang Kelas",
+      label: "🏫 Ruang Kelas",
+    },
+    {
+      value: "Halaman Sekolah",
+      label: "🌳 Halaman Sekolah",
+    },
+    {
+      value: "Kantin",
+      label: "🍜 Kantin",
+    },
+    {
+      value: "Lapangan",
+      label: "⚽ Lapangan",
+    },
+    {
+      value: "Perpustakaan",
+      label: "📚 Perpustakaan",
+    },
+    {
+      value: "Toilet",
+      label: "🚻 Toilet",
+    },
+    {
+      value: "Depan Gerbang",
+      label: "🚪 Depan Gerbang",
+    },
+    {
+      value: "Lainnya",
+      label: "❓ Tempat lainnya",
+    },
+  ];
+
+  const listJenisBullying = [
+    {
+      value: "Kekerasan Fisik",
+      label:
+        "👊 Dipukul / ditendang",
+      sub:
+        "Dipukul, ditendang, didorong",
+    },
+    {
+      value: "Kekerasan Verbal",
+      label:
+        "😡 Diejek / dihina",
+      sub:
+        "Diejek, dihina, dipanggil nama buruk",
+    },
+    {
+      value: "Pengucilan Sosial",
+      label:
+        "🙁 Dijauhi teman",
+      sub:
+        "Dijauhi teman atau disebarkan fitnah",
+    },
+    {
+      value:
+        "Pemalakan / Ancaman",
+      label:
+        "😨 Diancam / diminta uang",
+      sub:
+        "Uang atau barang diambil paksa",
+    },
+    {
+      value: "Cyberbullying",
+      label:
+        "📱 Diganggu lewat HP",
+      sub:
+        "Melalui chat atau media sosial",
+    },
+    {
+      value: "Lainnya",
+      label:
+        "❓ Kejadian lainnya",
+      sub:
+        "Ketik jenis kejadian lainnya",
+    },
+  ];
+
+  // ====================================================
+  // ALERT
+  // ====================================================
+
+  const showAlert =
+    useCallback(
+      (
+        type,
+        title,
+        message,
+        onCloseCallback = null
+      ) => {
+        setAlertConfig({
+          isOpen: true,
+          type,
+          title,
+          message,
+          onCloseCallback,
+        });
+      },
+      []
+    );
+
+  const closeAlert =
+    useCallback(() => {
+      const callback =
+        alertConfig.onCloseCallback;
+
+      setAlertConfig(
+        (prev) => ({
+          ...prev,
+          isOpen: false,
+          onCloseCallback: null,
+        })
+      );
+
+      if (callback) {
+        callback();
+      }
+    }, [
+      alertConfig.onCloseCallback,
+    ]);
+
+  // ====================================================
+  // IDENTITAS SISWA
+  // ====================================================
+
+  useEffect(() => {
+    const savedNama =
+      localStorage.getItem(
+        "namaSiswa"
+      ) || "";
+
+    const savedNis =
+      localStorage.getItem(
+        "nisSiswa"
+      ) || "";
+
+    const savedKelas =
+      localStorage.getItem(
+        "kelasSiswa"
+      ) || "";
+
+    setNama(
+      savedNama.trim()
+    );
+
+    setNis(
+      savedNis.trim()
+    );
+
+    setKelas(
+      savedKelas.trim()
+    );
+
+    // Jumlah kejadian wajib diisi.
+    // Tanggal kalender sengaja dibiarkan kosong karena bersifat opsional.
+    setJumlahKejadian("");
+    setTanggal("");
+  }, []);
+
+  // ====================================================
+  // TTS BAHASA INDONESIA - TANPA API / TANPA AUDIO FILE
+  // ====================================================
+
+  const getIndonesianVoice = useCallback(() => {
+    if (!("speechSynthesis" in window)) {
+      return null;
+    }
+
+    const voices =
+      window.speechSynthesis.getVoices() || [];
+
+    if (!voices.length) {
+      return null;
+    }
+
+    // Prioritas utama: voice Indonesia yang benar-benar id-ID.
+    const exactId = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-") === "id-id"
+    );
+
+    if (exactId) {
+      return exactId;
+    }
+
+    // Cadangan: semua voice yang diawali id-
+    const indonesiaVoice = voices.find(
+      (voice) =>
+        String(voice.lang || "")
+          .toLowerCase()
+          .replace(/_/g, "-")
+          .startsWith("id-")
+    );
+
+    return indonesiaVoice || null;
+  }, []);
+
+  const speakText = useCallback(
+    (text) => {
+      if (!("speechSynthesis" in window)) {
         showAlert(
           "warning",
-          "Fitur Bicara Tidak Tersedia",
-          "Browser ini belum mendukung fitur bicara. Silakan gunakan Chrome/Edge versi terbaru."
+          "Suara Tidak Tersedia",
+          "Browser ini belum mendukung fitur suara. Silakan gunakan Chrome atau Edge terbaru."
         );
         return;
       }
 
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (error) {
-          console.warn(error);
-        }
-        recognitionRef.current = null;
+      const cleanText = String(text || "").trim();
+
+      if (!cleanText) {
+        return;
       }
 
-      try {
-        const recognition =
-          new SpeechRecognition();
+      // Hentikan bacaan sebelumnya.
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
 
-        recognition.lang = "id-ID";
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+      const startSpeaking = () => {
+        const voice = getIndonesianVoice();
 
-        setIsListening(true);
+        // Jangan diam-diam menggunakan voice Inggris.
+        if (!voice) {
+          setIsSpeaking(false);
 
-        recognition.onresult = (event) => {
-          const transcript =
-            event.results?.[0]?.[0]?.transcript
-              ?.trim() || "";
+          showAlert(
+            "warning",
+            "Suara Bahasa Indonesia Tidak Ditemukan",
+            "Perangkat atau browser ini belum menyediakan voice Bahasa Indonesia (id-ID). Coba buka aplikasi di Chrome atau Edge dan pastikan voice Bahasa Indonesia tersedia di perangkat."
+          );
 
-          if (transcript) {
-            const previous =
-              String(currentValue || "").trim();
+          return;
+        }
 
-            setValue(
-              previous
-                ? `${previous} ${transcript}`
-                : transcript
-            );
-          }
+        const utterance =
+          new SpeechSynthesisUtterance(
+            cleanText
+          );
+
+        utterance.lang = "id-ID";
+        utterance.voice = voice;
+
+        // Kecepatan sedikit diperlambat agar lebih mudah
+        // dipahami oleh anak SD.
+        utterance.rate = 0.88;
+        utterance.pitch = 1.05;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+          setIsSpeaking(true);
         };
 
-        recognition.onerror = (event) => {
+        utterance.onend = () => {
+          setIsSpeaking(false);
+        };
+
+        utterance.onerror = (event) => {
           console.warn(
-            "Speech recognition:",
+            "Speech synthesis error:",
             event.error
           );
 
-          setIsListening(false);
-          recognitionRef.current = null;
-
-          if (
-            event.error === "not-allowed" ||
-            event.error === "service-not-allowed"
-          ) {
-            showAlert(
-              "warning",
-              "Mikrofon Belum Diizinkan",
-              "Izinkan akses mikrofon pada browser agar fitur Bicara dapat digunakan."
-            );
-          } else if (
-            event.error !== "aborted"
-          ) {
-            showAlert(
-              "error",
-              "Bicara Tidak Berhasil",
-              "Suara belum dapat dikenali. Silakan coba lagi."
-            );
-          }
+          setIsSpeaking(false);
         };
 
-        recognition.onend = () => {
-          setIsListening(false);
-          recognitionRef.current = null;
-        };
+        window.speechSynthesis.speak(
+          utterance
+        );
+      };
 
-        recognitionRef.current = recognition;
-        recognition.start();
-      } catch (error) {
-        console.error(
-          "Gagal menjalankan Speech Recognition:",
-          error
+      // Pada beberapa browser, getVoices() kosong pada pemanggilan pertama.
+      // Beri kesempatan browser memuat daftar voice terlebih dahulu.
+      const voices =
+        window.speechSynthesis.getVoices();
+
+      if (voices.length > 0) {
+        startSpeaking();
+        return;
+      }
+
+      let finished = false;
+
+      const handleVoicesChanged = () => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+        startSpeaking();
+      };
+
+      window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        handleVoicesChanged
+      );
+
+      // Fallback jika browser tidak menembakkan voiceschanged.
+      setTimeout(() => {
+        if (finished) return;
+
+        finished = true;
+
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+        startSpeaking();
+      }, 1000);
+    },
+    [getIndonesianVoice, showAlert]
+  );
+
+  // ====================================================
+  // STOP TTS
+  // ====================================================
+
+  const stopAudio = useCallback(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    setIsSpeaking(false);
+  }, []);
+
+  // ====================================================
+  // SPEECH TO TEXT
+  // ====================================================
+
+  const startVoiceInput = (
+    setValue,
+    currentValue = ""
+  ) => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      showAlert(
+        "warning",
+        "Fitur Bicara Tidak Tersedia",
+        "Browser ini belum mendukung input suara. Silakan gunakan Chrome atau Edge terbaru."
+      );
+      return;
+    }
+
+    if (isListening) {
+      stopVoiceInput();
+      return;
+    }
+
+    try {
+      const recognition =
+        new SpeechRecognition();
+
+      recognition.lang = "id-ID";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript =
+          event.results?.[0]?.[0]
+            ?.transcript
+            ?.trim() || "";
+
+        if (!transcript) return;
+
+        setValue((previous) => {
+          const oldText =
+            String(
+              previous ?? currentValue ?? ""
+            ).trim();
+
+          return oldText
+            ? `${oldText} ${transcript}`
+            : transcript;
+        });
+      };
+
+      recognition.onerror = (event) => {
+        console.warn(
+          "Speech recognition:",
+          event.error
         );
 
         setIsListening(false);
         recognitionRef.current = null;
 
-        showAlert(
-          "error",
-          "Bicara Tidak Berhasil",
-          "Fitur bicara tidak dapat dijalankan."
-        );
-      }
-    },
-    [showAlert]
-  );
+        if (
+          event.error === "not-allowed" ||
+          event.error ===
+            "service-not-allowed"
+        ) {
+          showAlert(
+            "warning",
+            "Mikrofon Belum Diizinkan",
+            "Izinkan akses mikrofon pada browser agar fitur Bicara dapat digunakan."
+          );
+        } else if (
+          event.error !== "aborted"
+        ) {
+          showAlert(
+            "error",
+            "Bicara Tidak Berhasil",
+            "Suara belum dapat dikenali. Silakan coba lagi."
+          );
+        }
+      };
 
-  const stopVoiceInput = useCallback(() => {
+      recognition.onend = () => {
+        setIsListening(false);
+        recognitionRef.current = null;
+      };
+
+      recognitionRef.current =
+        recognition;
+
+      recognition.start();
+    } catch (error) {
+      console.error(error);
+      setIsListening(false);
+      recognitionRef.current = null;
+    }
+  };
+
+  const stopVoiceInput = () => {
     try {
-      if (recognitionRef.current) {
+      if (
+        recognitionRef.current
+      ) {
         recognitionRef.current.stop();
+
+        recognitionRef.current =
+          null;
       }
     } catch (error) {
       console.warn(error);
     }
 
-    recognitionRef.current = null;
     setIsListening(false);
-  }, []);
+  };
 
-  useEffect(() => {
-    return () => {
-      try {
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-        }
-      } catch (error) {
-        console.warn(error);
-      }
-    };
-  }, []);
+  // ====================================================
+  // TOMBOL BICARA
+  // ====================================================
 
-  // Tombol mikrofon kecil yang ditempatkan di samping
-  // setiap kolom yang dapat diketik.
   const VoiceButton = ({
     value,
     onChange,
@@ -733,19 +1048,18 @@ function FormPengaduan() {
       disabled={disabled}
       title={
         isListening
-          ? "Sedang mendengarkan..."
+          ? "Tekan untuk berhenti"
           : "Tekan untuk bicara"
       }
       onClick={() => {
         if (isListening) {
           stopVoiceInput();
-          return;
+        } else {
+          startVoiceInput(
+            onChange,
+            value
+          );
         }
-
-        startVoiceInput(
-          onChange,
-          value
-        );
       }}
       style={{
         position: "absolute",
@@ -771,12 +1085,32 @@ function FormPengaduan() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 2,
+        zIndex: 3,
       }}
     >
       {isListening ? "■" : "🎤"}
     </button>
   );
+
+  // ====================================================
+  // CLEANUP
+  // ====================================================
+
+  useEffect(() => {
+    return () => {
+      stopAudio();
+
+      try {
+        if (
+          recognitionRef.current
+        ) {
+          recognitionRef.current.stop();
+        }
+      } catch (error) {
+        console.warn(error);
+      }
+    };
+  }, []);
 
   // ====================================================
   // KOMPRESI GAMBAR
@@ -1040,7 +1374,8 @@ function FormPengaduan() {
       }
 
       if (
-        !tanggal ||
+        !jumlahKejadian ||
+        Number(jumlahKejadian) < 1 ||
         !lokasiFinal ||
         !jenisFinal ||
         !ceritaFinal
@@ -1051,7 +1386,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Form Belum Lengkap",
-          "Yuk cek kembali tempat kejadian, jenis kejadian, dan ceritamu."
+          "Yuk isi berapa kali kejadian, tempat kejadian, jenis kejadian, dan ceritamu."
         );
 
         return;
@@ -1074,7 +1409,8 @@ function FormPengaduan() {
         peran === "Saksi / Teman" &&
         !namaTemanDilihat.trim()
       ) {
-        submitLockRef.current = false;
+        submitLockRef.current =
+          false;
 
         showAlert(
           "warning",
@@ -1085,8 +1421,9 @@ function FormPengaduan() {
         return;
       }
 
-      if (!pelaku.trim()) {
-        submitLockRef.current = false;
+      if (!pelakuFinal) {
+        submitLockRef.current =
+          false;
 
         showAlert(
           "warning",
@@ -1139,7 +1476,14 @@ function FormPengaduan() {
               ? namaTemanDilihat.trim()
               : "-",
 
-          tanggal,
+          jumlahKejadian: Number(
+            jumlahKejadian
+          ),
+
+          // Tanggal bersifat opsional.
+          // Jika kalender tidak dipilih, nilainya tetap "-" agar
+          // data Firebase konsisten dan mudah dibaca di halaman admin.
+          tanggal: tanggal || "-",
 
           lokasi:
             lokasiFinal,
@@ -1236,6 +1580,13 @@ function FormPengaduan() {
           hal yang membuatmu tidak nyaman.
           Kami akan mendengarkanmu. 💚
         </p>
+
+        <div
+          style={{
+            marginTop: "12px",
+          }}
+        >
+        </div>
       </div>
 
       {/* HOTLINE */}
@@ -1310,7 +1661,11 @@ function FormPengaduan() {
               </label>
             </div>
 
-            <input
+            <div style={{ position: "relative" }}>
+                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative" }}>
+                <input
               value={nama}
               readOnly
               style={
@@ -1398,8 +1753,6 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* TEMAN YANG DILIHAT */}
-
           {peran === "Saksi / Teman" && (
             <div
               style={{
@@ -1410,20 +1763,18 @@ function FormPengaduan() {
                 border: "1px solid #C8E6C9",
               }}
             >
-              <div style={styles.labelRow}>
-                <label style={styles.label}>
-                  👧 Temanmu itu siapa?
-                  <span
-                    style={{
-                      color: "#D32F2F",
-                      marginLeft: "3px",
-                      fontWeight: "900",
-                    }}
-                  >
-                    *
-                  </span>
-                </label>
-              </div>
+              <label style={styles.label}>
+                👧 Temanmu itu siapa?
+                <span
+                  style={{
+                    color: "#D32F2F",
+                    marginLeft: "3px",
+                    fontWeight: "900",
+                  }}
+                >
+                  *
+                </span>
+              </label>
 
               <div
                 style={{
@@ -1431,7 +1782,7 @@ function FormPengaduan() {
                   marginBottom: "8px",
                 }}
               >
-                Tuliskan nama teman yang kamu lihat dalam kejadian tersebut.
+                Tuliskan nama teman yang kamu lihat.
               </div>
 
               <div style={{ position: "relative" }}>
@@ -1439,7 +1790,9 @@ function FormPengaduan() {
                   type="text"
                   value={namaTemanDilihat}
                   onChange={(e) =>
-                    setNamaTemanDilihat(e.target.value)
+                    setNamaTemanDilihat(
+                      e.target.value
+                    )
                   }
                   placeholder="Nama teman yang kamu lihat..."
                   style={{
@@ -1448,6 +1801,7 @@ function FormPengaduan() {
                   }}
                   disabled={loading}
                 />
+
                 <VoiceButton
                   value={namaTemanDilihat}
                   onChange={setNamaTemanDilihat}
@@ -1457,7 +1811,7 @@ function FormPengaduan() {
             </div>
           )}
 
-          {/* TANGGAL */}
+          {/* JUMLAH & TANGGAL KEJADIAN */}
 
           <div style={styles.group}>
             <div
@@ -1465,24 +1819,105 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <label
-                style={styles.label}
-              >
-                📅 Kapan kejadiannya?
-              </label>
+              <div>
+                <label
+                  style={styles.label}
+                >
+                  🔢 Berapa kali kejadian?
+                </label>
+
+                <div
+                  style={
+                    styles.helperText
+                  }
+                >
+                  Tulis berapa kali kejadian serupa terjadi.
+                </div>
+              </div>
             </div>
 
-            <input
-              type="date"
-              value={tanggal}
-              onChange={(e) =>
-                setTanggal(
-                  e.target.value
-                )
+            <div
+              style={
+                styles.selectWrapper
               }
-              style={styles.input}
-              disabled={loading}
-            />
+            >
+              <span
+                style={
+                  styles.selectEmoji
+                }
+              >
+                🔢
+              </span>
+
+              <input
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={jumlahKejadian}
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
+
+                  // Hanya izinkan angka bulat positif.
+                  if (
+                    value === "" ||
+                    /^\d+$/.test(value)
+                  ) {
+                    setJumlahKejadian(
+                      value
+                    );
+                  }
+                }}
+                placeholder=""
+                style={{
+                  ...styles.input,
+                  flex: 1,
+                }}
+                disabled={loading}
+              />
+            </div>
+
+            <div
+              style={{
+                marginTop: "10px",
+                padding: "10px 12px",
+                borderRadius: "12px",
+                background: "#F8FFF6",
+                border: "1.5px solid #E0EEDB",
+              }}
+            >
+              <label
+                style={{
+                  ...styles.label,
+                  fontSize: "13px",
+                  marginBottom: "6px",
+                }}
+              >
+                Tanggal tepat (opsional)
+              </label>
+
+              <input
+                type="date"
+                value={tanggal}
+                onChange={(e) =>
+                  setTanggal(
+                    e.target.value
+                  )
+                }
+                style={styles.input}
+                disabled={loading}
+              />
+
+              <div
+                style={{
+                  ...styles.helperText,
+                  marginTop: "6px",
+                }}
+              >
+                Boleh dikosongkan kalau kamu tidak ingat tanggal pastinya.
+              </div>
+            </div>
           </div>
 
           {/* LOKASI */}
@@ -1573,31 +2008,23 @@ function FormPengaduan() {
                   styles.otherInputBox
                 }
               >
-                <div style={{ position: "relative" }}>
-                  <input
-                    value={
-                      lokasiLainnya
-                    }
-                    onChange={(e) =>
-                      setLokasiLainnya(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Tulis tempatnya..."
-                    style={{
-                      ...styles.input,
-                      paddingRight: "50px",
-                    }}
-                    disabled={
-                      loading
-                    }
-                  />
-                  <VoiceButton
-                    value={lokasiLainnya}
-                    onChange={setLokasiLainnya}
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  value={
+                    lokasiLainnya
+                  }
+                  onChange={(e) =>
+                    setLokasiLainnya(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Tulis tempatnya..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
               </div>
             )}
           </div>
@@ -1684,6 +2111,25 @@ function FormPengaduan() {
               </select>
             </div>
 
+            {jenis &&
+              jenis !==
+                "Lainnya" && (
+              <div
+                style={
+                  styles.voiceHelp
+                }
+              >
+                💡{" "}
+                {
+                  listJenisBullying.find(
+                    (item) =>
+                      item.value ===
+                      jenis
+                  )?.sub
+                }
+              </div>
+            )}
+
             {jenis ===
               "Lainnya" && (
               <div
@@ -1691,31 +2137,23 @@ function FormPengaduan() {
                   styles.otherInputBox
                 }
               >
-                <div style={{ position: "relative" }}>
-                  <input
-                    value={
-                      jenisLainnya
-                    }
-                    onChange={(e) =>
-                      setJenisLainnya(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Ceritakan jenis kejadian..."
-                    style={{
-                      ...styles.input,
-                      paddingRight: "50px",
-                    }}
-                    disabled={
-                      loading
-                    }
-                  />
-                  <VoiceButton
-                    value={jenisLainnya}
-                    onChange={setJenisLainnya}
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  value={
+                    jenisLainnya
+                  }
+                  onChange={(e) =>
+                    setJenisLainnya(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Ceritakan jenis kejadian..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
               </div>
             )}
           </div>
@@ -1745,36 +2183,95 @@ function FormPengaduan() {
                   Tulis apa yang kamu ingat.
                 </div>
               </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "6px",
+                }}
+              >
+                <button
+                  type="button"
+                  style={
+                    isSpeaking
+                      ? styles.speakingButton
+                      : styles.speakButton
+                  }
+                  onClick={() => {
+                    if (isSpeaking) {
+                      stopAudio();
+                    } else {
+                      speakText(
+                        "Ceritakan dengan kata-katamu. Tidak perlu panjang. Tulis apa yang kamu ingat."
+                      );
+                    }
+                  }}
+                >
+                  {isSpeaking
+                    ? "⏹️"
+                    : "🔊"}
+                </button>
+
+                <button
+                  type="button"
+                  style={
+                    isListening
+                      ? styles.listeningButton
+                      : styles.voiceButton
+                  }
+                  onClick={
+                    startVoiceInput
+                  }
+                  disabled={loading}
+                >
+                  {isListening
+                    ? "⏹️ Stop"
+                    : "🎤 Bicara"}
+                </button>
+              </div>
             </div>
 
             <div style={{ position: "relative" }}>
               <textarea
+              value={cerita}
+              onChange={(e) =>
+                setCerita(
+                  e.target.value
+                )
+              }
+              placeholder="Ceritakan apa yang kamu alami"
+              style={
+                styles.textarea
+              }
+              disabled={loading}
+            />
+              <VoiceButton
                 value={cerita}
-                onChange={(e) =>
-                  setCerita(
-                    e.target.value
-                  )
-                }
-                placeholder="Contoh: Tadi saya diejek teman di kantin..."
-                style={{
-                  ...styles.textarea,
-                  paddingRight: "52px",
-                }}
+                onChange={setCerita}
                 disabled={loading}
               />
-              <div
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "10px",
-                }}
-              >
+            </div>
                 <VoiceButton
-                  value={cerita}
-                  onChange={setCerita}
+                  value={jenisLainnya}
+                  onChange={setJenisLainnya}
                   disabled={loading}
                 />
               </div>
+                <VoiceButton
+                  value={lokasiLainnya}
+                  onChange={setLokasiLainnya}
+                  disabled={loading}
+                />
+              </div>
+
+            <div
+              style={
+                styles.voiceHelp
+              }
+            >
+              💡 Kalau sulit mengetik,
+              tekan <strong>🎤 Bicara</strong>{" "}
+              lalu ceritakan dengan suaramu.
             </div>
           </div>
 
@@ -1802,27 +2299,23 @@ function FormPengaduan() {
               </label>
             </div>
 
-            <div style={{ position: "relative" }}>
-              <input
-                value={pelaku}
-                onChange={(e) =>
-                  setPelaku(
-                    e.target.value
-                  )
-                }
-                placeholder="Nama teman atau orangnya..."
-                style={{
-                  ...styles.input,
-                  paddingRight: "50px",
-                }}
-                disabled={loading}
-              />
-              <VoiceButton
-                value={pelaku}
-                onChange={setPelaku}
-                disabled={loading}
-              />
-            </div>
+            <input
+              value={pelaku}
+              onChange={(e) =>
+                setPelaku(
+                  e.target.value
+                )
+              }
+              placeholder="Nama teman atau orangnya..."
+              style={styles.input}
+              disabled={loading}
+            />
+                <VoiceButton
+                  value={pelaku}
+                  onChange={setPelaku}
+                  disabled={loading}
+                />
+              </div>
           </div>
 
           {/* SAKSI */}
@@ -1911,31 +2404,23 @@ function FormPengaduan() {
                   </label>
                 </div>
 
-                <div style={{ position: "relative" }}>
-                  <input
-                    value={
-                      namaSaksi
-                    }
-                    onChange={(e) =>
-                      setNamaSaksi(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Nama teman..."
-                    style={{
-                      ...styles.input,
-                      paddingRight: "50px",
-                    }}
-                    disabled={
-                      loading
-                    }
-                  />
-                  <VoiceButton
-                    value={namaSaksi}
-                    onChange={setNamaSaksi}
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  value={
+                    namaSaksi
+                  }
+                  onChange={(e) =>
+                    setNamaSaksi(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Nama teman..."
+                  style={
+                    styles.input
+                  }
+                  disabled={
+                    loading
+                  }
+                />
               </div>
 
               <div>
@@ -2030,6 +2515,12 @@ function FormPengaduan() {
                 style={styles.input}
                 disabled={loading}
               />
+                <VoiceButton
+                  value={namaSaksi}
+                  onChange={setNamaSaksi}
+                  disabled={loading}
+                />
+              </div>
 
               {foto && (
                 <div
