@@ -12,6 +12,11 @@ import {
   push,
 } from "firebase/database";
 
+import {
+  getFunctions,
+  httpsCallable,
+} from "firebase/functions";
+
 import { db } from "../firebase";
 
 // ======================================================
@@ -447,8 +452,10 @@ function FormPengaduan() {
   const [peran, setPeran] =
     useState("Korban");
 
-  const [jumlahKejadian, setJumlahKejadian] =
-    useState("");
+  const [
+    namaTemanDilihat,
+    setNamaTemanDilihat,
+  ] = useState("");
 
   const [tanggal, setTanggal] =
     useState("");
@@ -556,9 +563,6 @@ function FormPengaduan() {
     "5",
     "6",
   ];
-
-  // Jumlah kejadian menggunakan input angka agar siswa
-  // dapat menuliskan jumlah kejadian secara tepat.
 
   const listPeran = [
     {
@@ -729,183 +733,206 @@ function FormPengaduan() {
       savedKelas.trim()
     );
 
-    // Jumlah kejadian wajib diisi.
-    // Tanggal kalender sengaja dibiarkan kosong karena bersifat opsional.
-    setJumlahKejadian("");
-    setTanggal("");
+    setTanggal(
+      new Date()
+        .toISOString()
+        .split("T")[0]
+    );
   }, []);
 
   // ====================================================
-  // TTS BAHASA INDONESIA - TANPA API / TANPA AUDIO FILE
+  // TTS BAHASA INDONESIA
   // ====================================================
 
-  const getIndonesianVoice = useCallback(() => {
-    if (!("speechSynthesis" in window)) {
-      return null;
-    }
+  const speakText = async (
+    text
+  ) => {
+    /*
+     * Hentikan audio sebelumnya.
+     */
 
-    const voices =
-      window.speechSynthesis.getVoices() || [];
+    stopAudio();
 
-    if (!voices.length) {
-      return null;
-    }
+    setIsSpeaking(true);
 
-    // Prioritas utama: voice Indonesia yang benar-benar id-ID.
-    const exactId = voices.find(
-      (voice) =>
-        String(voice.lang || "")
-          .toLowerCase()
-          .replace(/_/g, "-") === "id-id"
-    );
+    try {
+      /*
+       * Ambil Cloud Function.
+       *
+       * Region harus sama dengan region function.
+       */
 
-    if (exactId) {
-      return exactId;
-    }
-
-    // Cadangan: semua voice yang diawali id-
-    const indonesiaVoice = voices.find(
-      (voice) =>
-        String(voice.lang || "")
-          .toLowerCase()
-          .replace(/_/g, "-")
-          .startsWith("id-")
-    );
-
-    return indonesiaVoice || null;
-  }, []);
-
-  const speakText = useCallback(
-    (text) => {
-      if (!("speechSynthesis" in window)) {
-        showAlert(
-          "warning",
-          "Suara Tidak Tersedia",
-          "Browser ini belum mendukung fitur suara. Silakan gunakan Chrome atau Edge terbaru."
+      const functions =
+        getFunctions(
+          undefined,
+          "asia-southeast1"
         );
-        return;
+
+      const generateSpeech =
+        httpsCallable(
+          functions,
+          "generateIndonesianSpeech"
+        );
+
+      const result =
+        await generateSpeech({
+          text: String(text),
+        });
+
+      const data =
+        result?.data || {};
+
+      if (!data.audioContent) {
+        throw new Error(
+          "Audio Bahasa Indonesia tidak diterima dari server."
+        );
       }
 
-      const cleanText = String(text || "").trim();
+      /*
+       * Google TTS mengembalikan base64.
+       * Kita ubah menjadi Blob audio.
+       */
 
-      if (!cleanText) {
-        return;
+      const binaryString =
+        window.atob(
+          data.audioContent
+        );
+
+      const len =
+        binaryString.length;
+
+      const bytes =
+        new Uint8Array(len);
+
+      for (
+        let i = 0;
+        i < len;
+        i++
+      ) {
+        bytes[i] =
+          binaryString.charCodeAt(
+            i
+          );
       }
 
-      // Hentikan bacaan sebelumnya.
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+      const blob =
+        new Blob(
+          [bytes],
+          {
+            type: "audio/mpeg",
+          }
+        );
 
-      const startSpeaking = () => {
-        const voice = getIndonesianVoice();
+      const audioUrl =
+        URL.createObjectURL(
+          blob
+        );
 
-        // Jangan diam-diam menggunakan voice Inggris.
-        if (!voice) {
-          setIsSpeaking(false);
+      audioUrlRef.current =
+        audioUrl;
 
-          showAlert(
-            "warning",
-            "Suara Bahasa Indonesia Tidak Ditemukan",
-            "Perangkat atau browser ini belum menyediakan voice Bahasa Indonesia (id-ID). Coba buka aplikasi di Chrome atau Edge dan pastikan voice Bahasa Indonesia tersedia di perangkat."
+      const audio =
+        new Audio(audioUrl);
+
+      audioRef.current =
+        audio;
+
+      audio.volume = 1;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+
+        if (
+          audioUrlRef.current
+        ) {
+          URL.revokeObjectURL(
+            audioUrlRef.current
           );
 
-          return;
+          audioUrlRef.current =
+            null;
         }
 
-        const utterance =
-          new SpeechSynthesisUtterance(
-            cleanText
+        audioRef.current =
+          null;
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+
+        if (
+          audioUrlRef.current
+        ) {
+          URL.revokeObjectURL(
+            audioUrlRef.current
           );
 
-        utterance.lang = "id-ID";
-        utterance.voice = voice;
+          audioUrlRef.current =
+            null;
+        }
 
-        // Kecepatan sedikit diperlambat agar lebih mudah
-        // dipahami oleh anak SD.
-        utterance.rate = 0.88;
-        utterance.pitch = 1.05;
-        utterance.volume = 1;
+        audioRef.current =
+          null;
 
-        utterance.onstart = () => {
-          setIsSpeaking(true);
-        };
-
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-
-        utterance.onerror = (event) => {
-          console.warn(
-            "Speech synthesis error:",
-            event.error
-          );
-
-          setIsSpeaking(false);
-        };
-
-        window.speechSynthesis.speak(
-          utterance
+        showAlert(
+          "error",
+          "Suara Gagal Diputar",
+          "Audio Bahasa Indonesia berhasil dibuat, tetapi tidak dapat diputar."
         );
       };
 
-      // Pada beberapa browser, getVoices() kosong pada pemanggilan pertama.
-      // Beri kesempatan browser memuat daftar voice terlebih dahulu.
-      const voices =
-        window.speechSynthesis.getVoices();
-
-      if (voices.length > 0) {
-        startSpeaking();
-        return;
-      }
-
-      let finished = false;
-
-      const handleVoicesChanged = () => {
-        if (finished) return;
-
-        finished = true;
-
-        window.speechSynthesis.removeEventListener(
-          "voiceschanged",
-          handleVoicesChanged
-        );
-
-        startSpeaking();
-      };
-
-      window.speechSynthesis.addEventListener(
-        "voiceschanged",
-        handleVoicesChanged
+      await audio.play();
+    } catch (error) {
+      console.error(
+        "TTS Bahasa Indonesia:",
+        error
       );
 
-      // Fallback jika browser tidak menembakkan voiceschanged.
-      setTimeout(() => {
-        if (finished) return;
+      setIsSpeaking(false);
 
-        finished = true;
+      showAlert(
+        "error",
+        "Suara Belum Berhasil",
+        error?.message ||
+          "Tidak dapat mengambil suara Bahasa Indonesia. Periksa koneksi internet."
+      );
+    }
+  };
 
-        window.speechSynthesis.removeEventListener(
-          "voiceschanged",
-          handleVoicesChanged
+  // ====================================================
+  // STOP AUDIO
+  // ====================================================
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+
+        audioRef.current.currentTime =
+          0;
+      } catch (error) {
+        console.warn(error);
+      }
+
+      audioRef.current =
+        null;
+    }
+
+    if (audioUrlRef.current) {
+      try {
+        URL.revokeObjectURL(
+          audioUrlRef.current
         );
+      } catch (error) {
+        console.warn(error);
+      }
 
-        startSpeaking();
-      }, 1000);
-    },
-    [getIndonesianVoice, showAlert]
-  );
-
-  // ====================================================
-  // STOP TTS
-  // ====================================================
-
-  const stopAudio = useCallback(() => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+      audioUrlRef.current =
+        null;
     }
 
     setIsSpeaking(false);
-  }, []);
+  };
 
   // ====================================================
   // SPEECH TO TEXT
@@ -1325,8 +1352,7 @@ function FormPengaduan() {
       }
 
       if (
-        !jumlahKejadian ||
-        Number(jumlahKejadian) < 1 ||
+        !tanggal ||
         !lokasiFinal ||
         !jenisFinal ||
         !ceritaFinal
@@ -1337,7 +1363,7 @@ function FormPengaduan() {
         showAlert(
           "warning",
           "Form Belum Lengkap",
-          "Yuk isi berapa kali kejadian, tempat kejadian, jenis kejadian, dan ceritamu."
+          "Yuk cek kembali tempat kejadian, jenis kejadian, dan ceritamu."
         );
 
         return;
@@ -1351,6 +1377,33 @@ function FormPengaduan() {
           "warning",
           "Satu Langkah Lagi",
           "Centang pernyataan bahwa cerita yang kamu tulis adalah benar."
+        );
+
+        return;
+      }
+
+      if (
+        peran === "Saksi / Teman" &&
+        !namaTemanDilihat.trim()
+      ) {
+        submitLockRef.current = false;
+
+        showAlert(
+          "warning",
+          "Nama Teman Belum Diisi",
+          "Tuliskan nama teman yang kamu lihat."
+        );
+
+        return;
+      }
+
+      if (!pelaku.trim()) {
+        submitLockRef.current = false;
+
+        showAlert(
+          "warning",
+          "Siapa yang melakukan?",
+          "Silakan isi siapa yang melakukan tindakan tersebut."
         );
 
         return;
@@ -1393,14 +1446,12 @@ function FormPengaduan() {
 
           peran,
 
-          jumlahKejadian: Number(
-            jumlahKejadian
-          ),
+          namaTemanDilihat:
+            peran === "Saksi / Teman"
+              ? namaTemanDilihat.trim()
+              : "-",
 
-          // Tanggal bersifat opsional.
-          // Jika kalender tidak dipilih, nilainya tetap "-" agar
-          // data Firebase konsisten dan mudah dibaca di halaman admin.
-          tanggal: tanggal || "-",
+          tanggal,
 
           lokasi:
             lokasiFinal,
@@ -1802,7 +1853,68 @@ function FormPengaduan() {
             </div>
           </div>
 
-          {/* JUMLAH & TANGGAL KEJADIAN */}
+          {/* TEMAN YANG DILIHAT */}
+
+          {peran === "Saksi / Teman" && (
+            <div
+              style={{
+                ...styles.group,
+                background: "#F7FFF3",
+                padding: "14px",
+                borderRadius: "12px",
+                border: "1px solid #C8E6C9",
+              }}
+            >
+              <div style={styles.labelRow}>
+                <label style={styles.label}>
+                  👧 Temanmu itu siapa?
+                  <span
+                    style={{
+                      color: "#D32F2F",
+                      marginLeft: "3px",
+                      fontWeight: "900",
+                    }}
+                  >
+                    *
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  style={styles.speakButton}
+                  onClick={() =>
+                    speakText(
+                      "Temanmu itu siapa? Tuliskan nama teman yang kamu lihat."
+                    )
+                  }
+                >
+                  🔊
+                </button>
+              </div>
+
+              <div
+                style={{
+                  ...styles.helperText,
+                  marginBottom: "8px",
+                }}
+              >
+                Tuliskan nama teman yang kamu lihat dalam kejadian tersebut.
+              </div>
+
+              <input
+                type="text"
+                value={namaTemanDilihat}
+                onChange={(e) =>
+                  setNamaTemanDilihat(e.target.value)
+                }
+                placeholder="Nama teman yang kamu lihat..."
+                style={styles.input}
+                disabled={loading}
+              />
+            </div>
+          )}
+
+          {/* TANGGAL */}
 
           <div style={styles.group}>
             <div
@@ -1810,21 +1922,11 @@ function FormPengaduan() {
                 styles.labelRow
               }
             >
-              <div>
-                <label
-                  style={styles.label}
-                >
-                  🔢 Berapa kali kejadian?
-                </label>
-
-                <div
-                  style={
-                    styles.helperText
-                  }
-                >
-                  Tulis berapa kali kejadian serupa terjadi.
-                </div>
-              </div>
+              <label
+                style={styles.label}
+              >
+                📅 Kapan kejadiannya?
+              </label>
 
               <button
                 type="button"
@@ -1833,7 +1935,7 @@ function FormPengaduan() {
                 }
                 onClick={() =>
                   speakText(
-                    "Berapa kali kejadian? Tulis berapa kali kejadian serupa terjadi."
+                    "Kapan kejadiannya? Pilih tanggal kejadian."
                   )
                 }
               >
@@ -1841,88 +1943,17 @@ function FormPengaduan() {
               </button>
             </div>
 
-            <div
-              style={
-                styles.selectWrapper
+            <input
+              type="date"
+              value={tanggal}
+              onChange={(e) =>
+                setTanggal(
+                  e.target.value
+                )
               }
-            >
-              <span
-                style={
-                  styles.selectEmoji
-                }
-              >
-                🔢
-              </span>
-
-              <input
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                value={jumlahKejadian}
-                onChange={(e) => {
-                  const value =
-                    e.target.value;
-
-                  // Hanya izinkan angka bulat positif.
-                  if (
-                    value === "" ||
-                    /^\d+$/.test(value)
-                  ) {
-                    setJumlahKejadian(
-                      value
-                    );
-                  }
-                }}
-                placeholder=""
-                style={{
-                  ...styles.input,
-                  flex: 1,
-                }}
-                disabled={loading}
-              />
-            </div>
-
-            <div
-              style={{
-                marginTop: "10px",
-                padding: "10px 12px",
-                borderRadius: "12px",
-                background: "#F8FFF6",
-                border: "1.5px solid #E0EEDB",
-              }}
-            >
-              <label
-                style={{
-                  ...styles.label,
-                  fontSize: "13px",
-                  marginBottom: "6px",
-                }}
-              >
-                Tanggal tepat (opsional)
-              </label>
-
-              <input
-                type="date"
-                value={tanggal}
-                onChange={(e) =>
-                  setTanggal(
-                    e.target.value
-                  )
-                }
-                style={styles.input}
-                disabled={loading}
-              />
-
-              <div
-                style={{
-                  ...styles.helperText,
-                  marginTop: "6px",
-                }}
-              >
-                Boleh dikosongkan kalau kamu tidak ingat tanggal pastinya.
-              </div>
-            </div>
+              style={styles.input}
+              disabled={loading}
+            />
           </div>
 
           {/* LOKASI */}
@@ -2271,7 +2302,7 @@ function FormPengaduan() {
                   e.target.value
                 )
               }
-              placeholder="Ceritakan apa yang kamu alami"
+              placeholder="Contoh: Tadi saya diejek teman di kantin..."
               style={
                 styles.textarea
               }
