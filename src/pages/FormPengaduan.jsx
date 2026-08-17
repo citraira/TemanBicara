@@ -911,8 +911,9 @@ function FormPengaduan() {
 
   useEffect(() => {
     return () => {
-      stopAudio();
-
+      // Hentikan speech recognition saat komponen dibongkar.
+      // stopAudio() tidak pernah didefinisikan di komponen ini dan
+      // menyebabkan ReferenceError saat berpindah ke dashboard.
       try {
         if (
           recognitionRef.current
