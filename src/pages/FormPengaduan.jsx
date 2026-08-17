@@ -1874,7 +1874,7 @@ function FormPengaduan() {
                     );
                   }
                 }}
-                placeholder="Contoh: 3"
+                placeholder=""
                 style={{
                   ...styles.input,
                   flex: 1,
