@@ -4,7 +4,7 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get } from "firebase/database";
+import { ref, get, onValue } from "firebase/database";
 import { db } from "../firebase";
 
 function Riwayat() {
@@ -20,79 +20,172 @@ function Riwayat() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFoto, setSelectedFoto] = useState(null);
 
-  // Fungsi Fetch Data dari Firebase
-  const fetchRiwayatData = useCallback(async (isSilent = false) => {
-    if (!isSilent) {
-      setLoading(true);
+  // ======================================================
+  // FORMAT DATA RIWAYAT
+  // ======================================================
+  // Semua perubahan admin di Daftar Pengaduan disimpan pada
+  // node pengaduan/{id} yang sama. Riwayat membaca node yang
+  // sama agar status dan catatan penanganan selalu sinkron.
+  const formatRiwayatData = useCallback((data) => {
+    const currentNama = (localStorage.getItem("namaSiswa") || "").trim();
+    const currentNis = (localStorage.getItem("nisSiswa") || "").trim();
+
+    if (!currentNis && !currentNama) {
+      return [];
     }
 
-    try {
-      const currentNama = (localStorage.getItem("namaSiswa") || "").trim();
-      const currentNis = (localStorage.getItem("nisSiswa") || "").trim();
-
-      if (!currentNis && !currentNama) {
-        setRiwayatList([]);
-        return;
-      }
-
-      const snapshot = await get(ref(db, "pengaduan"));
-
-      if (!snapshot.exists()) {
-        setRiwayatList([]);
-        return;
-      }
-
-      const data = snapshot.val();
-
-      // Filter fleksibel: Berdasarkan NIS atau Nama
-      const formattedList = Object.entries(data)
-        .map(([key, value]) => ({
-          id: key,
-          ...value,
-        }))
-        .filter((item) => {
-          const itemNis = String(item.nis || "").trim();
-          const itemNama = String(item.nama || "").trim().toLowerCase();
-
-          const matchNis = currentNis && itemNis === currentNis;
-          const matchNama = currentNama && itemNama === currentNama.toLowerCase();
-
-          return matchNis || matchNama;
-        })
-        .sort((a, b) => {
-          const timeA =
-            Number(a.createdAtMs || 0) ||
-            new Date(a.updatedAt || a.createdAt || 0).getTime();
-          const timeB =
-            Number(b.createdAtMs || 0) ||
-            new Date(b.updatedAt || b.createdAt || 0).getTime();
-          return timeB - timeA;
-        });
-
-      setRiwayatList(formattedList);
-    } catch (error) {
-      console.error("Gagal memuat data riwayat:", error);
-      setRiwayatList([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    if (!data) {
+      return [];
     }
+
+    return Object.entries(data)
+      .map(([key, value]) => ({
+        id: key,
+        ...(value || {}),
+      }))
+      .filter((item) => {
+        const itemNis = String(item.nis || item.NIS || "").trim();
+        const itemNama = String(item.nama || "").trim().toLowerCase();
+
+        const matchNis =
+          currentNis && itemNis === currentNis;
+
+        const matchNama =
+          currentNama &&
+          itemNama === currentNama.toLowerCase();
+
+        return matchNis || matchNama;
+      })
+      .sort((a, b) => {
+        // Jika admin mengubah data, updatedAt diprioritaskan
+        // supaya laporan yang baru diperbarui muncul paling atas.
+        const timeA =
+          new Date(
+            a.updatedAt || a.createdAt || 0
+          ).getTime() ||
+          Number(a.createdAtMs || 0);
+
+        const timeB =
+          new Date(
+            b.updatedAt || b.createdAt || 0
+          ).getTime() ||
+          Number(b.createdAtMs || 0);
+
+        return timeB - timeA;
+      });
   }, []);
 
-  // Hanya jalankan 1 kali saat komponen dimuat
-  useEffect(() => {
-    fetchRiwayatData(false);
-  }, [fetchRiwayatData]);
+  // ======================================================
+  // FETCH DATA DARI FIREBASE
+  // ======================================================
+  const fetchRiwayatData = useCallback(
+    async (isSilent = false) => {
+      if (!isSilent) {
+        setLoading(true);
+      }
 
-  // Handler Tombol Refresh Manual
+      try {
+        const snapshot = await get(
+          ref(db, "pengaduan")
+        );
+
+        setRiwayatList(
+          snapshot.exists()
+            ? formatRiwayatData(snapshot.val())
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Gagal memuat data riwayat:",
+          error
+        );
+        setRiwayatList([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [formatRiwayatData]
+  );
+
+  // ======================================================
+  // REALTIME SYNC
+  // ======================================================
+  // Ketika admin mengubah status/penanganan/catatan,
+  // Riwayat siswa langsung menerima perubahan Firebase
+  // tanpa harus keluar-masuk halaman.
+  useEffect(() => {
+    const currentNama = (
+      localStorage.getItem("namaSiswa") || ""
+    ).trim();
+
+    const currentNis = (
+      localStorage.getItem("nisSiswa") || ""
+    ).trim();
+
+    if (!currentNis && !currentNama) {
+      setRiwayatList([]);
+      setLoading(false);
+      return undefined;
+    }
+
+    setLoading(true);
+
+    const pengaduanRef = ref(db, "pengaduan");
+
+    const unsubscribe = onValue(
+      pengaduanRef,
+      (snapshot) => {
+        setRiwayatList(
+          snapshot.exists()
+            ? formatRiwayatData(snapshot.val())
+            : []
+        );
+        setLoading(false);
+        setRefreshing(false);
+      },
+      (error) => {
+        console.error(
+          "Gagal memantau riwayat pengaduan:",
+          error
+        );
+        setRiwayatList([]);
+        setLoading(false);
+        setRefreshing(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [formatRiwayatData]);
+
+  // ======================================================
+  // REFRESH MANUAL
+  // ======================================================
   const handleRefresh = () => {
     if (refreshing) return;
+
     setRefreshing(true);
-    fetchRiwayatData(true); // Silent refresh agar tidak memicu kedip
+    fetchRiwayatData(true);
+  };
+
+  // Status "Diproses" lama disamakan dengan format
+  // yang sekarang digunakan di Daftar Pengaduan admin.
+  const normalizeStatus = (status) => {
+    const value = String(status || "").trim();
+
+    if (
+      value === "" ||
+      value === "Diproses" ||
+      value === "Diproses (Guru/BK)"
+    ) {
+      return "Diproses (Guru/BK)";
+    }
+
+    return value;
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    switch (normalizeStatus(status)) {
       case "Selesai":
         return {
           label: "Selesai Penanganan",
@@ -429,31 +522,63 @@ function Riwayat() {
                   </div>
                 )}
 
-                {(item.penanganan || item.responOrangTua || item.tindakanSanksi) && (
+                {/* ==================================================
+                    UPDATE ADMIN / GURU BK
+                    Semua field yang dapat diubah dari Daftar Pengaduan
+                    ditampilkan di Riwayat siswa.
+                   ================================================== */}
+                {(item.penanganan ||
+                  item.penangananLainnya ||
+                  item.responOrangTua ||
+                  item.tindakanSanksi ||
+                  item.updatedAt) && (
                   <div style={styles.followUpBox}>
                     <strong style={{ fontSize: "13px" }}>
-                      Update Penanganan Guru:
+                      📌 Update Penanganan Guru / BK
                     </strong>
+
                     <ul
                       style={{
-                        margin: "6px 0 0 0",
+                        margin: "7px 0 0 0",
                         paddingLeft: "18px",
-                        lineHeight: "1.5",
+                        lineHeight: "1.6",
                       }}
                     >
                       {item.penanganan && (
                         <li>
-                          <strong>Metode Penanganan:</strong> {item.penanganan}
+                          <strong>Metode Penanganan:</strong>{" "}
+                          {item.penanganan === "Lainnya"
+                            ? item.penangananLainnya || "Penanganan lainnya"
+                            : item.penanganan}
                         </li>
                       )}
+
+                      {item.penanganan === "Lainnya" &&
+                        item.penangananLainnya && (
+                          <li>
+                            <strong>Detail Penanganan:</strong>{" "}
+                            {item.penangananLainnya}
+                          </li>
+                        )}
+
                       {item.responOrangTua && (
                         <li>
-                          <strong>Status Orang Tua:</strong> {item.responOrangTua}
+                          <strong>Respon Orang Tua:</strong>{" "}
+                          {item.responOrangTua}
                         </li>
                       )}
+
                       {item.tindakanSanksi && (
                         <li>
-                          <strong>Tindakan / Sanksi:</strong> {item.tindakanSanksi}
+                          <strong>Tindakan / Sanksi:</strong>{" "}
+                          {item.tindakanSanksi}
+                        </li>
+                      )}
+
+                      {item.updatedAt && (
+                        <li>
+                          <strong>Terakhir Diperbarui:</strong>{" "}
+                          {new Date(item.updatedAt).toLocaleString("id-ID")}
                         </li>
                       )}
                     </ul>
@@ -469,6 +594,13 @@ function Riwayat() {
                     }}
                   >
                     Dikirim: {new Date(item.createdAt).toLocaleString("id-ID")}
+                    {item.updatedAt && (
+                      <>
+                        {" • "}
+                        Diperbarui:{" "}
+                        {new Date(item.updatedAt).toLocaleString("id-ID")}
+                      </>
+                    )}
                   </div>
                 )}
               </div>

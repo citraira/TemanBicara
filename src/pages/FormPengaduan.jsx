@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ref as dbRef,
   push,
+  onValue,
 } from "firebase/database";
 
 import { db } from "../firebase";
@@ -417,8 +418,83 @@ const styles = {
 // COMPONENT
 // ======================================================
 
+// Menyamakan format nomor WhatsApp agar aman digunakan
+// pada URL https://wa.me/.
+// Contoh: 08123456789 -> 628123456789
+const normalizeWhatsAppNumber = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) return "";
+
+  if (digits.startsWith("0")) {
+    return `62${digits.slice(1)}`;
+  }
+
+  if (digits.startsWith("62")) {
+    return digits;
+  }
+
+  return digits;
+};
+
 function FormPengaduan() {
   const navigate = useNavigate();
+
+  // ====================================================
+  // NOMOR WHATSAPP GURU/BK
+  // ====================================================
+
+  useEffect(() => {
+    // Dengarkan perubahan nomor WA admin secara realtime.
+    // Jadi ketika admin mengubah nomor di Pengaturan Admin,
+    // tombol "Chat Guru" di halaman ini otomatis menggunakan
+    // nomor terbaru tanpa perlu mengubah source code.
+    const adminRef = dbRef(db, "pengaturan/admin");
+
+    const unsubscribe = onValue(
+      adminRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const nomorDatabase = normalizeWhatsAppNumber(
+            data.noWa
+          );
+
+          setNomorWaGuru(nomorDatabase);
+
+          // Sinkronkan cache lokal agar tetap konsisten.
+          if (nomorDatabase) {
+            localStorage.setItem(
+              "noWaGuru",
+              nomorDatabase
+            );
+          }
+        } else {
+          const nomorLocal = normalizeWhatsAppNumber(
+            localStorage.getItem("noWaGuru")
+          );
+
+          setNomorWaGuru(nomorLocal);
+        }
+      },
+      (error) => {
+        console.error(
+          "Gagal memuat nomor WhatsApp Guru/BK:",
+          error
+        );
+
+        const nomorLocal = normalizeWhatsAppNumber(
+          localStorage.getItem("noWaGuru")
+        );
+
+        setNomorWaGuru(nomorLocal);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // ====================================================
   // CLOUDINARY
@@ -428,8 +504,11 @@ function FormPengaduan() {
 
   const UPLOAD_PRESET = "ml_default";
 
-  const NOMOR_WA_GURU =
-    "6281234567890";
+  // Nomor WhatsApp Guru/BK tidak lagi ditulis manual di sini.
+  // Sumber utama diambil realtime dari Firebase:
+  // pengaturan/admin/noWa
+  const [nomorWaGuru, setNomorWaGuru] =
+    useState("");
 
   // ====================================================
   // FORM STATE
@@ -1415,10 +1494,29 @@ function FormPengaduan() {
         </div>
 
         <a
-          href={`https://wa.me/${NOMOR_WA_GURU}?text=Halo%20Bapak/Ibu%20Guru,%20saya%20ingin%20berkonsultasi.`}
+          href={
+            nomorWaGuru
+              ? `https://wa.me/${nomorWaGuru}?text=Halo%20Bapak/Ibu%20Guru,%20saya%20ingin%20berkonsultasi.`
+              : undefined
+          }
           target="_blank"
           rel="noopener noreferrer"
-          style={styles.hotlineBtn}
+          aria-disabled={!nomorWaGuru}
+          onClick={(e) => {
+            if (!nomorWaGuru) {
+              e.preventDefault();
+              showAlert(
+                "warning",
+                "Nomor Guru Belum Tersedia",
+                "Nomor WhatsApp Guru/BK belum diatur oleh admin."
+              );
+            }
+          }}
+          style={{
+            ...styles.hotlineBtn,
+            opacity: nomorWaGuru ? 1 : 0.55,
+            cursor: nomorWaGuru ? "pointer" : "not-allowed",
+          }}
         >
           💬 Chat Guru
         </a>
