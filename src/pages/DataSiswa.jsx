@@ -351,16 +351,61 @@ function DataSiswa() {
     }
 
     try {
+      /*
+       * Buat salinan SVG terlebih dahulu.
+       * react-qr-code menghasilkan SVG yang bisa tampil normal
+       * di halaman, tetapi beberapa browser gagal jika SVG asli
+       * langsung diubah menjadi Image dari Blob.
+       *
+       * Dengan menetapkan namespace + ukuran secara eksplisit,
+       * SVG menjadi SVG mandiri yang aman dikonversi ke Canvas/PNG.
+       */
+      const svgClone = svg.cloneNode(true);
+
+      svgClone.setAttribute(
+        "xmlns",
+        "http://www.w3.org/2000/svg"
+      );
+
+      svgClone.setAttribute(
+        "xmlns:xlink",
+        "http://www.w3.org/1999/xlink"
+      );
+
+      svgClone.setAttribute(
+        "width",
+        "1000"
+      );
+
+      svgClone.setAttribute(
+        "height",
+        "1000"
+      );
+
+      svgClone.setAttribute(
+        "viewBox",
+        svg.getAttribute("viewBox") ||
+          "0 0 256 256"
+      );
+
+      // Pastikan SVG tidak bergantung pada CSS luar.
+      svgClone.style.width = "1000px";
+      svgClone.style.height = "1000px";
+      svgClone.style.background = "#FFFFFF";
+
       const serializer =
         new XMLSerializer();
 
       const svgString =
         serializer.serializeToString(
-          svg
+          svgClone
         );
 
       const svgBlob = new Blob(
-        [svgString],
+        [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          svgString,
+        ],
         {
           type:
             "image/svg+xml;charset=utf-8",
@@ -457,7 +502,7 @@ function DataSiswa() {
             155
           );
 
-          // KELAS + NIS
+          // KELAS + NISN
           context.fillStyle =
             "#556B4D";
 
@@ -465,7 +510,7 @@ function DataSiswa() {
             "400 30px Segoe UI, Arial, sans-serif";
 
           context.fillText(
-            `Kelas: ${kelasSiswa} | NIS: ${nisnSiswa}`,
+            `Kelas: ${kelasSiswa} | NISN: ${nisnSiswa}`,
             width / 2,
             210
           );
@@ -494,20 +539,20 @@ function DataSiswa() {
 
           context.lineWidth = 3;
 
-          context.beginPath();
-
-          // roundRect didukung browser modern.
-          context.roundRect(
+          /*
+           * Jangan menggunakan context.roundRect().
+           * Beberapa browser/runtime bisa gagal di sini dan
+           * membuat seluruh proses download masuk ke catch.
+           * Gambar kotak biasa agar kompatibel.
+           */
+          context.strokeRect(
             qrX - qrPadding,
             qrY - qrPadding,
             qrSize +
               qrPadding * 2,
             qrSize +
-              qrPadding * 2,
-            20
+              qrPadding * 2
           );
-
-          context.stroke();
 
           // QR CODE
           context.drawImage(
@@ -524,6 +569,17 @@ function DataSiswa() {
               "image/png"
             );
 
+          if (
+            !dataUrl ||
+            !dataUrl.startsWith(
+              "data:image/png"
+            )
+          ) {
+            throw new Error(
+              "PNG gagal dibuat dari canvas."
+            );
+          }
+
           const namaFile =
             namaSiswa
               .replace(
@@ -539,7 +595,7 @@ function DataSiswa() {
               );
 
           const fileName =
-            `QR-${namaFile}-${nisnFile}.png`;
+            `QR-${namaFile}-${nisFile}.png`;
 
           const link =
             document.createElement(
@@ -550,6 +606,9 @@ function DataSiswa() {
             fileName;
 
           link.href = dataUrl;
+
+          link.style.display =
+            "none";
 
           document.body.appendChild(
             link
@@ -582,7 +641,12 @@ function DataSiswa() {
         }
       };
 
-      image.onerror = () => {
+      image.onerror = (error) => {
+        console.error(
+          "SVG QR gagal dimuat sebagai gambar:",
+          error
+        );
+
         URL.revokeObjectURL(
           url
         );
