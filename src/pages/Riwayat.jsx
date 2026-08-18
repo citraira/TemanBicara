@@ -440,9 +440,7 @@ function Riwayat() {
                       color: "#1B5E20",
                     }}
                   >
-                    Tanggal Kejadian: {item.createdAt
-                      ? new Date(item.createdAt).toLocaleDateString("id-ID")
-                      : "-"}
+                    Laporan Tanggal: {item.tanggal || "-"}
                   </div>
 
                   <div style={{ ...styles.badge, ...statusInfo.style }}>
