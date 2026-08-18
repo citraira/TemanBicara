@@ -7,7 +7,7 @@ function TambahSiswa() {
   const navigate = useNavigate();
 
   const [nama, setNama] = useState("");
-  const [nisN, setNisN] = useState("");
+  const [nisn, setNisn] = useState("");
   const [kelas, setKelas] = useState("");
   const [jenisKelamin, setJenisKelamin] = useState("");
   const [noHp, setNoHp] = useState("");
