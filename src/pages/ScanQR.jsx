@@ -383,7 +383,7 @@ function ScanQR() {
   // =========================================================
   const findStudent = useCallback(
     async (nisn) => {
-      const cleanNisn = normalizeNis(nisn);
+      const cleanNisn = normalizeNisn(nisn);
       const siswaRef = ref(db, "siswa");
 
       try {
