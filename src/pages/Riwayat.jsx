@@ -367,7 +367,7 @@ function Riwayat() {
               {namaSiswa
                 ? `Laporan atas nama: ${namaSiswa}`
                 : "Pantau status pengaduanmu di sini"}
-              {nisnSiswa ? ` • NISN: ${nisSiswa}` : ""}
+              {nisnSiswa ? ` • NISN: ${nisnSiswa}` : ""}
               {kelasSiswa ? ` • Kelas: ${kelasSiswa}` : ""}
             </p>
           </div>
