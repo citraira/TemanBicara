@@ -200,7 +200,7 @@ function LoginSiswa() {
   const navigate = useNavigate();
 
   const namaRef = useRef(null);
-  const nisRef = useRef(null);
+  const nisnRef = useRef(null);
   const loginLockRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
@@ -243,16 +243,16 @@ function LoginSiswa() {
       .toLowerCase();
   };
 
-  const normalizeNis = (value) => {
+  const normalizeNisn = (value) => {
     return String(value || "").trim();
   };
 
-  const findStudentByNis = async (nisInput) => {
+  const findStudentByNisn = async (nisnInput) => {
     const siswaRef = ref(db, "siswa");
 
     // 1. Cari via query index NIS
     try {
-      const siswaQuery = query(siswaRef, orderByChild("nis"), equalTo(nisInput));
+      const siswaQuery = query(siswaRef, orderByChild("nisn"), equalTo(nisnInput));
       const querySnapshot = await get(siswaQuery);
       if (querySnapshot.exists()) {
         const data = querySnapshot.val();
@@ -260,7 +260,7 @@ function LoginSiswa() {
         if (entries.length > 0) return entries[0];
       }
     } catch (error) {
-      console.warn("Query NIS gagal:", error);
+      console.warn("Query NISN gagal:", error);
     }
 
     // 2. Fallback pencarian langsung
@@ -270,8 +270,8 @@ function LoginSiswa() {
 
       const data = snapshot.val();
       const found = Object.entries(data).find(([key, item]) => {
-        const itemNis = normalizeNis(item?.nis);
-        return itemNis === nisInput || String(key).trim() === nisInput;
+        const itemNisn = normalizeNisn(item?.nisn);
+        return itemNisn === nisnInput || String(key).trim() === nisnInput;
       });
       return found || null;
     } catch (error) {
@@ -287,10 +287,10 @@ function LoginSiswa() {
     loginLockRef.current = true;
 
     const namaVal = namaRef.current?.value || "";
-    const nisVal = nisRef.current?.value || "";
+    const nisnVal = nisnRef.current?.value || "";
 
     const namaInput = normalizeNama(namaVal);
-    const nisInput = normalizeNis(nisVal);
+    const nisnInput = normalizeNisn(nisnVal);
 
     if (!namaInput) {
       loginLockRef.current = false;
@@ -298,22 +298,22 @@ function LoginSiswa() {
       return;
     }
 
-    if (!nisInput) {
+    if (!nisnInput) {
       loginLockRef.current = false;
-      showAlert("warning", "NIS Belum Diisi", "Silakan masukkan Nomor Induk Siswa (NIS) milikmu.");
+      showAlert("warning", "NISN Belum Diisi", "Silakan masukkan Nomor Induk Siswa (NISN) milikmu.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const siswaDitemukan = await findStudentByNis(nisInput);
+      const siswaDitemukan = await findStudentByNisn(nisnInput);
 
       if (!siswaDitemukan) {
         showAlert(
           "error",
           "Data Tidak Ditemukan",
-          "NIS tersebut tidak terdaftar di sistem. Periksa kembali NIS yang dimasukkan."
+          "NISN tersebut tidak terdaftar di sistem. Periksa kembali NISN yang dimasukkan."
         );
         return;
       }
@@ -321,7 +321,7 @@ function LoginSiswa() {
       const [studentId, studentData] = siswaDitemukan;
 
       const namaDatabase = normalizeNama(studentData?.nama);
-      const nisFinal = normalizeNis(studentData?.nis) || String(studentId).trim();
+      const nisnFinal = normalizeNisn(studentData?.nisn) || String(studentId).trim();
       const kelasFinal = String(studentData?.kelas || "").trim();
 
       // Verifikasi kecocokan nama (fleksibel: cocok persis atau saling mengandung kata)
@@ -334,19 +334,19 @@ function LoginSiswa() {
         showAlert(
           "error",
           "Nama Tidak Sesuai",
-          `Nama yang dimasukkan tidak sesuai dengan data NIS ${nisFinal}. Pastikan penulisan nama sudah benar.`
+          `Nama yang dimasukkan tidak sesuai dengan data NISN ${nisnFinal}. Pastikan penulisan nama sudah benar.`
         );
         return;
       }
 
       // Simpan sesi ke localStorage
       localStorage.removeItem("namaSiswa");
-      localStorage.removeItem("nisSiswa");
+      localStorage.removeItem("nisnSiswa");
       localStorage.removeItem("kelasSiswa");
 
       const namaTersimpan = studentData?.nama ? studentData.nama.trim() : namaVal.trim();
       localStorage.setItem("namaSiswa", namaTersimpan);
-      localStorage.setItem("nisSiswa", nisFinal);
+      localStorage.setItem("nisnSiswa", nisnFinal);
       localStorage.setItem("kelasSiswa", kelasFinal);
 
       showAlert(
@@ -382,7 +382,7 @@ function LoginSiswa() {
             SCAN QR CODE LOGIN
           </button>
 
-          <div style={styles.divider}>— ATAU MASUK DENGAN NIS —</div>
+          <div style={styles.divider}>— ATAU MASUK DENGAN NISN —</div>
 
           <form onSubmit={handleLogin} autoComplete="off">
             <label style={styles.label} htmlFor="nama-siswa">
@@ -398,14 +398,14 @@ function LoginSiswa() {
               autoComplete="off"
             />
 
-            <label style={styles.label} htmlFor="nis-siswa">
-              Nomor Induk Siswa (NIS)
+            <label style={styles.label} htmlFor="nisn-siswa">
+              Nomor Induk Siswa (NISN)
             </label>
             <input
-              id="nis-siswa"
-              ref={nisRef}
+              id="nisn-siswa"
+              ref={nisnRef}
               type="text"
-              placeholder="Ketik nomor NIS"
+              placeholder="Ketik nomor NISN"
               style={styles.input}
               disabled={loading}
               inputMode="numeric"

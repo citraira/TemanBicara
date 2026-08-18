@@ -1206,9 +1206,9 @@ function DaftarPengaduan() {
         item.nama || ""
       ).toLowerCase();
 
-      const nisSiswa = String(
-        item.nis ||
-          item.NIS ||
+      const nisnSiswa = String(
+        item.nisn ||
+          item.NISN ||
           ""
       ).toLowerCase();
 
@@ -1217,7 +1217,7 @@ function DaftarPengaduan() {
         namaSiswa.includes(
           normalizedStudentSearch
         ) ||
-        nisSiswa.includes(
+        nisnSiswa.includes(
           normalizedStudentSearch
         );
 
@@ -1367,11 +1367,11 @@ function DaftarPengaduan() {
                   e.target.value
                 )
               }
-              placeholder="Ketik nama siswa atau NIS..."
+              placeholder="Ketik nama siswa atau NISN..."
               style={
                 styles.studentSearch
               }
-              aria-label="Cari siswa berdasarkan nama atau NIS"
+              aria-label="Cari siswa berdasarkan nama atau NISN"
             />
 
 

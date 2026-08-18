@@ -9,7 +9,7 @@ function EditSiswa() {
   const { id } = useParams();
 
   const [nama, setNama] = useState("");
-  const [nis, setNis] = useState("");
+  const [nisn, setNisn] = useState("");
   const [kelas, setKelas] = useState("");
   const [jenisKelamin, setJenisKelamin] = useState("");
   const [noHp, setNoHp] = useState("");
@@ -70,7 +70,7 @@ function EditSiswa() {
           const data = snapshot.val();
 
           setNama(data.nama || "");
-          setNis(data.nis || "");
+          setNisn(data.nisn || "");
           setKelas(data.kelas || "");
           setJenisKelamin(data.jenisKelamin || "");
           setNoHp(data.noHp || "");
@@ -111,14 +111,14 @@ function EditSiswa() {
 
     if (
       nama.trim() === "" ||
-      nis.trim() === "" ||
+      nisn.trim() === "" ||
       kelas === "" ||
       jenisKelamin === ""
     ) {
       showAlert(
         "warning",
         "Data Belum Lengkap",
-        "Nama Lengkap, NIS, Kelas, dan Jenis Kelamin wajib diisi!"
+        "Nama Lengkap, NISN, Kelas, dan Jenis Kelamin wajib diisi!"
       );
       return;
     }
@@ -127,13 +127,13 @@ function EditSiswa() {
 
     try {
       const namaFinal = nama.trim();
-      const nisFinal = nis.trim();
+      const nisnFinal = nisn.trim();
       const noHpFinal = noHp.trim() || "-";
       const alamatFinal = alamat.trim() || "-";
 
       await update(ref(db, `siswa/${id}`), {
         nama: namaFinal,
-        nis: nisFinal,
+        nisn: nisnFinal,
         kelas,
         jenisKelamin,
         noHp: noHpFinal,
@@ -385,12 +385,12 @@ function EditSiswa() {
 
           {/* NIS */}
           <div style={styles.group}>
-            <label style={styles.label}>Nomor Induk Siswa (NIS) *</label>
+            <label style={styles.label}>Nomor Induk Siswa (NISN) *</label>
             <input
               type="text"
-              value={nis}
-              onChange={(e) => setNis(e.target.value)}
-              placeholder="Masukkan NIS"
+              value={nisn}
+              onChange={(e) => setNisn(e.target.value)}
+              placeholder="Masukkan NISN"
               style={styles.input}
               disabled={loading}
             />

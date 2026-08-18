@@ -200,8 +200,8 @@ function DataSiswa() {
     setDeleteTarget(null);
 
     try {
-      const nisSiswa = String(
-        student.nis ||
+      const nisnSiswa = String(
+        student.nisn ||
           student.id ||
           ""
       ).trim();
@@ -232,9 +232,9 @@ function DataSiswa() {
               dataPengaduan
             ).filter(
               ([, laporan]) => {
-                const nisLaporan =
+                const nisnLaporan =
                   String(
-                    laporan?.nis || ""
+                    laporan?.nisn || ""
                   ).trim();
 
                 const namaLaporan =
@@ -246,19 +246,19 @@ function DataSiswa() {
 
                 // Prioritas pencocokan NIS
                 if (
-                  nisSiswa &&
-                  nisLaporan
+                  nisnSiswa &&
+                  nisnLaporan
                 ) {
                   return (
-                    nisLaporan ===
-                    nisSiswa
+                    nisnLaporan ===
+                    nisnSiswa
                   );
                 }
 
                 // Fallback nama jika laporan
                 // tidak mempunyai NIS
                 return (
-                  !nisLaporan &&
+                  !nisnLaporan &&
                   namaSiswa &&
                   namaLaporan ===
                     namaSiswa
@@ -403,8 +403,8 @@ function DataSiswa() {
               "Siswa"
           ).trim();
 
-          const nisSiswa = String(
-            selectedQr.nis ||
+          const nisnSiswa = String(
+            selectedQr.nisn ||
               selectedQr.id ||
               "-"
           ).trim();
@@ -465,7 +465,7 @@ function DataSiswa() {
             "400 30px Segoe UI, Arial, sans-serif";
 
           context.fillText(
-            `Kelas: ${kelasSiswa} | NIS: ${nisSiswa}`,
+            `Kelas: ${kelasSiswa} | NIS: ${nisnSiswa}`,
             width / 2,
             210
           );
@@ -532,14 +532,14 @@ function DataSiswa() {
               );
 
           const nisFile =
-            nisSiswa
+            nisnSiswa
               .replace(
                 /[^a-zA-Z0-9_-]/g,
                 "_"
               );
 
           const fileName =
-            `QR-${namaFile}-${nisFile}.png`;
+            `QR-${namaFile}-${nisnFile}.png`;
 
           const link =
             document.createElement(
@@ -630,7 +630,7 @@ function DataSiswa() {
           .includes(keyword) ||
 
         String(
-          item.nis || ""
+          item.nisn || ""
         )
           .toLowerCase()
           .includes(keyword) ||
@@ -1029,7 +1029,7 @@ function DataSiswa() {
 
       <input
         type="text"
-        placeholder="Cari Nama, NIS atau Kelas..."
+        placeholder="Cari Nama, NISN atau Kelas..."
         value={search}
         onChange={(e) =>
           setSearch(
@@ -1087,7 +1087,7 @@ function DataSiswa() {
                 <th
                   style={styles.th}
                 >
-                  NIS
+                  NISN
                 </th>
 
                 <th
@@ -1173,7 +1173,7 @@ function DataSiswa() {
                           styles.td
                         }
                       >
-                        {item.nis ||
+                        {item.nisn ||
                           item.id ||
                           "-"}
                       </td>
@@ -1339,8 +1339,8 @@ function DataSiswa() {
               Kelas:{" "}
               {selectedQr.kelas ||
                 "-"}{" "}
-              | NIS:{" "}
-              {selectedQr.nis ||
+              | NISN:{" "}
+              {selectedQr.nisn ||
                 selectedQr.id ||
                 "-"}
             </p>
@@ -1368,7 +1368,7 @@ function DataSiswa() {
               <QRCode
                 id="qr-code-download"
                 value={String(
-                  selectedQr.nis ||
+                  selectedQr.nisn ||
                     selectedQr.id ||
                     ""
                 )}
@@ -1489,8 +1489,8 @@ function DataSiswa() {
                   "Siswa"}
               </strong>
 
-              {deleteTarget.nis
-                ? ` (NIS ${deleteTarget.nis})`
+              {deleteTarget.nisn
+                ? ` (NISN ${deleteTarget.nisn})`
                 : ""}
               ?
             </p>

@@ -517,7 +517,7 @@ function FormPengaduan() {
   const [nama, setNama] =
     useState("");
 
-  const [nis, setNis] =
+  const [nisn, setNisn] =
     useState("");
 
   const [kelas, setKelas] =
@@ -776,9 +776,9 @@ function FormPengaduan() {
         "namaSiswa"
       ) || "";
 
-    const savedNis =
+    const savedNisn =
       localStorage.getItem(
-        "nisSiswa"
+        "nisnSiswa"
       ) || "";
 
     const savedKelas =
@@ -790,8 +790,8 @@ function FormPengaduan() {
       savedNama.trim()
     );
 
-    setNis(
-      savedNis.trim()
+    setNisn(
+      savedNisn.trim()
     );
 
     setKelas(
@@ -1201,8 +1201,8 @@ function FormPengaduan() {
       const namaFinal =
         nama.trim();
 
-      const nisFinal =
-        nis.trim();
+      const nisnFinal =
+        nisn.trim();
 
       const kelasFinal =
         kelas.trim();
@@ -1240,13 +1240,13 @@ function FormPengaduan() {
         return;
       }
 
-      if (!nisFinal) {
+      if (!nisnFinal) {
         submitLockRef.current =
           false;
 
         showAlert(
           "warning",
-          "NIS Belum Ada",
+          "NISN Belum Ada",
           "Silakan login ulang sebagai siswa."
         );
 
@@ -1358,7 +1358,7 @@ function FormPengaduan() {
         const laporan = {
           nama: namaFinal,
 
-          nis: nisFinal,
+          nisn: nisnFinal,
 
           kelas: kelasFinal,
 
@@ -1594,13 +1594,13 @@ function FormPengaduan() {
               <label
                 style={styles.label}
               >
-                🪪 Nomor NIS
+                🪪 Nomor NISN
               </label>
 
 </div>
 
             <input
-              value={nis}
+              value={nisn}
               readOnly
               style={
                 styles.readonlyInput

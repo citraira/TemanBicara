@@ -22,8 +22,8 @@ function DashboardSiswa() {
     localStorage.getItem("namaSiswa") || "Siswa"
   ).trim();
 
-  const savedNis = (
-    localStorage.getItem("nisSiswa") || ""
+  const savedNisn = (
+    localStorage.getItem("nisnSiswa") || ""
   ).trim();
 
   const [namaSiswa, setNamaSiswa] =
@@ -114,7 +114,7 @@ function DashboardSiswa() {
    */
   const getReadStorageKey = () => {
     return `readNotifState_${
-      savedNis || savedNama || "guest"
+      savedNisn || savedNama || "guest"
     }`;
   };
 
@@ -179,7 +179,7 @@ function DashboardSiswa() {
   // =========================================================
 
   useEffect(() => {
-    if (!savedNis) return;
+    if (!savedNisn) return;
 
     const setupFCM = async () => {
       try {
@@ -203,7 +203,7 @@ function DashboardSiswa() {
 
           if (currentToken) {
             const cleanKey =
-              savedNis.replace(
+              savedNisn.replace(
                 /[.#$[\]]/g,
                 "_"
               );
@@ -215,7 +215,7 @@ function DashboardSiswa() {
               ),
               {
                 nama: savedNama,
-                nis: savedNis,
+                nisn: savedNis,
                 token: currentToken,
                 updatedAt:
                   new Date().toISOString(),
@@ -239,7 +239,7 @@ function DashboardSiswa() {
   // =========================================================
 
   useEffect(() => {
-    if (!savedNis && !savedNama) {
+    if (!savedNisn && !savedNama) {
       setNotifList([]);
       setUnreadCount(0);
 
@@ -291,10 +291,10 @@ function DashboardSiswa() {
               ...data[key],
             }))
             .filter((item) => {
-              const matchNis =
-                savedNis &&
-                String(item.nis || "").trim() ===
-                  savedNis;
+              const matchNisn =
+                savedNisn &&
+                String(item.nisn || "").trim() ===
+                  savedNisn;
 
               const matchNama =
                 savedNama &&
@@ -304,7 +304,7 @@ function DashboardSiswa() {
                   savedNama.toLowerCase();
 
               return (
-                matchNis ||
+                matchNisn ||
                 matchNama
               );
             });
@@ -560,7 +560,7 @@ function DashboardSiswa() {
     // Cleanup listener Firebase
     return () => unsubscribe();
   }, [
-    savedNis,
+    savedNisn,
     savedNama,
   ]);
 
@@ -662,7 +662,7 @@ function DashboardSiswa() {
     );
 
     localStorage.removeItem(
-      "nisSiswa"
+      "nisnSiswa"
     );
 
     localStorage.removeItem(

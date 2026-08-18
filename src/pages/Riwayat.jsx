@@ -12,7 +12,7 @@ function Riwayat() {
 
   // Ambil identitas siswa dari localStorage langsung saat inisialisasi state
   const [namaSiswa] = useState(() => (localStorage.getItem("namaSiswa") || "").trim());
-  const [nisSiswa] = useState(() => (localStorage.getItem("nisSiswa") || "").trim());
+  const [nisnSiswa] = useState(() => (localStorage.getItem("nisnSiswa") || "").trim());
   const [kelasSiswa] = useState(() => (localStorage.getItem("kelasSiswa") || "").trim());
 
   const [riwayatList, setRiwayatList] = useState([]);
@@ -28,9 +28,9 @@ function Riwayat() {
   // sama agar status dan catatan penanganan selalu sinkron.
   const formatRiwayatData = useCallback((data) => {
     const currentNama = (localStorage.getItem("namaSiswa") || "").trim();
-    const currentNis = (localStorage.getItem("nisSiswa") || "").trim();
+    const currentNisn = (localStorage.getItem("nisnSiswa") || "").trim();
 
-    if (!currentNis && !currentNama) {
+    if (!currentNisn && !currentNama) {
       return [];
     }
 
@@ -44,17 +44,17 @@ function Riwayat() {
         ...(value || {}),
       }))
       .filter((item) => {
-        const itemNis = String(item.nis || item.NIS || "").trim();
+        const itemNisn = String(item.nisn || item.NISN || "").trim();
         const itemNama = String(item.nama || "").trim().toLowerCase();
 
-        const matchNis =
-          currentNis && itemNis === currentNis;
+        const matchNisn =
+          currentNisn && itemNisn === currentNisn;
 
         const matchNama =
           currentNama &&
           itemNama === currentNama.toLowerCase();
 
-        return matchNis || matchNama;
+        return matchNisn || matchNama;
       })
       .sort((a, b) => {
         // Jika admin mengubah data, updatedAt diprioritaskan
@@ -119,11 +119,11 @@ function Riwayat() {
       localStorage.getItem("namaSiswa") || ""
     ).trim();
 
-    const currentNis = (
-      localStorage.getItem("nisSiswa") || ""
+    const currentNisn = (
+      localStorage.getItem("nisnSiswa") || ""
     ).trim();
 
-    if (!currentNis && !currentNama) {
+    if (!currentNisn && !currentNama) {
       setRiwayatList([]);
       setLoading(false);
       return undefined;
@@ -367,7 +367,7 @@ function Riwayat() {
               {namaSiswa
                 ? `Laporan atas nama: ${namaSiswa}`
                 : "Pantau status pengaduanmu di sini"}
-              {nisSiswa ? ` • NIS: ${nisSiswa}` : ""}
+              {nisnSiswa ? ` • NISN: ${nisSiswa}` : ""}
               {kelasSiswa ? ` • Kelas: ${kelasSiswa}` : ""}
             </p>
           </div>
@@ -458,7 +458,7 @@ function Riwayat() {
                   <div>
                     <strong style={{ color: "#1B5E20" }}>NIS:</strong>
                     <br />
-                    {item.nis || nisSiswa || "-"}
+                    {item.nisn || nisnSiswa || "-"}
                   </div>
 
                   <div>

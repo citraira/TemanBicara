@@ -320,7 +320,7 @@ function ScanQR() {
 
   const [scanResult, setScanResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [manualNis, setManualNis] = useState("");
+  const [manualNisn, setManualNisn] = useState("");
   const [loadingManual, setLoadingManual] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(true);
 
@@ -374,7 +374,7 @@ function ScanQR() {
     if (callback) callback();
   }, [alertConfig.onCloseCallback]);
 
-  const normalizeNis = useCallback((value) => {
+  const normalizeNisn = useCallback((value) => {
     return String(value || "").trim();
   }, []);
 
@@ -382,15 +382,15 @@ function ScanQR() {
   // CARI DATA SISWA
   // =========================================================
   const findStudent = useCallback(
-    async (nis) => {
-      const cleanNis = normalizeNis(nis);
+    async (nisn) => {
+      const cleanNisn = normalizeNis(nisn);
       const siswaRef = ref(db, "siswa");
 
       try {
         const q = query(
           siswaRef,
-          orderByChild("nis"),
-          equalTo(cleanNis)
+          orderByChild("nisn"),
+          equalTo(cleanNisn)
         );
 
         const snapshot = await get(q);
@@ -403,7 +403,7 @@ function ScanQR() {
           }
         }
       } catch (err) {
-        console.warn("Query NIS:", err);
+        console.warn("Query NISN:", err);
       }
 
       try {
@@ -414,11 +414,11 @@ function ScanQR() {
 
           const found = Object.entries(data).find(
             ([key, val]) => {
-              const dbNis = normalizeNis(val?.nis);
+              const dbNisn = normalizeNisn(val?.nisn);
 
               return (
-                dbNis === cleanNis ||
-                String(key).trim() === cleanNis
+                dbNisn === cleanNisn ||
+                String(key).trim() === cleanNisn
               );
             }
           );
@@ -433,7 +433,7 @@ function ScanQR() {
 
       return null;
     },
-    [normalizeNis]
+    [normalizeNisn]
   );
 
   // =========================================================
@@ -478,10 +478,10 @@ function ScanQR() {
   // =========================================================
   const verifyStudentData = useCallback(
     async (qrData) => {
-      const cleanNis = normalizeNis(qrData);
+      const cleanNisn = normalizeNisn(qrData);
 
-      if (!cleanNis) {
-        setErrorMsg("QR Code atau NIS tidak valid.");
+      if (!cleanNisn) {
+        setErrorMsg("QR Code atau NISN tidak valid.");
         isHandlingScan.current = false;
         return;
       }
@@ -490,12 +490,12 @@ function ScanQR() {
       setLoadingManual(true);
 
       try {
-        const studentEntry = await findStudent(cleanNis);
+        const studentEntry = await findStudent(cleanNisn);
 
         if (!studentEntry) {
           setErrorMsg(
-            "NIS / Barcode (" +
-              cleanNis +
+            "NISN / Barcode (" +
+              cleanNisn +
               ") tidak terdaftar di database sekolah."
           );
 
@@ -509,8 +509,8 @@ function ScanQR() {
           studentData?.nama || "Siswa"
         ).trim();
 
-        const nisFinal =
-          normalizeNis(studentData?.nis) ||
+        const nisnFinal =
+          normalizeNisn(studentData?.nisn) ||
           String(studentId).trim();
 
         const kelas = String(
@@ -518,14 +518,14 @@ function ScanQR() {
         ).trim();
 
         localStorage.removeItem("namaSiswa");
-        localStorage.removeItem("nisSiswa");
+        localStorage.removeItem("nisnSiswa");
         localStorage.removeItem("kelasSiswa");
 
         localStorage.setItem("namaSiswa", nama);
-        localStorage.setItem("nisSiswa", nisFinal);
+        localStorage.setItem("nisnSiswa", nisnFinal);
         localStorage.setItem("kelasSiswa", kelas);
 
-        setScanResult(nisFinal);
+        setScanResult(nisnFinal);
 
         stopMediaStream();
 
@@ -554,7 +554,7 @@ function ScanQR() {
     [
       findStudent,
       navigate,
-      normalizeNis,
+      normalizeNisn,
       showAlert,
       stopMediaStream,
     ]
@@ -567,7 +567,7 @@ function ScanQR() {
     async (decodedText) => {
       if (isHandlingScan.current) return;
 
-      const cleanData = normalizeNis(decodedText);
+      const cleanData = normalizeNisn(decodedText);
 
       if (!cleanData) return;
 
@@ -583,7 +583,7 @@ function ScanQR() {
       await verifyStudentData(cleanData);
     },
     [
-      normalizeNis,
+      normalizeNisn,
       stopMediaStream,
       verifyStudentData,
     ]
@@ -1070,11 +1070,11 @@ function ScanQR() {
       return;
     }
 
-    const nis = normalizeNis(manualNis);
+    const nisn = normalizeNisn(manualNisn);
 
-    if (!nis) {
+    if (!nisn) {
       setErrorMsg(
-        "Silakan masukkan NIS siswa."
+        "Silakan masukkan NISN siswa."
       );
 
       return;
@@ -1084,7 +1084,7 @@ function ScanQR() {
 
     stopMediaStream();
 
-    await verifyStudentData(nis);
+    await verifyStudentData(nisn);
   };
 
   return (
@@ -1167,7 +1167,7 @@ function ScanQR() {
           <div style={styles.dividerLine} />
 
           <span style={{ padding: "0 10px" }}>
-            ATAU MASUKKAN NIS
+            ATAU MASUKKAN NISN
           </span>
 
           <div style={styles.dividerLine} />
@@ -1176,10 +1176,10 @@ function ScanQR() {
         <form onSubmit={handleManualSubmit}>
           <input
             type="text"
-            placeholder="Ketik NIS Siswa di sini..."
-            value={manualNis}
+            placeholder="Ketik NISN Siswa di sini..."
+            value={manualNisn}
             onChange={(e) =>
-              setManualNis(e.target.value)
+              setManualNisn(e.target.value)
             }
             style={styles.inputManual}
             inputMode="numeric"
@@ -1196,7 +1196,7 @@ function ScanQR() {
           >
             {loadingManual
               ? "MEMERIKSA..."
-              : "MASUK DENGAN NIS"}
+              : "MASUK DENGAN NISN"}
           </button>
         </form>
 

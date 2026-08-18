@@ -7,7 +7,7 @@ function TambahSiswa() {
   const navigate = useNavigate();
 
   const [nama, setNama] = useState("");
-  const [nis, setNis] = useState("");
+  const [nisN, setNisN] = useState("");
   const [kelas, setKelas] = useState("");
   const [jenisKelamin, setJenisKelamin] = useState("");
   const [noHp, setNoHp] = useState("");
@@ -56,20 +56,20 @@ function TambahSiswa() {
     if (loading) return;
 
     const namaFinal = nama.trim();
-    const nisFinal = nis.trim();
+    const nisnFinal = nisn.trim();
     const noHpFinal = noHp.trim() || "-";
     const alamatFinal = alamat.trim() || "-";
 
     if (
       namaFinal === "" ||
-      nisFinal === "" ||
+      nisnFinal === "" ||
       kelas === "" ||
       jenisKelamin === ""
     ) {
       showAlert(
         "warning",
         "Data Belum Lengkap",
-        "Nama Lengkap, NIS, Kelas, dan Jenis Kelamin wajib diisi!"
+        "Nama Lengkap, NISN, Kelas, dan Jenis Kelamin wajib diisi!"
       );
       return;
     }
@@ -79,7 +79,7 @@ function TambahSiswa() {
     try {
       await push(ref(db, "siswa"), {
         nama: namaFinal,
-        nis: nisFinal,
+        nisn: nisnFinal,
         kelas,
         jenisKelamin,
         noHp: noHpFinal,
@@ -336,12 +336,12 @@ function TambahSiswa() {
 
           {/* NIS */}
           <div style={styles.group}>
-            <label style={styles.label}>Nomor Induk Siswa (NIS) *</label>
+            <label style={styles.label}>Nomor Induk Siswa (NISN) *</label>
             <input
               type="text"
-              value={nis}
-              onChange={(e) => setNis(e.target.value)}
-              placeholder="Masukkan NIS"
+              value={nisn}
+              onChange={(e) => setNisn(e.target.value)}
+              placeholder="Masukkan NISN"
               style={styles.input}
               disabled={loading}
               inputMode="numeric"
