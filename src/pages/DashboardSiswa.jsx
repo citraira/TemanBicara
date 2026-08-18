@@ -215,7 +215,7 @@ function DashboardSiswa() {
               ),
               {
                 nama: savedNama,
-                nisn: savedNis,
+                nisn: savedNisn,
                 token: currentToken,
                 updatedAt:
                   new Date().toISOString(),
@@ -232,7 +232,7 @@ function DashboardSiswa() {
     };
 
     setupFCM();
-  }, [savedNis, savedNama]);
+  }, [savedNisn, savedNama]);
 
   // =========================================================
   // LISTENER REALTIME PENGADUAN SISWA
