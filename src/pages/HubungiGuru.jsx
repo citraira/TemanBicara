@@ -92,7 +92,7 @@ function HubungiGuru() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       paddingBottom: "40px",
       paddingTop: "20px",
@@ -104,7 +104,7 @@ function HubungiGuru() {
       padding: "0 15px",
     },
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       textAlign: "center",
       padding: "25px 20px",
@@ -127,27 +127,27 @@ function HubungiGuru() {
       borderRadius: "18px",
       padding: "22px 20px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       marginBottom: "18px",
     },
     avatar: {
       width: "80px",
       height: "80px",
       borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
       fontSize: "32px",
       fontWeight: "800",
       margin: "0 auto 15px",
-      border: "3px solid #2E7D32",
+      border: "3px solid #1565C0",
     },
     nama: {
       fontSize: "22px",
       fontWeight: "800",
-      color: "#1B5E20",
+      color: "#0D47A1",
       textAlign: "center",
       marginBottom: "18px",
     },
@@ -168,7 +168,7 @@ function HubungiGuru() {
       textTransform: "uppercase",
     },
     cardTitle: {
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "18px",
       fontWeight: "800",
       marginBottom: "12px",
@@ -176,20 +176,20 @@ function HubungiGuru() {
     cardText: {
       fontSize: "14px",
       lineHeight: "1.7",
-      color: "#556B4D",
+      color: "#526579",
     },
     back: {
       width: "100%",
       padding: "14px",
       marginTop: "10px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       borderRadius: "12px",
       fontSize: "15px",
       cursor: "pointer",
       fontWeight: "800",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
       textTransform: "uppercase",
     },
     modalOverlay: {
@@ -214,7 +214,7 @@ function HubungiGuru() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     alertIconWrapper: {
@@ -226,8 +226,8 @@ function HubungiGuru() {
       justifyContent: "center",
       alignItems: "center",
       fontSize: "28px",
-      background: "#FFFDE7",
-      border: "2px solid #FBC02D",
+      background: "#F5F9FF",
+      border: "2px solid #90CAF9",
       color: "#F57F17",
     },
     alertBtn: {
@@ -239,9 +239,9 @@ function HubungiGuru() {
       fontSize: "14px",
       cursor: "pointer",
       textTransform: "uppercase",
-      color: "#1B5E20",
-      background: "#FFEB3B",
-      boxShadow: "0 3px 0 #FBC02D",
+      color: "#0D47A1",
+      background: "#FFFFFF",
+      boxShadow: "0 3px 0 #90CAF9",
     },
   };
 
@@ -326,7 +326,7 @@ function HubungiGuru() {
               {alertConfig.title}
             </h3>
 
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+            <p style={{ color: "#526579", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
               {alertConfig.message}
             </p>
 

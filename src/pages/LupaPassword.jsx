@@ -1,6 +1,3 @@
-
-
-
 import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
@@ -98,7 +95,7 @@ function LupaPassword() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE", // Tema hijau muda serasi
+      background: "#F5F9FF", // Tema hijau muda serasi
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -114,7 +111,7 @@ function LupaPassword() {
       borderRadius: "20px",
       padding: "30px 20px",
       boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
       textAlign: "center",
     },
@@ -125,7 +122,7 @@ function LupaPassword() {
     },
 
     title: {
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "24px",
       fontWeight: "800",
       marginBottom: "8px",
@@ -133,7 +130,7 @@ function LupaPassword() {
     },
 
     subtitle: {
-      color: "#556B4D",
+      color: "#526579",
       lineHeight: "1.5",
       fontSize: "13px",
       marginBottom: "25px",
@@ -144,7 +141,7 @@ function LupaPassword() {
       display: "block",
       fontWeight: "700",
       marginBottom: "6px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "14px",
       textAlign: "left",
     },
@@ -153,17 +150,17 @@ function LupaPassword() {
       width: "100%",
       padding: "12px 14px",
       borderRadius: "12px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       fontSize: "14px",
       boxSizing: "border-box",
       outline: "none",
-      background: "#FAFAFA",
+      background: "#FAFCFF",
       marginBottom: "18px",
     },
 
     button: {
       width: "100%",
-      background: loading ? "#A5D6A7" : "#2E7D32",
+      background: loading ? "#90CAF9" : "#1565C0",
       color: "#fff",
       border: "none",
       padding: "14px",
@@ -171,14 +168,14 @@ function LupaPassword() {
       fontSize: "15px",
       fontWeight: "800",
       cursor: loading ? "not-allowed" : "pointer",
-      boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+      boxShadow: loading ? "none" : "0 3px 0 #0D47A1",
       textTransform: "uppercase",
     },
 
     back: {
       width: "100%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "12px",
       borderRadius: "12px",
@@ -186,7 +183,7 @@ function LupaPassword() {
       fontWeight: "800",
       cursor: "pointer",
       marginTop: "12px",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
       textTransform: "uppercase",
     },
 
@@ -213,7 +210,7 @@ function LupaPassword() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     modalTitle: {
@@ -222,7 +219,7 @@ function LupaPassword() {
       fontWeight: "800",
     },
     modalText: {
-      color: "#556B4D",
+      color: "#526579",
       fontSize: "13px",
       marginBottom: "20px",
       lineHeight: "1.5",
@@ -238,20 +235,20 @@ function LupaPassword() {
       fontSize: "28px",
       background:
         type === "success"
-          ? "#E8F5E9"
+          ? "#E3F2FD"
           : type === "error"
           ? "#FFEBEE"
-          : "#FFFDE7",
+          : "#F5F9FF",
       border: `2px solid ${
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FBC02D"
+          : "#90CAF9"
       }`,
       color:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
           : "#F57F17",
@@ -265,19 +262,19 @@ function LupaPassword() {
       fontSize: "14px",
       cursor: "pointer",
       textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
+      color: type === "warning" ? "#0D47A1" : "#fff",
       background:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FFEB3B",
+          : "#FFFFFF",
       boxShadow:
         type === "success"
-          ? "0 3px 0 #1B5E20"
+          ? "0 3px 0 #0D47A1"
           : type === "error"
           ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
+          : "0 3px 0 #90CAF9",
     }),
   };
 
@@ -344,7 +341,7 @@ function LupaPassword() {
                 ...styles.modalTitle,
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",

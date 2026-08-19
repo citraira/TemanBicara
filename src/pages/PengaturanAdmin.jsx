@@ -303,7 +303,7 @@ function PengaturanAdmin() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       padding: "20px 15px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
@@ -315,65 +315,65 @@ function PengaturanAdmin() {
       maxWidth: "480px",
       margin: "0 auto",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
     },
     backBtn: {
-      background: "#FFEB3B",
+      background: "#FFFFFF",
       border: "none",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "13px",
       fontWeight: "800",
       cursor: "pointer",
       padding: "8px 14px",
       borderRadius: "10px",
       marginBottom: "20px",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
     },
     title: {
-      color: "#1B5E20",
+      color: "#0D47A1",
       marginBottom: "20px",
       marginTop: 0,
       fontSize: "20px",
       fontWeight: "800",
     },
     sectionTitle: {
-      color: "#2E7D32",
+      color: "#1565C0",
       fontSize: "14px",
       fontWeight: "800",
       marginTop: "15px",
       marginBottom: "10px",
-      borderBottom: "1px solid #E8F5E9",
+      borderBottom: "1px solid #E3F2FD",
       paddingBottom: "5px",
     },
     label: {
       display: "block",
       fontWeight: "700",
       marginBottom: "6px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "13px",
     },
     input: {
       width: "100%",
       padding: "10px 12px",
       borderRadius: "10px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       marginBottom: "16px",
       fontSize: "16px",
       boxSizing: "border-box",
       outline: "none",
-      background: "#FAFAFA",
+      background: "#FAFCFF",
     },
     btn: {
       width: "100%",
       padding: "12px",
-      background: loading ? "#A5D6A7" : "#2E7D32",
+      background: loading ? "#90CAF9" : "#1565C0",
       color: "#fff",
       border: "none",
       borderRadius: "12px",
       fontWeight: "800",
       fontSize: "14px",
       cursor: loading ? "not-allowed" : "pointer",
-      boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+      boxShadow: loading ? "none" : "0 3px 0 #0D47A1",
       textTransform: "uppercase",
       marginTop: "10px",
     },
@@ -399,20 +399,20 @@ function PengaturanAdmin() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     okBtn: {
       width: "100%",
       padding: "12px",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       borderRadius: "12px",
       fontWeight: "800",
       cursor: "pointer",
       fontSize: "13px",
-      boxShadow: "0 3px 0 #1B5E20",
+      boxShadow: "0 3px 0 #0D47A1",
       textTransform: "uppercase",
       marginTop: "15px",
     },
@@ -428,20 +428,20 @@ function PengaturanAdmin() {
       fontSize: "28px",
       background:
         type === "success"
-          ? "#E8F5E9"
+          ? "#E3F2FD"
           : type === "error"
           ? "#FFEBEE"
-          : "#FFFDE7",
+          : "#F5F9FF",
       border: `2px solid ${
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FBC02D"
+          : "#90CAF9"
       }`,
       color:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
           : "#F57F17",
@@ -455,19 +455,19 @@ function PengaturanAdmin() {
       fontSize: "14px",
       cursor: "pointer",
       textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
+      color: type === "warning" ? "#0D47A1" : "#fff",
       background:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FFEB3B",
+          : "#FFFFFF",
       boxShadow:
         type === "success"
-          ? "0 3px 0 #1B5E20"
+          ? "0 3px 0 #0D47A1"
           : type === "error"
           ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
+          : "0 3px 0 #90CAF9",
     }),
   };
 
@@ -549,13 +549,13 @@ function PengaturanAdmin() {
       {showEmailModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
-            <h3 style={{ color: "#1B5E20", marginBottom: "10px", fontSize: "18px", fontWeight: "800" }}>
+            <h3 style={{ color: "#0D47A1", marginBottom: "10px", fontSize: "18px", fontWeight: "800" }}>
               Verifikasi Email Dikirim!
             </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", lineHeight: "1.6" }}>
+            <p style={{ color: "#526579", fontSize: "13px", lineHeight: "1.6" }}>
               Tautan konfirmasi telah dikirimkan ke email baru Anda:
               <br />
-              <strong style={{ color: "#1B5E20" }}>{pendingEmail}</strong>
+              <strong style={{ color: "#0D47A1" }}>{pendingEmail}</strong>
               <br /><br />
               Silakan buka email Anda (cek juga folder Spam) lalu klik link verifikasi tersebut agar email login resmi diperbarui.
             </p>
@@ -590,7 +590,7 @@ function PengaturanAdmin() {
                 marginBottom: "8px",
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",
@@ -599,7 +599,7 @@ function PengaturanAdmin() {
               {alertConfig.title}
             </h3>
 
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+            <p style={{ color: "#526579", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
               {alertConfig.message}
             </p>
 

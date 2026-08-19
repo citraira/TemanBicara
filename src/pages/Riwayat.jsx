@@ -190,9 +190,9 @@ function Riwayat() {
         return {
           label: "Selesai Penanganan",
           style: {
-            background: "#E8F5E9",
-            color: "#2E7D32",
-            border: "1px solid #A5D6A7",
+            background: "#E3F2FD",
+            color: "#1565C0",
+            border: "1px solid #90CAF9",
           },
         };
       case "Ditolak (Fitnah / Tidak Valid)":
@@ -227,9 +227,9 @@ function Riwayat() {
         return {
           label: "Sedang Diproses Guru BK",
           style: {
-            background: "#FFFDE7",
+            background: "#F5F9FF",
             color: "#F57F17",
-            border: "1px solid #FFF59D",
+            border: "1px solid #BBDEFB",
           },
         };
     }
@@ -238,7 +238,7 @@ function Riwayat() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       padding: "20px 15px 40px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
@@ -248,7 +248,7 @@ function Riwayat() {
       margin: "0 auto",
     },
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "20px",
       borderRadius: "20px",
@@ -266,14 +266,14 @@ function Riwayat() {
     },
     backButton: {
       padding: "10px 16px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       borderRadius: "12px",
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
     },
     card: {
       background: "#fff",
@@ -281,16 +281,16 @@ function Riwayat() {
       padding: "20px 18px",
       marginBottom: "18px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      borderLeft: "6px solid #2E7D32",
-      borderTop: "1px solid #E8F5E9",
-      borderRight: "1px solid #E8F5E9",
-      borderBottom: "1px solid #E8F5E9",
+      borderLeft: "6px solid #1565C0",
+      borderTop: "1px solid #E3F2FD",
+      borderRight: "1px solid #E3F2FD",
+      borderBottom: "1px solid #E3F2FD",
     },
     cardHeader: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      borderBottom: "1px solid #E8F5E9",
+      borderBottom: "1px solid #E3F2FD",
       paddingBottom: "10px",
       marginBottom: "12px",
       flexWrap: "wrap",
@@ -308,28 +308,28 @@ function Riwayat() {
       gap: "10px",
       marginBottom: "12px",
       fontSize: "13px",
-      color: "#556B4D",
+      color: "#526579",
     },
     ceritaBox: {
-      background: "#FAFAFA",
+      background: "#FAFCFF",
       padding: "12px",
       borderRadius: "10px",
-      border: "1px dashed #C8E6C9",
+      border: "1px dashed #BBDEFB",
       fontSize: "13px",
       lineHeight: "1.5",
-      color: "#2E3D29",
+      color: "#26384A",
       marginTop: "5px",
       whiteSpace: "pre-wrap",
       overflowWrap: "break-word",
     },
     followUpBox: {
-      background: "#E8F5E9",
-      border: "1px solid #C8E6C9",
+      background: "#E3F2FD",
+      border: "1px solid #BBDEFB",
       borderRadius: "12px",
       padding: "12px",
       marginTop: "12px",
       fontSize: "13px",
-      color: "#1B5E20",
+      color: "#0D47A1",
     },
     thumbFoto: {
       width: "75px",
@@ -337,7 +337,7 @@ function Riwayat() {
       objectFit: "cover",
       borderRadius: "10px",
       cursor: "pointer",
-      border: "2px solid #2E7D32",
+      border: "2px solid #1565C0",
       marginTop: "6px",
     },
     modalOverlay: {
@@ -402,7 +402,7 @@ function Riwayat() {
             style={{
               textAlign: "center",
               padding: "40px",
-              color: "#1B5E20",
+              color: "#0D47A1",
               fontWeight: "600",
             }}
           >
@@ -416,8 +416,8 @@ function Riwayat() {
               padding: "35px 20px",
               borderRadius: "18px",
               textAlign: "center",
-              color: "#556B4D",
-              border: "2px solid #C8E6C9",
+              color: "#526579",
+              border: "2px solid #BBDEFB",
               fontWeight: "600",
             }}
           >
@@ -437,7 +437,7 @@ function Riwayat() {
                     style={{
                       fontWeight: "800",
                       fontSize: "15px",
-                      color: "#1B5E20",
+                      color: "#0D47A1",
                     }}
                   >
                     Laporan Tanggal: {item.tanggal || "-"}
@@ -450,49 +450,49 @@ function Riwayat() {
 
                 <div style={styles.grid}>
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Nama:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Nama:</strong>
                     <br />
                     {item.nama || namaSiswa || "-"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>NIS:</strong>
+                    <strong style={{ color: "#0D47A1" }}>NIS:</strong>
                     <br />
                     {item.nisn || nisnSiswa || "-"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Kelas:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Kelas:</strong>
                     <br />
                     {item.kelas || kelasSiswa || "-"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Lokasi:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Lokasi:</strong>
                     <br />
                     {item.lokasi || "-"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Jenis Tindakan:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Jenis Tindakan:</strong>
                     <br />
                     {item.jenis || "-"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Peran:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Peran:</strong>
                     <br />
                     {item.peran || "Korban"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Terduga Pelaku:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Terduga Pelaku:</strong>
                     <br />
                     {item.pelaku || "Tidak disebutkan"}
                   </div>
 
                   <div>
-                    <strong style={{ color: "#1B5E20" }}>Saksi Mata:</strong>
+                    <strong style={{ color: "#0D47A1" }}>Saksi Mata:</strong>
                     <br />
                     {item.saksi === "Ya"
                       ? `${item.namaSaksi || "Ada Saksi"} (${item.kelasSaksi || "Kelas -"})`
@@ -501,7 +501,7 @@ function Riwayat() {
                 </div>
 
                 <div style={{ marginBottom: "10px" }}>
-                  <strong style={{ color: "#1B5E20", fontSize: "13px" }}>
+                  <strong style={{ color: "#0D47A1", fontSize: "13px" }}>
                     Cerita Kejadian:
                   </strong>
                   <div style={styles.ceritaBox}>{item.cerita}</div>
@@ -509,7 +509,7 @@ function Riwayat() {
 
                 {item.fotoUrl && item.fotoUrl !== "-" && (
                   <div style={{ marginBottom: "10px" }}>
-                    <strong style={{ color: "#1B5E20", fontSize: "13px" }}>
+                    <strong style={{ color: "#0D47A1", fontSize: "13px" }}>
                       Bukti Foto:
                     </strong>
                     <br />

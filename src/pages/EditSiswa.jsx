@@ -163,7 +163,7 @@ function EditSiswa() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE", // Hijau muda serasi
+      background: "#F5F9FF", // Hijau muda serasi
       padding: "20px 15px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
@@ -176,13 +176,13 @@ function EditSiswa() {
       borderRadius: "20px",
       padding: "30px 20px",
       boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
 
     title: {
       textAlign: "center",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "24px",
       fontWeight: "800",
       marginBottom: "6px",
@@ -191,7 +191,7 @@ function EditSiswa() {
 
     subtitle: {
       textAlign: "center",
-      color: "#556B4D",
+      color: "#526579",
       marginBottom: "25px",
       lineHeight: "1.5",
       fontSize: "13px",
@@ -206,7 +206,7 @@ function EditSiswa() {
       display: "block",
       marginBottom: "6px",
       fontWeight: "700",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "13px",
     },
 
@@ -214,24 +214,24 @@ function EditSiswa() {
       width: "100%",
       padding: "12px 14px",
       borderRadius: "12px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       fontSize: "16px",
       outline: "none",
       boxSizing: "border-box",
-      background: "#FAFAFA",
+      background: "#F8FBFF",
     },
 
     textarea: {
       width: "100%",
       padding: "12px 14px",
       borderRadius: "12px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       fontSize: "16px",
       resize: "vertical",
       minHeight: "90px",
       outline: "none",
       boxSizing: "border-box",
-      background: "#FAFAFA",
+      background: "#F8FBFF",
     },
 
     buttonGroup: {
@@ -243,7 +243,7 @@ function EditSiswa() {
 
     updateButton: {
       flex: 1,
-      background: loading ? "#A5D6A7" : "#2E7D32",
+      background: loading ? "#90CAF9" : "#1565C0",
       color: "#fff",
       border: "none",
       padding: "13px",
@@ -251,21 +251,21 @@ function EditSiswa() {
       fontSize: "14px",
       cursor: loading ? "not-allowed" : "pointer",
       fontWeight: "800",
-      boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+      boxShadow: loading ? "none" : "0 3px 0 #0D47A1",
       textTransform: "uppercase",
     },
 
     cancelButton: {
       flex: 1,
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "13px",
       borderRadius: "12px",
       fontSize: "14px",
       cursor: "pointer",
       fontWeight: "800",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
       textTransform: "uppercase",
     },
 
@@ -292,7 +292,7 @@ function EditSiswa() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     modalTitle: {
@@ -301,7 +301,7 @@ function EditSiswa() {
       fontWeight: "800",
     },
     modalText: {
-      color: "#556B4D",
+      color: "#526579",
       fontSize: "13px",
       marginBottom: "20px",
       lineHeight: "1.5",
@@ -317,20 +317,20 @@ function EditSiswa() {
       fontSize: "28px",
       background:
         type === "success"
-          ? "#E8F5E9"
+          ? "#E3F2FD"
           : type === "error"
           ? "#FFEBEE"
           : "#FFFDE7",
       border: `2px solid ${
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FBC02D"
+          : "#90CAF9"
       }`,
       color:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
           : "#F57F17",
@@ -344,19 +344,19 @@ function EditSiswa() {
       fontSize: "14px",
       cursor: "pointer",
       textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
+      color: type === "warning" ? "#0D47A1" : "#fff",
       background:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FFEB3B",
+          : "#FFFFFF",
       boxShadow:
         type === "success"
-          ? "0 3px 0 #1B5E20"
+          ? "0 3px 0 #0D47A1"
           : type === "error"
           ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
+          : "0 3px 0 #90CAF9",
     }),
   };
 
@@ -494,7 +494,7 @@ function EditSiswa() {
                 ...styles.modalTitle,
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",

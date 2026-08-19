@@ -12,7 +12,7 @@ import jsQR from "jsqr";
 const styles = {
   page: {
     minHeight: "100dvh",
-    background: "#F4FBEE",
+    background: "#F5F9FF",
     fontFamily: "'Segoe UI', Roboto, sans-serif",
     padding: "20px 15px",
     display: "flex",
@@ -28,13 +28,13 @@ const styles = {
     borderRadius: "24px",
     padding: "25px 20px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     textAlign: "center",
     boxSizing: "border-box",
   },
 
   title: {
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "22px",
     fontWeight: "800",
     marginBottom: "6px",
@@ -42,7 +42,7 @@ const styles = {
   },
 
   desc: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "13px",
     lineHeight: "1.5",
     marginBottom: "15px",
@@ -54,7 +54,7 @@ const styles = {
     margin: "15px 0",
     borderRadius: "18px",
     overflow: "hidden",
-    border: "3px solid #2E7D32",
+    border: "3px solid #1565C0",
     background: "#000",
     height: "260px",
     width: "100%",
@@ -76,7 +76,7 @@ const styles = {
     position: "absolute",
     width: "180px",
     height: "180px",
-    border: "2px dashed #FFEB3B",
+    border: "2px dashed #FFFFFF",
     borderRadius: "12px",
     pointerEvents: "none",
     boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
@@ -88,9 +88,9 @@ const styles = {
     right: "12px",
     width: "44px",
     height: "44px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
-    border: "2px solid #2E7D32",
+    background: "#FFFFFF",
+    color: "#0D47A1",
+    border: "2px solid #1565C0",
     borderRadius: "12px",
     fontSize: "20px",
     cursor: "pointer",
@@ -121,17 +121,17 @@ const styles = {
     display: "block",
     width: "100%",
     padding: "14px",
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     borderRadius: "14px",
     fontWeight: "800",
     fontSize: "14px",
     cursor: "pointer",
-    boxShadow: "0 4px 0 #1B5E20",
+    boxShadow: "0 4px 0 #0D47A1",
     textTransform: "uppercase",
     boxSizing: "border-box",
     margin: "15px 0",
-    border: "2px solid #A5D6A7",
+    border: "2px solid #90CAF9",
   },
 
   hiddenFileInput: {
@@ -139,14 +139,14 @@ const styles = {
   },
 
   successBox: {
-    color: "#1B5E20",
-    background: "#E8F5E9",
+    color: "#0D47A1",
+    background: "#E3F2FD",
     padding: "12px",
     borderRadius: "12px",
     fontWeight: "700",
     fontSize: "13px",
     margin: "12px 0",
-    border: "1px solid #C8E6C9",
+    border: "1px solid #BBDEFB",
     wordBreak: "break-word",
   },
 
@@ -165,7 +165,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     margin: "20px 0 15px 0",
-    color: "#81C784",
+    color: "#64B5F6",
     fontSize: "12px",
     fontWeight: "700",
   },
@@ -173,35 +173,35 @@ const styles = {
   dividerLine: {
     flex: 1,
     height: "1px",
-    background: "#C8E6C9",
+    background: "#BBDEFB",
   },
 
   inputManual: {
     width: "100%",
     padding: "12px",
     borderRadius: "12px",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
     textAlign: "center",
     marginBottom: "10px",
     fontWeight: "700",
-    color: "#1B5E20",
-    background: "#FAFAFA",
+    color: "#0D47A1",
+    background: "#FAFCFF",
   },
 
   submitBtn: (loading) => ({
     width: "100%",
     padding: "12px",
-    background: loading ? "#FFE082" : "#FFEB3B",
-    color: "#1B5E20",
+    background: loading ? "#EAF3FF" : "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "12px",
     fontWeight: "800",
     fontSize: "13px",
     cursor: loading ? "not-allowed" : "pointer",
-    boxShadow: "0 3px 0 #FBC02D",
+    boxShadow: "0 3px 0 #90CAF9",
     textTransform: "uppercase",
     marginBottom: "15px",
   }),
@@ -243,7 +243,7 @@ const styles = {
     width: "100%",
     textAlign: "center",
     boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     boxSizing: "border-box",
   },
 
@@ -254,7 +254,7 @@ const styles = {
   },
 
   modalText: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "13px",
     marginBottom: "20px",
     lineHeight: "1.5",
@@ -271,20 +271,20 @@ const styles = {
     fontSize: "28px",
     background:
       type === "success"
-        ? "#E8F5E9"
+        ? "#E3F2FD"
         : type === "error"
         ? "#FFEBEE"
-        : "#FFFDE7",
+        : "#F5F9FF",
     border: `2px solid ${
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FBC02D"
+        : "#90CAF9"
     }`,
     color:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
         : "#F57F17",
@@ -299,19 +299,19 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer",
     textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
+    color: type === "warning" ? "#0D47A1" : "#fff",
     background:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FFEB3B",
+        : "#FFFFFF",
     boxShadow:
       type === "success"
-        ? "0 3px 0 #1B5E20"
+        ? "0 3px 0 #0D47A1"
         : type === "error"
         ? "0 3px 0 #9A0007"
-        : "0 3px 0 #FBC02D",
+        : "0 3px 0 #90CAF9",
   }),
 };
 
@@ -1241,7 +1241,7 @@ function ScanQR() {
                 color:
                   alertConfig.type ===
                   "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type ===
                       "error"
                     ? "#C62828"

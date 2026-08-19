@@ -22,7 +22,7 @@ import { db } from "../firebase";
 const styles = {
   page: {
     minHeight: "100dvh",
-    background: "#F4FBEE",
+    background: "#F5F9FF",
     padding: "16px 12px 40px",
     fontFamily:
       "'Segoe UI', Roboto, sans-serif",
@@ -30,7 +30,7 @@ const styles = {
   },
 
   header: {
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     padding: "20px 18px",
     borderRadius: "18px",
@@ -67,7 +67,7 @@ const styles = {
   },
 
   hotlineText: {
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "13px",
     lineHeight: "1.4",
     flex: 1,
@@ -91,7 +91,7 @@ const styles = {
     borderRadius: "18px",
     boxShadow:
       "0 4px 14px rgba(0,0,0,0.04)",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
     boxSizing: "border-box",
   },
 
@@ -110,14 +110,14 @@ const styles = {
   label: {
     display: "block",
     fontWeight: "800",
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "14px",
     lineHeight: "1.4",
   },
 
   helperText: {
     fontSize: "12px",
-    color: "#667C5E",
+    color: "#607D8B",
     marginTop: "4px",
     lineHeight: "1.4",
   },
@@ -126,22 +126,22 @@ const styles = {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "12px",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
-    background: "#FAFAFA",
+    background: "#FAFCFF",
   },
 
   readonlyInput: {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "12px",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
     fontSize: "16px",
     boxSizing: "border-box",
-    background: "#F1F8E9",
-    color: "#33691E",
+    background: "#F5F9FF",
+    color: "#1565C0",
     fontWeight: "700",
   },
 
@@ -150,12 +150,12 @@ const styles = {
     minHeight: "130px",
     padding: "13px 14px",
     borderRadius: "12px",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
     fontSize: "16px",
     resize: "vertical",
     boxSizing: "border-box",
     outline: "none",
-    background: "#FAFAFA",
+    background: "#FAFCFF",
     lineHeight: "1.5",
     fontFamily:
       "'Segoe UI', Roboto, sans-serif",
@@ -173,12 +173,12 @@ const styles = {
     height: "46px",
     flexShrink: 0,
     borderRadius: "13px",
-    background: "#E8F5E9",
+    background: "#E3F2FD",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: "24px",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
   },
 
   childSelect: {
@@ -186,9 +186,9 @@ const styles = {
     minWidth: 0,
     padding: "12px 13px",
     borderRadius: "12px",
-    border: "1.5px solid #C8E6C9",
-    background: "#FAFAFA",
-    color: "#1B5E20",
+    border: "1.5px solid #BBDEFB",
+    background: "#FAFCFF",
+    color: "#0D47A1",
     fontSize: "16px",
     fontWeight: "700",
     boxSizing: "border-box",
@@ -196,8 +196,8 @@ const styles = {
 
   speakButton: {
     border: "none",
-    background: "#E8F5E9",
-    color: "#1B5E20",
+    background: "#E3F2FD",
+    color: "#0D47A1",
     borderRadius: "11px",
     padding: "8px 10px",
     fontSize: "13px",
@@ -211,8 +211,8 @@ const styles = {
 
   speakingButton: {
     border: "none",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     borderRadius: "11px",
     padding: "8px 10px",
     fontSize: "13px",
@@ -241,8 +241,8 @@ const styles = {
 
   listeningButton: {
     border: "none",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     borderRadius: "11px",
     padding: "8px 10px",
     fontSize: "13px",
@@ -261,14 +261,14 @@ const styles = {
     padding: "10px 12px",
     marginTop: "8px",
     fontSize: "12px",
-    color: "#5D5D32",
+    color: "#526579",
     lineHeight: "1.5",
   },
 
   childInfoBox: {
     background:
-      "linear-gradient(135deg,#E8F5E9,#F1F8E9)",
-    border: "1.5px solid #A5D6A7",
+      "linear-gradient(135deg,#E3F2FD,#F5F9FF)",
+    border: "1.5px solid #90CAF9",
     borderRadius: "14px",
     padding: "13px 14px",
     marginBottom: "18px",
@@ -290,13 +290,13 @@ const styles = {
     fontWeight: "800",
     fontSize: "14px",
     border: `1.5px solid ${
-      selected ? "#2E7D32" : "#E0E0E0"
+      selected ? "#1565C0" : "#E0E0E0"
     }`,
     background: selected
-      ? "#E8F5E9"
-      : "#FAFAFA",
+      ? "#E3F2FD"
+      : "#FAFCFF",
     color: selected
-      ? "#1B5E20"
+      ? "#0D47A1"
       : "#444",
     minHeight: "52px",
   }),
@@ -304,14 +304,14 @@ const styles = {
   otherInputBox: {
     marginTop: "9px",
     padding: "10px",
-    background: "#F1F8E9",
+    background: "#F5F9FF",
     borderRadius: "12px",
-    border: "1.5px dashed #A5D6A7",
+    border: "1.5px dashed #90CAF9",
   },
 
   fileBox: {
-    background: "#FAFAFA",
-    border: "1.5px dashed #A5D6A7",
+    background: "#FAFCFF",
+    border: "1.5px dashed #90CAF9",
     borderRadius: "12px",
     padding: "12px",
   },
@@ -337,8 +337,8 @@ const styles = {
     flex: "1 1 180px",
     padding: "14px",
     background: disabled
-      ? "#A5D6A7"
-      : "#2E7D32",
+      ? "#90CAF9"
+      : "#1565C0",
     color: "#fff",
     border: "none",
     borderRadius: "12px",
@@ -352,8 +352,8 @@ const styles = {
   backBtn: {
     flex: "1 1 180px",
     padding: "14px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "12px",
     cursor: "pointer",
@@ -389,7 +389,7 @@ const styles = {
 
   modalMsg: {
     fontSize: "13px",
-    color: "#556B4D",
+    color: "#526579",
     lineHeight: "1.5",
     margin: "0 0 18px",
   },
@@ -403,13 +403,13 @@ const styles = {
     cursor: "pointer",
     background:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FFEB3B",
+        : "#FFFFFF",
     color:
       type === "warning"
-        ? "#1B5E20"
+        ? "#0D47A1"
         : "#fff",
   }),
 };
@@ -960,13 +960,13 @@ function FormPengaduan() {
         width: "36px",
         height: "36px",
         borderRadius: "10px",
-        border: "1px solid #A5D6A7",
+        border: "1px solid #90CAF9",
         background: isListening
           ? "#FFEBEE"
-          : "#E8F5E9",
+          : "#E3F2FD",
         color: isListening
           ? "#C62828"
-          : "#1B5E20",
+          : "#0D47A1",
         fontSize: "16px",
         fontWeight: "800",
         cursor: disabled
@@ -1547,7 +1547,7 @@ function FormPengaduan() {
               style={{
                 ...styles.helperText,
                 margin: 0,
-                color: "#1B5E20",
+                color: "#0D47A1",
                 fontWeight: "600",
               }}
             >
@@ -1725,10 +1725,10 @@ function FormPengaduan() {
             <div
               style={{
                 ...styles.group,
-                background: "#F7FFF3",
+                background: "#F5F9FF",
                 padding: "14px",
                 borderRadius: "12px",
-                border: "1px solid #C8E6C9",
+                border: "1px solid #BBDEFB",
               }}
             >
               <label style={styles.label}>
@@ -1863,8 +1863,8 @@ function FormPengaduan() {
                 marginTop: "10px",
                 padding: "10px 12px",
                 borderRadius: "12px",
-                background: "#F8FFF6",
-                border: "1.5px solid #E0EEDB",
+                background: "#F7FAFF",
+                border: "1.5px solid #DCE9F7",
               }}
             >
               <label
@@ -2333,7 +2333,7 @@ function FormPengaduan() {
           {saksi === "Ya" && (
             <div
               style={{
-                background: "#FAFAFA",
+                background: "#FAFCFF",
                 padding: "14px",
                 borderRadius: "12px",
                 marginBottom: "18px",
@@ -2452,7 +2452,7 @@ function FormPengaduan() {
                 📷 Foto bukti
                 <span
                   style={{
-                    color: "#667C5E",
+                    color: "#607D8B",
                     fontWeight: "600",
                   }}
                 >
@@ -2486,7 +2486,7 @@ function FormPengaduan() {
                 <div
                   style={{
                     marginTop: "8px",
-                    color: "#2E7D32",
+                    color: "#1565C0",
                     fontSize: "12px",
                     fontWeight: "700",
                   }}
@@ -2526,7 +2526,7 @@ function FormPengaduan() {
               htmlFor="jujurCheck"
               style={{
                 fontSize: "12.5px",
-                color: "#1B5E20",
+                color: "#0D47A1",
                 lineHeight: "1.5",
                 fontWeight: "600",
                 flex: 1,

@@ -281,13 +281,13 @@ function KelolaEdukasi() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       padding: "20px 15px",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box",
     },
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "20px",
       borderRadius: "20px",
@@ -303,53 +303,53 @@ function KelolaEdukasi() {
     subtitle: { margin: "4px 0 0 0", fontSize: "13px", opacity: 0.95 },
     backBtn: {
       padding: "10px 16px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       borderRadius: "12px",
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
     },
     formCard: {
       background: "#fff",
       padding: "20px 18px",
       borderRadius: "18px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       marginBottom: "25px",
     },
     formTitle: {
       marginTop: 0,
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "18px",
       fontWeight: "800",
       marginBottom: "15px",
     },
     group: { marginBottom: "15px" },
-    label: { display: "block", fontWeight: "700", marginBottom: "6px", color: "#1B5E20", fontSize: "13px" },
+    label: { display: "block", fontWeight: "700", marginBottom: "6px", color: "#0D47A1", fontSize: "13px" },
     input: {
       width: "100%",
       padding: "10px 12px",
       borderRadius: "10px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       fontSize: "14px",
       boxSizing: "border-box",
       outline: "none",
-      background: "#FAFAFA",
+      background: "#FAFCFF",
     },
     textarea: {
       width: "100%",
       minHeight: "120px",
       padding: "10px 12px",
       borderRadius: "10px",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       fontSize: "14px",
       resize: "vertical",
       boxSizing: "border-box",
       outline: "none",
-      background: "#FAFAFA",
+      background: "#FAFCFF",
     },
     btnContainer: {
       display: "flex",
@@ -358,14 +358,14 @@ function KelolaEdukasi() {
     },
     btnSubmit: {
       padding: "12px 18px",
-      background: editId ? "#FFEB3B" : "#2E7D32",
-      color: editId ? "#1B5E20" : "#fff",
+      background: editId ? "#FFFFFF" : "#1565C0",
+      color: editId ? "#0D47A1" : "#fff",
       border: "none",
       borderRadius: "10px",
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      boxShadow: editId ? "0 3px 0 #FBC02D" : "0 3px 0 #1B5E20",
+      boxShadow: editId ? "0 3px 0 #90CAF9" : "0 3px 0 #0D47A1",
       textTransform: "uppercase",
     },
     btnCancel: {
@@ -379,7 +379,7 @@ function KelolaEdukasi() {
       fontSize: "13px",
     },
     sectionHeading: {
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontSize: "18px",
       fontWeight: "800",
       marginBottom: "15px",
@@ -390,14 +390,14 @@ function KelolaEdukasi() {
       borderRadius: "16px",
       marginBottom: "15px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      borderLeft: "6px solid #2E7D32",
-      borderTop: "1px solid #E8F5E9",
-      borderRight: "1px solid #E8F5E9",
-      borderBottom: "1px solid #E8F5E9",
+      borderLeft: "6px solid #1565C0",
+      borderTop: "1px solid #E3F2FD",
+      borderRight: "1px solid #E3F2FD",
+      borderBottom: "1px solid #E3F2FD",
     },
     kategoriBadge: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       padding: "4px 10px",
       borderRadius: "8px",
       fontSize: "12px",
@@ -405,14 +405,14 @@ function KelolaEdukasi() {
     },
     btnEdit: {
       padding: "6px 14px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       borderRadius: "8px",
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "12px",
-      boxShadow: "0 2px 0 #FBC02D",
+      boxShadow: "0 2px 0 #90CAF9",
     },
     btnHapus: {
       padding: "6px 14px",
@@ -447,7 +447,7 @@ function KelolaEdukasi() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     modalBtnGroup: {
@@ -470,15 +470,15 @@ function KelolaEdukasi() {
     },
     confirmNoBtn: {
       flex: 1,
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "11px",
       borderRadius: "10px",
       fontWeight: "800",
       fontSize: "13px",
       cursor: "pointer",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
       textTransform: "uppercase",
     },
     alertIconWrapper: (type) => ({
@@ -492,20 +492,20 @@ function KelolaEdukasi() {
       fontSize: "28px",
       background:
         type === "success"
-          ? "#E8F5E9"
+          ? "#E3F2FD"
           : type === "error"
           ? "#FFEBEE"
-          : "#FFFDE7",
+          : "#F5F9FF",
       border: `2px solid ${
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FBC02D"
+          : "#90CAF9"
       }`,
       color:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
           : "#F57F17",
@@ -519,19 +519,19 @@ function KelolaEdukasi() {
       fontSize: "14px",
       cursor: "pointer",
       textTransform: "uppercase",
-      color: type === "warning" ? "#1B5E20" : "#fff",
+      color: type === "warning" ? "#0D47A1" : "#fff",
       background:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FFEB3B",
+          : "#FFFFFF",
       boxShadow:
         type === "success"
-          ? "0 3px 0 #1B5E20"
+          ? "0 3px 0 #0D47A1"
           : type === "error"
           ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
+          : "0 3px 0 #90CAF9",
     }),
   };
 
@@ -666,9 +666,9 @@ function KelolaEdukasi() {
       {/* LIST KONTEN YANG SUDAH DIPUBLIKASIKAN */}
       <h3 style={styles.sectionHeading}>Daftar Konten Edukasi Terpublikasi</h3>
       {loading ? (
-        <div style={{ color: "#1B5E20", fontWeight: "600" }}>Memuat materi edukasi...</div>
+        <div style={{ color: "#0D47A1", fontWeight: "600" }}>Memuat materi edukasi...</div>
       ) : edukasiList.length === 0 ? (
-        <div style={{ color: "#556B4D", fontStyle: "italic" }}>
+        <div style={{ color: "#526579", fontStyle: "italic" }}>
           Belum ada materi edukasi. Silakan buat materi baru di atas.
         </div>
       ) : (
@@ -678,12 +678,12 @@ function KelolaEdukasi() {
               <span style={styles.kategoriBadge}>
                 {item.kategori}
               </span>
-              <span style={{ fontSize: "12px", color: "#556B4D" }}>
+              <span style={{ fontSize: "12px", color: "#526579" }}>
                 {new Date(item.createdAt).toLocaleDateString("id-ID")}
               </span>
             </div>
-            <h4 style={{ margin: "6px 0", fontSize: "16px", color: "#1B5E20", fontWeight: "800" }}>{item.judul}</h4>
-            <p style={{ color: "#556B4D", fontSize: "13px", lineHeight: "1.5", margin: "4px 0 12px 0" }}>
+            <h4 style={{ margin: "6px 0", fontSize: "16px", color: "#0D47A1", fontWeight: "800" }}>{item.judul}</h4>
+            <p style={{ color: "#526579", fontSize: "13px", lineHeight: "1.5", margin: "4px 0 12px 0" }}>
               {item.ringkasan || item.isi.substring(0, 120) + "..."}
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -709,7 +709,7 @@ function KelolaEdukasi() {
           style={{
             textAlign: "center",
             padding: "12px",
-            color: "#556B4D",
+            color: "#526579",
             fontSize: "12px",
             fontWeight: "700",
           }}
@@ -726,7 +726,7 @@ function KelolaEdukasi() {
             <h3 style={{ color: "#C62828", fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
               Konfirmasi Hapus Konten
             </h3>
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
+            <p style={{ color: "#526579", fontSize: "13px", marginBottom: "15px", lineHeight: "1.5" }}>
               Apakah Anda yakin ingin menghapus materi edukasi ini dari sistem?
             </p>
             <div style={styles.modalBtnGroup}>
@@ -760,7 +760,7 @@ function KelolaEdukasi() {
                 marginBottom: "8px",
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",
@@ -769,7 +769,7 @@ function KelolaEdukasi() {
               {alertConfig.title}
             </h3>
 
-            <p style={{ color: "#556B4D", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+            <p style={{ color: "#526579", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
               {alertConfig.message}
             </p>
 

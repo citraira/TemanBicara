@@ -9,7 +9,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "#F4FBEE",
+    background: "#F5F9FF",
     padding: "15px",
     fontFamily: "'Segoe UI', Roboto, sans-serif",
     boxSizing: "border-box",
@@ -23,7 +23,7 @@ const styles = {
     flexWrap: "wrap",
     overflow: "hidden",
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
   },
   left: {
     flex: "1 1 320px",
@@ -32,7 +32,7 @@ const styles = {
   },
   right: {
     flex: "1 1 320px",
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     display: "flex",
     justifyContent: "center",
@@ -43,12 +43,12 @@ const styles = {
   },
   title: {
     fontSize: "28px",
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontWeight: "800",
     marginBottom: "8px",
   },
   subtitle: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "14px",
     lineHeight: "1.5",
     marginBottom: "25px",
@@ -57,15 +57,15 @@ const styles = {
   qrButton: {
     width: "100%",
     padding: "14px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "14px",
     fontSize: "16px",
     cursor: "pointer",
     marginBottom: "20px",
     fontWeight: "800",
-    boxShadow: "0 4px 0 #FBC02D",
+    boxShadow: "0 4px 0 #90CAF9",
     textTransform: "uppercase",
   },
   divider: {
@@ -79,37 +79,37 @@ const styles = {
     display: "block",
     marginBottom: "6px",
     fontWeight: "700",
-    color: "#2E3D29",
+    color: "#26384A",
     fontSize: "14px",
   },
   input: {
     width: "100%",
     padding: "14px",
     borderRadius: "12px",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     marginBottom: "18px",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
-    background: "#FAFAFA",
+    background: "#FAFCFF",
   },
   loginButton: (loading) => ({
     width: "100%",
     padding: "15px",
     border: "none",
     borderRadius: "14px",
-    background: loading ? "#A5D6A7" : "#2E7D32",
+    background: loading ? "#90CAF9" : "#1565C0",
     color: "#fff",
     fontSize: "16px",
     cursor: loading ? "not-allowed" : "pointer",
     fontWeight: "800",
-    boxShadow: loading ? "none" : "0 4px 0 #1B5E20",
+    boxShadow: loading ? "none" : "0 4px 0 #0D47A1",
     textTransform: "uppercase",
   }),
   back: {
     marginTop: "20px",
     textAlign: "center",
-    color: "#2E7D32",
+    color: "#1565C0",
     cursor: "pointer",
     fontWeight: "700",
     fontSize: "14px",
@@ -118,7 +118,7 @@ const styles = {
     fontSize: "32px",
     fontWeight: "800",
     marginBottom: "15px",
-    color: "#FFEB3B",
+    color: "#FFFFFF",
   },
   desc: {
     fontSize: "15px",
@@ -148,7 +148,7 @@ const styles = {
     width: "100%",
     textAlign: "center",
     boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     boxSizing: "border-box",
   },
   modalTitle: {
@@ -157,7 +157,7 @@ const styles = {
     fontWeight: "800",
   },
   modalText: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "13px",
     marginBottom: "20px",
     lineHeight: "1.5",
@@ -172,12 +172,12 @@ const styles = {
     alignItems: "center",
     fontSize: "28px",
     background:
-      type === "success" ? "#E8F5E9" : type === "error" ? "#FFEBEE" : "#FFFDE7",
+      type === "success" ? "#E3F2FD" : type === "error" ? "#FFEBEE" : "#F5F9FF",
     border: `2px solid ${
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FBC02D"
+      type === "success" ? "#1565C0" : type === "error" ? "#D32F2F" : "#90CAF9"
     }`,
     color:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#F57F17",
+      type === "success" ? "#1565C0" : type === "error" ? "#D32F2F" : "#F57F17",
   }),
   alertBtn: (type) => ({
     width: "100%",
@@ -188,11 +188,11 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer",
     textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
+    color: type === "warning" ? "#0D47A1" : "#fff",
     background:
-      type === "success" ? "#2E7D32" : type === "error" ? "#D32F2F" : "#FFEB3B",
+      type === "success" ? "#1565C0" : type === "error" ? "#D32F2F" : "#FFFFFF",
     boxShadow:
-      type === "success" ? "0 3px 0 #1B5E20" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #FBC02D",
+      type === "success" ? "0 3px 0 #0D47A1" : type === "error" ? "0 3px 0 #9A0007" : "0 3px 0 #90CAF9",
   }),
 };
 
@@ -455,7 +455,7 @@ function LoginSiswa() {
                 ...styles.modalTitle,
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",

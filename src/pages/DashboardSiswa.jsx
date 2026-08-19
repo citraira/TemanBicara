@@ -679,7 +679,7 @@ function DashboardSiswa() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       fontFamily:
         "'Segoe UI', Roboto, sans-serif",
       paddingBottom: "85px",
@@ -687,7 +687,7 @@ function DashboardSiswa() {
     },
 
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding:
         "20px 20px 24px 20px",
@@ -715,8 +715,8 @@ function DashboardSiswa() {
       width: "52px",
       height: "52px",
       borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -772,8 +772,8 @@ function DashboardSiswa() {
     },
 
     logoutBtn: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "8px 16px",
       borderRadius: "18px",
@@ -781,7 +781,7 @@ function DashboardSiswa() {
       fontWeight: "800",
       fontSize: "13px",
       boxShadow:
-        "0 2px 0 #FBC02D",
+        "0 2px 0 #90CAF9",
     },
 
     toast: {
@@ -791,7 +791,7 @@ function DashboardSiswa() {
       right: "16px",
       maxWidth: "400px",
       margin: "0 auto",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "14px 16px",
       borderRadius: "18px",
@@ -803,18 +803,18 @@ function DashboardSiswa() {
       justifyContent:
         "space-between",
       border:
-        "2px solid #FFEB3B",
+        "2px solid #FFFFFF",
     },
 
     bannerCard: {
       background:
-        "linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%)",
+        "linear-gradient(135deg, #F5F9FF 0%, #EAF3FF 100%)",
       margin:
         "18px 15px 15px",
       borderRadius: "22px",
       padding: "18px 20px",
       border:
-        "2px solid #FFF59D",
+        "2px solid #BBDEFB",
       boxShadow:
         "0 4px 12px rgba(0,0,0,0.03)",
       display: "flex",
@@ -830,13 +830,13 @@ function DashboardSiswa() {
     bannerTitle: {
       fontSize: "18px",
       fontWeight: "800",
-      color: "#1B5E20",
+      color: "#0D47A1",
       marginBottom: "2px",
     },
 
     bannerText: {
       fontSize: "13px",
-      color: "#556B4D",
+      color: "#526579",
       margin: 0,
       fontWeight: "600",
     },
@@ -887,14 +887,14 @@ function DashboardSiswa() {
     cardLabel: {
       fontSize: "16px",
       fontWeight: "800",
-      color: "#1B5E20",
+      color: "#0D47A1",
       margin: 0,
     },
 
     cardTag: {
       fontSize: "11px",
       fontWeight: "700",
-      color: "#4E6647",
+      color: "#546E7A",
       background:
         "rgba(255,255,255,0.7)",
       padding: "3px 8px",
@@ -934,14 +934,14 @@ function DashboardSiswa() {
       alignItems: "center",
       marginBottom: "16px",
       borderBottom:
-        "1.5px solid #E8F5E9",
+        "1.5px solid #E3F2FD",
       paddingBottom: "12px",
     },
 
     panelTitle: {
       fontSize: "19px",
       fontWeight: "800",
-      color: "#1B5E20",
+      color: "#0D47A1",
       margin: 0,
     },
 
@@ -960,16 +960,16 @@ function DashboardSiswa() {
       justifyContent:
         "space-between",
       padding: "12px",
-      background: "#F9FCF7",
+      background: "#F8FBFF",
       borderRadius: "14px",
       border:
-        "1.5px solid #E8F5E9",
+        "1.5px solid #E3F2FD",
       marginBottom: "10px",
     },
 
     actionBtn: {
       padding: "8px 14px",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       borderRadius: "10px",
@@ -1007,7 +1007,7 @@ function DashboardSiswa() {
       boxShadow:
         "0 10px 30px rgba(0,0,0,0.15)",
       border:
-        "2px solid #C8E6C9",
+        "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
 
@@ -1022,9 +1022,9 @@ function DashboardSiswa() {
         "center",
       alignItems: "center",
       fontSize: "30px",
-      background: "#FFFDE7",
+      background: "#F5F9FF",
       border:
-        "2px solid #FBC02D",
+        "2px solid #90CAF9",
     },
 
     modalBtnGroup: {
@@ -1051,8 +1051,8 @@ function DashboardSiswa() {
 
     cancelBtn: {
       flex: 1,
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "12px",
       borderRadius: "12px",
@@ -1060,7 +1060,7 @@ function DashboardSiswa() {
       fontSize: "13px",
       cursor: "pointer",
       boxShadow:
-        "0 3px 0 #FBC02D",
+        "0 3px 0 #90CAF9",
       textTransform:
         "uppercase",
     },
@@ -1079,7 +1079,7 @@ function DashboardSiswa() {
       boxShadow:
         "0 -2px 12px rgba(0,0,0,0.06)",
       borderTop:
-        "1.5px solid #E8F5E9",
+        "1.5px solid #E3F2FD",
     },
 
     navItem: {
@@ -1089,7 +1089,7 @@ function DashboardSiswa() {
       justifyContent:
         "center",
       cursor: "pointer",
-      color: "#2E7D32",
+      color: "#1565C0",
       fontWeight: "800",
       fontSize: "11px",
       gap: "2px",
@@ -1118,7 +1118,7 @@ function DashboardSiswa() {
               style={{
                 fontSize: "14px",
                 fontWeight: "800",
-                color: "#FFEB3B",
+                color: "#FFFFFF",
               }}
             >
               Pemberitahuan Guru
@@ -1250,8 +1250,8 @@ function DashboardSiswa() {
       <div style={styles.menuGrid}>
         <div
           style={styles.actionCard(
-            "#E8F5E9",
-            "#A5D6A7"
+            "#E3F2FD",
+            "#90CAF9"
           )}
           onClick={() =>
             navigate("/pengaduan")
@@ -1260,7 +1260,7 @@ function DashboardSiswa() {
           <div
             style={
               styles.cardIconCircle(
-                "#C8E6C9"
+                "#BBDEFB"
               )
             }
           >
@@ -1282,8 +1282,8 @@ function DashboardSiswa() {
 
         <div
           style={styles.actionCard(
-            "#FFFDE7",
-            "#FFE082"
+            "#F5F9FF",
+            "#90CAF9"
           )}
           onClick={() =>
             navigate("/riwayat")
@@ -1292,7 +1292,7 @@ function DashboardSiswa() {
           <div
             style={
               styles.cardIconCircle(
-                "#FFF59D"
+                "#BBDEFB"
               )
             }
           >
@@ -1436,7 +1436,7 @@ function DashboardSiswa() {
                   padding:
                     "40px 10px",
                   color:
-                    "#667C5E",
+                    "#607D8B",
                 }}
               >
                 <div
@@ -1457,7 +1457,7 @@ function DashboardSiswa() {
                     fontSize:
                       "15px",
                     color:
-                      "#1B5E20",
+                      "#0D47A1",
                   }}
                 >
                   Belum Ada Laporan
@@ -1481,7 +1481,7 @@ function DashboardSiswa() {
                             fontWeight:
                               "800",
                             color:
-                              "#1B5E20",
+                              "#0D47A1",
                           }}
                         >
                           {item.jenis ||
@@ -1493,7 +1493,7 @@ function DashboardSiswa() {
                             fontSize:
                               "12px",
                             color:
-                              "#556B4D",
+                              "#526579",
                             marginTop:
                               "3px",
                           }}
@@ -1561,7 +1561,7 @@ function DashboardSiswa() {
               style={{
                 fontSize: "19px",
                 fontWeight: "800",
-                color: "#1B5E20",
+                color: "#0D47A1",
                 margin:
                   "0 0 6px 0",
               }}
@@ -1572,7 +1572,7 @@ function DashboardSiswa() {
             <p
               style={{
                 fontSize: "13px",
-                color: "#556B4D",
+                color: "#526579",
                 margin:
                   "0 0 8px 0",
                 lineHeight: "1.5",

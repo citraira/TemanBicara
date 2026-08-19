@@ -298,13 +298,13 @@ function DashboardAdmin() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       fontFamily: "'Segoe UI', Roboto, sans-serif",
       padding: "20px 15px",
       boxSizing: "border-box",
     },
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "20px",
       borderRadius: "20px",
@@ -358,8 +358,8 @@ function DashboardAdmin() {
       fontWeight: "bold",
     },
     logout: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "8px 16px",
       minWidth: "118px",
@@ -368,7 +368,7 @@ function DashboardAdmin() {
       cursor: "pointer",
       fontWeight: "800",
       fontSize: "13px",
-      boxShadow: "0 2px 0 #FBC02D",
+      boxShadow: "0 2px 0 #90CAF9",
       boxSizing: "border-box",
       flexShrink: 0,
     },
@@ -376,7 +376,7 @@ function DashboardAdmin() {
       position: "fixed",
       top: "20px",
       right: "20px",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "15px 20px",
       borderRadius: "16px",
@@ -385,7 +385,7 @@ function DashboardAdmin() {
       display: "flex",
       alignItems: "center",
       gap: "12px",
-      border: "2px solid #A5D6A7",
+      border: "2px solid #90CAF9",
     },
     grid: {
       display: "grid",
@@ -397,7 +397,7 @@ function DashboardAdmin() {
       borderRadius: "18px",
       padding: "22px 18px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       textAlign: "center",
       position: "relative",
       display: "flex",
@@ -423,25 +423,25 @@ function DashboardAdmin() {
       width: "60px",
       height: "60px",
       borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
       fontSize: "22px",
       fontWeight: "800",
       margin: "0 auto 15px",
-      border: "2px solid #2E7D32",
+      border: "2px solid #1565C0",
     },
     cardTitle: {
       fontSize: "18px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontWeight: "800",
       marginBottom: "8px",
     },
-    desc: { color: "#556B4D", marginBottom: "18px", lineHeight: "1.5", fontSize: "13px" },
+    desc: { color: "#526579", marginBottom: "18px", lineHeight: "1.5", fontSize: "13px" },
     button: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       padding: "12px 18px",
@@ -450,7 +450,7 @@ function DashboardAdmin() {
       fontSize: "14px",
       width: "100%",
       fontWeight: "800",
-      boxShadow: "0 3px 0 #1B5E20",
+      boxShadow: "0 3px 0 #0D47A1",
       textTransform: "uppercase",
     },
     centerModalOverlay: {
@@ -477,7 +477,7 @@ function DashboardAdmin() {
       maxHeight: "85vh",
       overflowY: "auto",
       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
     },
     logoutModalCard: {
       background: "#fff",
@@ -487,7 +487,7 @@ function DashboardAdmin() {
       width: "100%",
       textAlign: "center",
       boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
       boxSizing: "border-box",
     },
     logoutIconBox: {
@@ -499,8 +499,8 @@ function DashboardAdmin() {
       justifyContent: "center",
       alignItems: "center",
       fontSize: "28px",
-      background: "#FFFDE7",
-      border: "2px solid #FBC02D",
+      background: "#F5F9FF",
+      border: "2px solid #90CAF9",
     },
     modalBtnGroup: { display: "flex", gap: "10px", marginTop: "20px" },
     yesBtn: {
@@ -518,15 +518,15 @@ function DashboardAdmin() {
     },
     cancelBtn: {
       flex: 1,
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "12px",
       borderRadius: "12px",
       fontWeight: "800",
       fontSize: "13px",
       cursor: "pointer",
-      boxShadow: "0 3px 0 #FBC02D",
+      boxShadow: "0 3px 0 #90CAF9",
       textTransform: "uppercase",
     },
     modalOverlay: {
@@ -561,7 +561,7 @@ function DashboardAdmin() {
     panelTitle: {
       fontSize: "20px",
       fontWeight: "800",
-      color: "#1B5E20",
+      color: "#0D47A1",
       margin: 0,
     },
     closeBtn: {
@@ -577,26 +577,26 @@ function DashboardAdmin() {
       alignItems: "center",
       justifyContent: "space-between",
       padding: "12px 0",
-      borderBottom: "1px solid #E8F5E9",
+      borderBottom: "1px solid #E3F2FD",
     },
     itemAvatar: {
       width: "42px",
       height: "42px",
       borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: "16px",
       fontWeight: "800",
       marginRight: "10px",
-      border: "1px solid #2E7D32",
+      border: "1px solid #1565C0",
     },
-    itemText: { fontSize: "13px", color: "#2E3D29", margin: 0, lineHeight: "1.4" },
+    itemText: { fontSize: "13px", color: "#26384A", margin: 0, lineHeight: "1.4" },
     actionBtn: {
       padding: "6px 12px",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       borderRadius: "10px",
@@ -605,11 +605,11 @@ function DashboardAdmin() {
       cursor: "pointer",
     },
     statBox: {
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       padding: "14px",
       borderRadius: "14px",
       textAlign: "center",
-      border: "2px solid #C8E6C9",
+      border: "2px solid #BBDEFB",
     },
   };
 
@@ -727,7 +727,7 @@ function DashboardAdmin() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={styles.panelHeader}>
-              <h2 style={{ color: "#1B5E20", margin: 0, fontSize: "20px", fontWeight: "800" }}>
+              <h2 style={{ color: "#0D47A1", margin: 0, fontSize: "20px", fontWeight: "800" }}>
                 Statistik Pengaduan
               </h2>
               <button
@@ -738,7 +738,7 @@ function DashboardAdmin() {
               </button>
             </div>
 
-            <p style={{ color: "#556B4D", marginBottom: "18px", fontSize: "13px" }}>
+            <p style={{ color: "#526579", marginBottom: "18px", fontSize: "13px" }}>
               Ringkasan data laporan bullying real-time di sekolah.
             </p>
 
@@ -751,10 +751,10 @@ function DashboardAdmin() {
               }}
             >
               <div style={styles.statBox}>
-                <div style={{ fontSize: "24px", fontWeight: "800", color: "#1B5E20" }}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#0D47A1" }}>
                   {totalAduan}
                 </div>
-                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                <div style={{ fontSize: "12px", color: "#526579", fontWeight: "600" }}>
                   Total Aduan Masuk
                 </div>
               </div>
@@ -762,15 +762,15 @@ function DashboardAdmin() {
                 <div style={{ fontSize: "24px", fontWeight: "800", color: "#D32F2F" }}>
                   {totalDiproses}
                 </div>
-                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                <div style={{ fontSize: "12px", color: "#526579", fontWeight: "600" }}>
                   Sedang Diproses
                 </div>
               </div>
               <div style={styles.statBox}>
-                <div style={{ fontSize: "24px", fontWeight: "800", color: "#2E7D32" }}>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#1565C0" }}>
                   {totalSelesai}
                 </div>
-                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                <div style={{ fontSize: "12px", color: "#526579", fontWeight: "600" }}>
                   Selesai Ditangani
                 </div>
               </div>
@@ -778,14 +778,14 @@ function DashboardAdmin() {
                 <div style={{ fontSize: "24px", fontWeight: "800", color: "#E65100" }}>
                   {persentaseSelesai}%
                 </div>
-                <div style={{ fontSize: "12px", color: "#556B4D", fontWeight: "600" }}>
+                <div style={{ fontSize: "12px", color: "#526579", fontWeight: "600" }}>
                   Tingkat Penyelesaian
                 </div>
               </div>
             </div>
 
             <button
-              style={{ ...styles.button, background: "#FFEB3B", color: "#1B5E20", boxShadow: "0 3px 0 #FBC02D" }}
+              style={{ ...styles.button, background: "#FFFFFF", color: "#0D47A1", boxShadow: "0 3px 0 #90CAF9" }}
               onClick={() => setShowStatistikModal(false)}
             >
               Tutup
@@ -816,10 +816,10 @@ function DashboardAdmin() {
                 style={{
                   textAlign: "center",
                   padding: "40px 10px",
-                  color: "#556B4D",
+                  color: "#526579",
                 }}
               >
-                <h3 style={{ fontSize: "16px", color: "#1B5E20" }}>Belum Ada Laporan</h3>
+                <h3 style={{ fontSize: "16px", color: "#0D47A1" }}>Belum Ada Laporan</h3>
               </div>
             ) : (
               <div>
@@ -828,7 +828,7 @@ function DashboardAdmin() {
                     fontSize: "14px",
                     fontWeight: "800",
                     marginBottom: "12px",
-                    color: "#1B5E20",
+                    color: "#0D47A1",
                   }}
                 >
                   Laporan Masuk Terbaru
@@ -845,7 +845,7 @@ function DashboardAdmin() {
                             {item.nama || "Siswa"} ({item.kelas || "-"})
                           </strong>
                         </p>
-                        <span style={{ fontSize: "12px", color: "#556B4D" }}>
+                        <span style={{ fontSize: "12px", color: "#526579" }}>
                           Kategori: <strong>{item.jenis || "Bullying"}</strong>
                         </span>
                       </div>
@@ -869,10 +869,10 @@ function DashboardAdmin() {
         <div style={styles.centerModalOverlay} onClick={() => setShowLogoutModal(false)}>
           <div style={styles.logoutModalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.logoutIconBox}>🚪</div>
-            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#1B5E20", margin: "0 0 8px 0" }}>
+            <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#0D47A1", margin: "0 0 8px 0" }}>
               Keluar Akun Admin?
             </h3>
-            <p style={{ fontSize: "13px", color: "#556B4D", margin: "0 0 10px 0", lineHeight: "1.5" }}>
+            <p style={{ fontSize: "13px", color: "#526579", margin: "0 0 10px 0", lineHeight: "1.5" }}>
               Apakah Bapak/Ibu Guru yakin ingin keluar dari panel admin?
             </p>
 

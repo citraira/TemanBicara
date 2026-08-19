@@ -12,7 +12,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "#F4FBEE",
+    background: "#F5F9FF",
     padding: "20px 15px",
     fontFamily: "'Segoe UI', Roboto, sans-serif",
     boxSizing: "border-box",
@@ -24,32 +24,32 @@ const styles = {
     borderRadius: "20px",
     padding: "30px 20px",
     boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     boxSizing: "border-box",
   },
   logo: {
     width: "70px",
     height: "70px",
     borderRadius: "50%",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     fontSize: "28px",
     fontWeight: "800",
     margin: "0 auto 15px",
-    border: "3px solid #2E7D32",
+    border: "3px solid #1565C0",
   },
   title: {
     fontSize: "24px",
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontWeight: "800",
     textAlign: "center",
     marginBottom: "5px",
   },
   subtitle: {
-    color: "#556B4D",
+    color: "#526579",
     textAlign: "center",
     fontSize: "13px",
     marginBottom: "25px",
@@ -59,19 +59,19 @@ const styles = {
     display: "block",
     marginBottom: "6px",
     fontWeight: "700",
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "14px",
   },
   input: {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "12px",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     marginBottom: "18px",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
-    background: "#FAFAFA",
+    background: "#FAFCFF",
   },
   passwordWrapper: {
     position: "relative",
@@ -84,11 +84,11 @@ const styles = {
     width: "100%",
     padding: "12px 45px 12px 14px",
     borderRadius: "12px",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
-    background: "#FAFAFA",
+    background: "#FAFCFF",
   },
   eyeBtn: {
     position: "absolute",
@@ -100,7 +100,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#2E7D32",
+    color: "#1565C0",
   },
   forgotContainer: {
     display: "flex",
@@ -110,7 +110,7 @@ const styles = {
   forgotBtn: {
     background: "none",
     border: "none",
-    color: "#1B5E20",
+    color: "#0D47A1",
     cursor: "pointer",
     fontSize: "13px",
     fontWeight: "700",
@@ -122,18 +122,18 @@ const styles = {
     padding: "14px",
     border: "none",
     borderRadius: "12px",
-    background: loading ? "#A5D6A7" : "#2E7D32",
+    background: loading ? "#90CAF9" : "#1565C0",
     color: "#fff",
     fontSize: "16px",
     cursor: loading ? "not-allowed" : "pointer",
     fontWeight: "800",
-    boxShadow: loading ? "none" : "0 3px 0 #1B5E20",
+    boxShadow: loading ? "none" : "0 3px 0 #0D47A1",
     textTransform: "uppercase",
   }),
   back: {
     marginTop: "20px",
     textAlign: "center",
-    color: "#1B5E20",
+    color: "#0D47A1",
     cursor: "pointer",
     fontWeight: "800",
     fontSize: "13px",
@@ -160,18 +160,18 @@ const styles = {
     maxWidth: "380px",
     width: "100%",
     boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     boxSizing: "border-box",
   },
   modalTitle: {
-    color: "#1B5E20",
+    color: "#0D47A1",
     marginBottom: "8px",
     fontSize: "20px",
     fontWeight: "800",
     textAlign: "center",
   },
   modalText: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "13px",
     marginBottom: "18px",
     lineHeight: "1.5",
@@ -180,15 +180,15 @@ const styles = {
   cancelBtn: (resetLoading) => ({
     width: "100%",
     padding: "12px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "12px",
     fontWeight: "800",
     cursor: resetLoading ? "not-allowed" : "pointer",
     marginTop: "10px",
     fontSize: "13px",
-    boxShadow: "0 3px 0 #FBC02D",
+    boxShadow: "0 3px 0 #90CAF9",
     textTransform: "uppercase",
   }),
   alertIconWrapper: (type) => ({
@@ -202,20 +202,20 @@ const styles = {
     fontSize: "28px",
     background:
       type === "success"
-        ? "#E8F5E9"
+        ? "#E3F2FD"
         : type === "error"
         ? "#FFEBEE"
-        : "#FFFDE7",
+        : "#F5F9FF",
     border: `2px solid ${
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FBC02D"
+        : "#90CAF9"
     }`,
     color:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
         : "#F57F17",
@@ -229,19 +229,19 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer",
     textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
+    color: type === "warning" ? "#0D47A1" : "#fff",
     background:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FFEB3B",
+        : "#FFFFFF",
     boxShadow:
       type === "success"
-        ? "0 3px 0 #1B5E20"
+        ? "0 3px 0 #0D47A1"
         : type === "error"
         ? "0 3px 0 #9A0007"
-        : "0 3px 0 #FBC02D",
+        : "0 3px 0 #90CAF9",
   }),
 };
 
@@ -526,7 +526,7 @@ function LoginAdmin() {
                 style={{
                   ...styles.loginBtn(resetLoading),
                   marginTop: 0,
-                  background: resetLoading ? "#A5D6A7" : "#2E7D32",
+                  background: resetLoading ? "#90CAF9" : "#1565C0",
                 }}
                 disabled={resetLoading}
               >
@@ -562,7 +562,7 @@ function LoginAdmin() {
                 ...styles.modalTitle,
                 color:
                   alertConfig.type === "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type === "error"
                     ? "#C62828"
                     : "#E65100",

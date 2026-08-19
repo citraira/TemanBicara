@@ -6,14 +6,14 @@ import { db } from "../firebase";
 const styles = {
   page: {
     minHeight: "100dvh",
-    background: "#F4FBEE",
+    background: "#F5FAFF",
     padding: "20px 15px 40px",
     fontFamily: "'Segoe UI', Roboto, sans-serif",
     boxSizing: "border-box",
   },
 
   header: {
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     padding: "20px",
     borderRadius: "20px",
@@ -34,14 +34,14 @@ const styles = {
 
   backButton: {
     padding: "10px 16px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "800",
     fontSize: "13px",
-    boxShadow: "0 3px 0 #FBC02D",
+    boxShadow: "0 3px 0 #1565C0",
   },
 
   card: {
@@ -50,17 +50,17 @@ const styles = {
     padding: "20px 18px",
     marginBottom: "20px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-    borderLeft: "6px solid #2E7D32",
-    borderTop: "1px solid #E8F5E9",
-    borderRight: "1px solid #E8F5E9",
-    borderBottom: "1px solid #E8F5E9",
+    borderLeft: "6px solid #1565C0",
+    borderTop: "1px solid #E3F2FD",
+    borderRight: "1px solid #E3F2FD",
+    borderBottom: "1px solid #E3F2FD",
   },
 
   cardHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottom: "1px solid #E8F5E9",
+    borderBottom: "1px solid #E3F2FD",
     paddingBottom: "10px",
     marginBottom: "14px",
     flexWrap: "wrap",
@@ -70,7 +70,7 @@ const styles = {
   pelaporInfo: {
     fontSize: "16px",
     fontWeight: "800",
-    color: "#1B5E20",
+    color: "#0D47A1",
   },
 
   badge: {
@@ -86,14 +86,14 @@ const styles = {
     gap: "10px",
     marginBottom: "12px",
     fontSize: "13px",
-    color: "#556B4D",
+    color: "#546E7A",
   },
 
   ceritaBox: {
     background: "#FAFAFA",
     padding: "12px",
     borderRadius: "10px",
-    border: "1px dashed #C8E6C9",
+    border: "1px dashed #BBDEFB",
     fontSize: "13px",
     lineHeight: "1.5",
     color: "#2E3D29",
@@ -102,8 +102,8 @@ const styles = {
   },
 
   interventionBox: {
-    background: "#FFFDE7",
-    border: "2px solid #FFF59D",
+    background: "#F5FAFF",
+    border: "2px solid #BBDEFB",
     borderRadius: "14px",
     padding: "18px",
     marginTop: "16px",
@@ -129,7 +129,7 @@ const styles = {
     fontSize: "12px",
     fontWeight: "700",
     lineHeight: "1.3",
-    color: "#1B5E20",
+    color: "#0D47A1",
     marginBottom: "6px",
   },
 
@@ -144,21 +144,21 @@ const styles = {
     height: "42px",
     padding: "9px 12px",
     borderRadius: "10px",
-    border: "1.5px solid #C8E6C9",
+    border: "1.5px solid #BBDEFB",
     fontSize: "14px",
     boxSizing: "border-box",
     outline: "none",
     background: "#fff",
     color: "#263238",
     fontFamily: "inherit",
-    boxShadow: "0 1px 3px rgba(46,125,50,0.08)",
+    boxShadow: "0 1px 3px rgba(21,101,192,0.08)",
   },
 
   saveBtn: {
     width: "100%",
     height: "42px",
     padding: "0 16px",
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
@@ -166,7 +166,7 @@ const styles = {
     fontWeight: "800",
     fontSize: "13px",
     boxSizing: "border-box",
-    boxShadow: "0 3px 0 #1B5E20",
+    boxShadow: "0 3px 0 #0D47A1",
     textTransform: "uppercase",
   },
 
@@ -176,7 +176,7 @@ const styles = {
     gap: "14px",
     marginTop: "16px",
     paddingTop: "16px",
-    borderTop: "1px solid #E8F5E9",
+    borderTop: "1px solid #E3F2FD",
   },
 
   actionButtons: {
@@ -202,11 +202,11 @@ const styles = {
 
   filterBox: {
     background: "#fff",
-    border: "1px solid #C8E6C9",
+    border: "1px solid #BBDEFB",
     borderRadius: "14px",
     padding: "14px 16px",
     marginBottom: "20px",
-    boxShadow: "0 3px 10px rgba(46,125,50,0.05)",
+    boxShadow: "0 3px 10px rgba(21,101,192,0.05)",
     display: "flex",
     alignItems: "center",
     gap: "12px",
@@ -214,7 +214,7 @@ const styles = {
   },
 
   filterLabel: {
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "13px",
     fontWeight: "800",
     whiteSpace: "nowrap",
@@ -227,8 +227,8 @@ const styles = {
     height: "42px",
     padding: "0 12px",
     borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
+    border: "1.5px solid #90CAF9",
+    background: "#F5FAFF",
     color: "#263238",
     fontSize: "14px",
     fontWeight: "600",
@@ -245,8 +245,8 @@ const styles = {
     height: "42px",
     padding: "0 14px",
     borderRadius: "10px",
-    border: "1.5px solid #A5D6A7",
-    background: "#F8FFF6",
+    border: "1.5px solid #90CAF9",
+    background: "#F5FAFF",
     color: "#263238",
     fontSize: "14px",
     fontWeight: "600",
@@ -257,7 +257,7 @@ const styles = {
 
   reportedAt: {
     fontSize: "12px",
-    color: "#556B4D",
+    color: "#546E7A",
     lineHeight: "1.4",
   },
 
@@ -282,7 +282,7 @@ const styles = {
     objectFit: "cover",
     borderRadius: "10px",
     cursor: "pointer",
-    border: "2px solid #2E7D32",
+    border: "2px solid #1565C0",
     marginTop: "6px",
   },
 
@@ -309,7 +309,7 @@ const styles = {
     width: "100%",
     textAlign: "center",
     boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
     boxSizing: "border-box",
   },
 
@@ -335,15 +335,15 @@ const styles = {
 
   confirmNoBtn: {
     flex: 1,
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     padding: "11px",
     borderRadius: "10px",
     fontWeight: "800",
     fontSize: "13px",
     cursor: "pointer",
-    boxShadow: "0 3px 0 #FBC02D",
+    boxShadow: "0 3px 0 #1565C0",
     textTransform: "uppercase",
   },
 
@@ -358,23 +358,23 @@ const styles = {
     fontSize: "28px",
     background:
       type === "success"
-        ? "#E8F5E9"
+        ? "#E3F2FD"
         : type === "error"
         ? "#FFEBEE"
-        : "#FFFDE7",
+        : "#F5FAFF",
     border: `2px solid ${
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FBC02D"
+        : "#1565C0"
     }`,
     color:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#F57F17",
+        : "#1565C0",
   }),
 
   alertBtn: (type) => ({
@@ -386,28 +386,28 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer",
     textTransform: "uppercase",
-    color: type === "warning" ? "#1B5E20" : "#fff",
+    color: type === "warning" ? "#0D47A1" : "#fff",
     background:
       type === "success"
-        ? "#2E7D32"
+        ? "#1565C0"
         : type === "error"
         ? "#D32F2F"
-        : "#FFEB3B",
+        : "#FFFFFF",
     boxShadow:
       type === "success"
-        ? "0 3px 0 #1B5E20"
+        ? "0 3px 0 #0D47A1"
         : type === "error"
         ? "0 3px 0 #9A0007"
-        : "0 3px 0 #FBC02D",
+        : "0 3px 0 #1565C0",
   }),
 };
 
 const statusOptions = [
   {
     label: "Diproses (Guru/BK)",
-    color: "#F57F17",
-    bg: "#FFFDE7",
-    border: "#FFF59D",
+    color: "#1565C0",
+    bg: "#F5FAFF",
+    border: "#BBDEFB",
   },
   {
     label: "Eskalasi: Kepala Sekolah",
@@ -423,9 +423,9 @@ const statusOptions = [
   },
   {
     label: "Selesai",
-    color: "#2E7D32",
-    bg: "#E8F5E9",
-    border: "#A5D6A7",
+    color: "#1565C0",
+    bg: "#E3F2FD",
+    border: "#90CAF9",
   },
   {
     label: "Ditolak (Fitnah / Tidak Valid)",
@@ -486,9 +486,9 @@ const getStatusBadgeStyle = (status) => {
   switch (normalizeStatus(status)) {
     case "Selesai":
       return {
-        background: "#E8F5E9",
-        color: "#2E7D32",
-        border: "1px solid #A5D6A7",
+        background: "#E3F2FD",
+        color: "#1565C0",
+        border: "1px solid #90CAF9",
       };
 
     case "Ditolak (Fitnah / Tidak Valid)":
@@ -514,9 +514,9 @@ const getStatusBadgeStyle = (status) => {
 
     default:
       return {
-        background: "#FFFDE7",
-        color: "#F57F17",
-        border: "1px solid #FFF59D",
+        background: "#F5FAFF",
+        color: "#1565C0",
+        border: "1px solid #BBDEFB",
       };
   }
 };
@@ -562,8 +562,8 @@ const ItemPengaduanCard = memo(
                 fontSize: "12px",
                 marginLeft: "8px",
                 padding: "3px 8px",
-                background: "#FFEB3B",
-                color: "#1B5E20",
+                background: "#FFFFFF",
+                color: "#0D47A1",
                 borderRadius: "6px",
                 fontWeight: "800",
               }}
@@ -585,7 +585,7 @@ const ItemPengaduanCard = memo(
         {/* INFORMASI LAPORAN */}
         <div style={styles.grid}>
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Berapa Kali Kejadian:
             </strong>
             <br />
@@ -593,7 +593,7 @@ const ItemPengaduanCard = memo(
           </div>
 
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Tanggal Kejadian:
             </strong>
             <br />
@@ -601,7 +601,7 @@ const ItemPengaduanCard = memo(
           </div>
 
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Lokasi:
             </strong>
             <br />
@@ -609,7 +609,7 @@ const ItemPengaduanCard = memo(
           </div>
 
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Jenis Bullying:
             </strong>
             <br />
@@ -617,7 +617,7 @@ const ItemPengaduanCard = memo(
           </div>
 
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Terduga Pelaku:
             </strong>
             <br />
@@ -625,7 +625,7 @@ const ItemPengaduanCard = memo(
           </div>
 
           <div>
-            <strong style={{ color: "#1B5E20" }}>
+            <strong style={{ color: "#0D47A1" }}>
               Saksi Mata:
             </strong>
             <br />
@@ -642,7 +642,7 @@ const ItemPengaduanCard = memo(
         <div>
           <strong
             style={{
-              color: "#1B5E20",
+              color: "#0D47A1",
               fontSize: "13px",
             }}
           >
@@ -659,7 +659,7 @@ const ItemPengaduanCard = memo(
           <div style={{ marginBottom: "14px" }}>
             <strong
               style={{
-                color: "#1B5E20",
+                color: "#0D47A1",
                 fontSize: "13px",
               }}
             >
@@ -684,7 +684,7 @@ const ItemPengaduanCard = memo(
             style={{
               fontWeight: "800",
               fontSize: "14px",
-              color: "#1B5E20",
+              color: "#0D47A1",
               marginBottom: "12px",
             }}
           >
@@ -1393,9 +1393,9 @@ function DaftarPengaduan() {
                   padding: "0 14px",
                   borderRadius: "10px",
                   border:
-                    "1px solid #C8E6C9",
+                    "1px solid #BBDEFB",
                   background: "#fff",
-                  color: "#2E7D32",
+                  color: "#1565C0",
                   fontWeight: "800",
                   fontSize: "12px",
                   cursor: "pointer",
@@ -1411,7 +1411,7 @@ function DaftarPengaduan() {
             <div
               style={{
                 width: "100%",
-                color: "#556B4D",
+                color: "#546E7A",
                 fontSize: "12px",
                 fontWeight: "600",
                 marginTop: "2px",
@@ -1438,7 +1438,7 @@ function DaftarPengaduan() {
           style={{
             textAlign: "center",
             padding: "40px",
-            color: "#1B5E20",
+            color: "#0D47A1",
             fontWeight: "700",
           }}
         >
@@ -1453,9 +1453,9 @@ function DaftarPengaduan() {
             padding: "35px 20px",
             borderRadius: "18px",
             textAlign: "center",
-            color: "#556B4D",
+            color: "#546E7A",
             border:
-              "2px solid #C8E6C9",
+              "2px solid #BBDEFB",
             fontWeight: "600",
           }}
         >
@@ -1471,9 +1471,9 @@ function DaftarPengaduan() {
             padding: "35px 20px",
             borderRadius: "18px",
             textAlign: "center",
-            color: "#556B4D",
+            color: "#546E7A",
             border:
-              "2px solid #C8E6C9",
+              "2px solid #BBDEFB",
             fontWeight: "600",
           }}
         >
@@ -1523,7 +1523,7 @@ function DaftarPengaduan() {
               textAlign: "center",
               padding: "12px",
               marginBottom: "16px",
-              color: "#556B4D",
+              color: "#546E7A",
               fontSize: "12px",
               fontWeight: "700",
             }}
@@ -1657,7 +1657,7 @@ function DaftarPengaduan() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#546E7A",
                 fontSize:
                   "13px",
                 marginBottom:
@@ -1767,7 +1767,7 @@ function DaftarPengaduan() {
                 color:
                   alertConfig.type ===
                   "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type ===
                       "error"
                     ? "#C62828"
@@ -1782,7 +1782,7 @@ function DaftarPengaduan() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#546E7A",
                 fontSize:
                   "13px",
                 marginBottom:

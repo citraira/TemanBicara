@@ -6,9 +6,9 @@ function LandingPage() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE", // Hijau sangat muda
+      background: "#F5F9FF", // Hijau sangat muda
       fontFamily: "'Segoe UI', Roboto, sans-serif",
-      color: "#2E3D29",
+      color: "#26384A",
     },
 
     navbar: {
@@ -16,7 +16,7 @@ function LandingPage() {
       justifyContent: "space-between",
       alignItems: "center",
       padding: "15px 5%",
-      background: "#2E7D32", // Hijau Utama
+      background: "#1565C0", // Hijau Utama
       color: "#fff",
       position: "sticky",
       top: 0,
@@ -47,13 +47,13 @@ function LandingPage() {
     },
 
     loginSiswaNav: {
-      background: "#FFEB3B", // Kuning Cerah
-      color: "#1B5E20",
+      background: "#FFFFFF", // Kuning Cerah
+      color: "#0D47A1",
     },
 
     loginGuruNav: {
       background: "#ffffff",
-      color: "#2E7D32",
+      color: "#1565C0",
     },
 
     hero: {
@@ -73,7 +73,7 @@ function LandingPage() {
 
     title: {
       fontSize: "36px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       fontWeight: "800",
       lineHeight: "1.2",
       marginBottom: "15px",
@@ -81,14 +81,14 @@ function LandingPage() {
 
     highlight: {
       color: "#F57F17", // Kuning/Oranye hangat
-      background: "#FFF9C4",
+      background: "#EAF3FF",
       padding: "0 8px",
       borderRadius: "8px",
     },
 
     desc: {
       fontSize: "16px",
-      color: "#4A5D43",
+      color: "#526579",
       lineHeight: "1.6",
       marginBottom: "25px",
       fontWeight: "500",
@@ -105,12 +105,12 @@ function LandingPage() {
       padding: "16px 20px",
       border: "none",
       borderRadius: "15px",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       fontSize: "18px",
       cursor: "pointer",
       fontWeight: "800",
-      boxShadow: "0 6px 0 #FBC02D",
+      boxShadow: "0 6px 0 #90CAF9",
       textAlign: "center",
       textTransform: "uppercase",
     },
@@ -120,12 +120,12 @@ function LandingPage() {
       padding: "16px 20px",
       border: "none",
       borderRadius: "15px",
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       fontSize: "18px",
       cursor: "pointer",
       fontWeight: "800",
-      boxShadow: "0 6px 0 #1B5E20",
+      boxShadow: "0 6px 0 #0D47A1",
       textAlign: "center",
     },
 
@@ -138,23 +138,23 @@ function LandingPage() {
     heroCard: {
       width: "100%",
       maxWidth: "360px",
-      background: "#FFFDE7",
+      background: "#F5F9FF",
       borderRadius: "20px",
       padding: "25px",
       boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
       textAlign: "center",
-      border: "3px solid #FFF59D",
+      border: "3px solid #BBDEFB",
     },
 
     cardTitle: {
       fontSize: "24px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       marginBottom: "12px",
       fontWeight: "800",
     },
 
     cardText: {
-      color: "#556B4D",
+      color: "#526579",
       fontSize: "15px",
       lineHeight: "1.6",
       fontWeight: "500",
@@ -169,7 +169,7 @@ function LandingPage() {
     sectionTitle: {
       textAlign: "center",
       fontSize: "26px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       marginBottom: "30px",
       fontWeight: "800",
     },
@@ -186,18 +186,18 @@ function LandingPage() {
       borderRadius: "18px",
       boxShadow: "0 6px 15px rgba(0,0,0,0.04)",
       textAlign: "center",
-      borderTop: "6px solid #81C784",
+      borderTop: "6px solid #64B5F6",
     },
 
     cardHeading: {
       fontSize: "20px",
-      color: "#1B5E20",
+      color: "#0D47A1",
       marginBottom: "10px",
       fontWeight: "700",
     },
 
     cardDesc: {
-      color: "#667C5E",
+      color: "#607D8B",
       fontSize: "14px",
       lineHeight: "1.5",
     },
@@ -210,8 +210,8 @@ function LandingPage() {
 
     stepCard: {
       background: "#fff",
-      border: "2px solid #C8E6C9",
-      color: "#2E3D29",
+      border: "2px solid #BBDEFB",
+      color: "#26384A",
       borderRadius: "16px",
       padding: "20px 15px",
       textAlign: "center",
@@ -221,8 +221,8 @@ function LandingPage() {
       width: "40px",
       height: "40px",
       borderRadius: "50%",
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -234,7 +234,7 @@ function LandingPage() {
     footer: {
       marginTop: "40px",
       padding: "25px 15px",
-      background: "#1B5E20",
+      background: "#0D47A1",
       color: "#fff",
       textAlign: "center",
       fontSize: "14px",
@@ -246,7 +246,7 @@ function LandingPage() {
       {/* Navbar */}
       <nav style={styles.navbar}>
         <div style={styles.logo}>
-          SDN 33 PAREPARE
+          UPTD SD NEGERI 33 PAREPARE
         </div>
 
         <div style={styles.navButton}>
@@ -348,25 +348,25 @@ function LandingPage() {
         <div style={styles.stepGrid}>
           <div style={styles.stepCard}>
             <div style={styles.stepBadge}>1</div>
-            <h4 style={{ margin: "5px 0", color: "#1B5E20" }}>Masuk Akun</h4>
+            <h4 style={{ margin: "5px 0", color: "#0D47A1" }}>Masuk Akun</h4>
             <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>Scan QR atau masukan NISN</p>
           </div>
 
           <div style={styles.stepCard}>
             <div style={styles.stepBadge}>2</div>
-            <h4 style={{ margin: "5px 0", color: "#1B5E20" }}>Isi Laporan</h4>
+            <h4 style={{ margin: "5px 0", color: "#0D47A1" }}>Isi Laporan</h4>
             <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>Ceritakan apa yang terjadi</p>
           </div>
 
           <div style={styles.stepCard}>
             <div style={styles.stepBadge}>3</div>
-            <h4 style={{ margin: "5px 0", color: "#1B5E20" }}>Kirim</h4>
+            <h4 style={{ margin: "5px 0", color: "#0D47A1" }}>Kirim</h4>
             <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>Tekan tombol kirim laporan</p>
           </div>
 
           <div style={styles.stepCard}>
             <div style={styles.stepBadge}>4</div>
-            <h4 style={{ margin: "5px 0", color: "#1B5E20" }}>Diproses</h4>
+            <h4 style={{ margin: "5px 0", color: "#0D47A1" }}>Diproses</h4>
             <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>Guru akan membantu kamu</p>
           </div>
         </div>
@@ -376,6 +376,9 @@ function LandingPage() {
       <footer style={styles.footer}>
         <strong style={{ fontSize: "16px" }}>Sistem Pengaduan Bullying SD</strong>
         <p style={{ margin: "5px 0 0", opacity: 0.8 }}>Program Kerja KKN ITH 03 TIRO SOMPE</p>
+        <p style={{ margin: "5px 0 0", opacity: 0.8 }}>
+          Alamat : Jl. H. Puang Cara No. 45 Kelurahan Tiro Sompe Kec. Bacukiki Barat Kota Parepare
+        </p>
       </footer>
     </div>
   );

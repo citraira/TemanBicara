@@ -478,7 +478,7 @@ function DataSiswa() {
 
           // JUDUL
           context.fillStyle =
-            "#1B5E20";
+            "#0D47A1";
 
           context.font =
             "800 46px Segoe UI, Arial, sans-serif";
@@ -491,7 +491,7 @@ function DataSiswa() {
 
           // NAMA
           context.fillStyle =
-            "#1B5E20";
+            "#0D47A1";
 
           context.font =
             "800 42px Segoe UI, Arial, sans-serif";
@@ -504,7 +504,7 @@ function DataSiswa() {
 
           // KELAS + NISN
           context.fillStyle =
-            "#556B4D";
+            "#526579";
 
           context.font =
             "400 30px Segoe UI, Arial, sans-serif";
@@ -535,7 +535,7 @@ function DataSiswa() {
           );
 
           context.strokeStyle =
-            "#C8E6C9";
+            "#BBDEFB";
 
           context.lineWidth = 3;
 
@@ -714,7 +714,7 @@ function DataSiswa() {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#F4FBEE",
+      background: "#F5F9FF",
       padding: "20px 15px",
       fontFamily:
         "'Segoe UI', Roboto, sans-serif",
@@ -722,7 +722,7 @@ function DataSiswa() {
     },
 
     header: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "20px",
       borderRadius: "20px",
@@ -750,8 +750,8 @@ function DataSiswa() {
     },
 
     topButton: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "10px 16px",
       borderRadius: "12px",
@@ -759,12 +759,12 @@ function DataSiswa() {
       fontSize: "13px",
       fontWeight: "800",
       boxShadow:
-        "0 3px 0 #FBC02D",
+        "0 3px 0 #90CAF9",
     },
 
     backButton: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "12px 20px",
       borderRadius: "12px",
@@ -772,7 +772,7 @@ function DataSiswa() {
       fontSize: "14px",
       fontWeight: "800",
       boxShadow:
-        "0 3px 0 #FBC02D",
+        "0 3px 0 #90CAF9",
       marginTop: "15px",
     },
 
@@ -781,7 +781,7 @@ function DataSiswa() {
       padding: "12px 14px",
       borderRadius: "12px",
       border:
-        "2px solid #C8E6C9",
+        "2px solid #BBDEFB",
       marginBottom: "20px",
       fontSize: "14px",
       boxSizing: "border-box",
@@ -796,7 +796,7 @@ function DataSiswa() {
       boxShadow:
         "0 4px 12px rgba(0,0,0,0.04)",
       border:
-        "2px solid #C8E6C9",
+        "2px solid #BBDEFB",
     },
 
     table: {
@@ -806,7 +806,7 @@ function DataSiswa() {
     },
 
     th: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       padding: "14px 12px",
       textAlign: "center",
@@ -817,14 +817,14 @@ function DataSiswa() {
     td: {
       padding: "12px",
       borderBottom:
-        "1px solid #E8F5E9",
+        "1px solid #E3F2FD",
       textAlign: "center",
       fontSize: "13px",
       color: "#2E3D29",
     },
 
     qrBtn: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       padding: "6px 12px",
@@ -835,8 +835,8 @@ function DataSiswa() {
     },
 
     editButton: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "6px 12px",
       borderRadius: "8px",
@@ -845,7 +845,7 @@ function DataSiswa() {
       fontWeight: "800",
       fontSize: "12px",
       boxShadow:
-        "0 2px 0 #FBC02D",
+        "0 2px 0 #90CAF9",
     },
 
     deleteButton: {
@@ -862,7 +862,7 @@ function DataSiswa() {
     empty: {
       textAlign: "center",
       padding: "35px",
-      color: "#556B4D",
+      color: "#526579",
       fontSize: "14px",
       fontWeight: "600",
     },
@@ -893,14 +893,14 @@ function DataSiswa() {
       boxShadow:
         "0 8px 24px rgba(0,0,0,0.15)",
       border:
-        "2px solid #C8E6C9",
+        "2px solid #BBDEFB",
       boxSizing: "border-box",
       maxHeight: "90vh",
       overflowY: "auto",
     },
 
     printBtn: {
-      background: "#2E7D32",
+      background: "#1565C0",
       color: "#fff",
       border: "none",
       padding: "12px",
@@ -911,14 +911,14 @@ function DataSiswa() {
       width: "100%",
       fontSize: "13px",
       boxShadow:
-        "0 3px 0 #1B5E20",
+        "0 3px 0 #0D47A1",
       textTransform:
         "uppercase",
     },
 
     closeBtn: {
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "12px",
       borderRadius: "12px",
@@ -928,7 +928,7 @@ function DataSiswa() {
       width: "100%",
       fontSize: "13px",
       boxShadow:
-        "0 3px 0 #FBC02D",
+        "0 3px 0 #90CAF9",
     },
 
     confirmYesBtn: {
@@ -947,8 +947,8 @@ function DataSiswa() {
 
     confirmNoBtn: {
       flex: 1,
-      background: "#FFEB3B",
-      color: "#1B5E20",
+      background: "#FFFFFF",
+      color: "#0D47A1",
       border: "none",
       padding: "11px",
       borderRadius: "10px",
@@ -956,7 +956,7 @@ function DataSiswa() {
       fontSize: "13px",
       cursor: "pointer",
       boxShadow:
-        "0 3px 0 #FBC02D",
+        "0 3px 0 #90CAF9",
     },
 
     alertIconWrapper: (type) => ({
@@ -972,23 +972,23 @@ function DataSiswa() {
 
       background:
         type === "success"
-          ? "#E8F5E9"
+          ? "#E3F2FD"
           : type === "error"
           ? "#FFEBEE"
-          : "#FFFDE7",
+          : "#F5F9FF",
 
       border:
         `2px solid ${
           type === "success"
-            ? "#2E7D32"
+            ? "#1565C0"
             : type === "error"
             ? "#D32F2F"
-            : "#FBC02D"
+            : "#90CAF9"
         }`,
 
       color:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
           : "#F57F17",
@@ -1007,22 +1007,22 @@ function DataSiswa() {
 
       color:
         type === "warning"
-          ? "#1B5E20"
+          ? "#0D47A1"
           : "#fff",
 
       background:
         type === "success"
-          ? "#2E7D32"
+          ? "#1565C0"
           : type === "error"
           ? "#D32F2F"
-          : "#FFEB3B",
+          : "#FFFFFF",
 
       boxShadow:
         type === "success"
-          ? "0 3px 0 #1B5E20"
+          ? "0 3px 0 #0D47A1"
           : type === "error"
           ? "0 3px 0 #9A0007"
-          : "0 3px 0 #FBC02D",
+          : "0 3px 0 #90CAF9",
     }),
   };
 
@@ -1116,9 +1116,9 @@ function DataSiswa() {
               "35px 20px",
             borderRadius: "18px",
             textAlign: "center",
-            color: "#1B5E20",
+            color: "#0D47A1",
             border:
-              "2px solid #C8E6C9",
+              "2px solid #BBDEFB",
             fontWeight: "700",
           }}
         >
@@ -1364,7 +1364,7 @@ function DataSiswa() {
 
             <h3
               style={{
-                color: "#1B5E20",
+                color: "#0D47A1",
                 marginBottom:
                   "5px",
                 fontSize:
@@ -1393,7 +1393,7 @@ function DataSiswa() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#526579",
                 fontSize:
                   "13px",
                 marginBottom:
@@ -1420,7 +1420,7 @@ function DataSiswa() {
                 borderRadius:
                   "12px",
                 border:
-                  "1px solid #C8E6C9",
+                  "1px solid #BBDEFB",
                 display:
                   "inline-block",
                 maxWidth:
@@ -1538,7 +1538,7 @@ function DataSiswa() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#526579",
                 fontSize:
                   "13px",
                 marginBottom:
@@ -1564,7 +1564,7 @@ function DataSiswa() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#526579",
                 fontSize:
                   "13px",
                 marginBottom:
@@ -1654,11 +1654,11 @@ function DataSiswa() {
                   width:
                     "100%",
                   background:
-                    "#F1F8E9",
+                    "#F5F9FF",
                   color:
-                    "#1B5E20",
+                    "#0D47A1",
                   border:
-                    "1px solid #A5D6A7",
+                    "1px solid #90CAF9",
                   padding:
                     "11px",
                   borderRadius:
@@ -1745,7 +1745,7 @@ function DataSiswa() {
                 color:
                   alertConfig.type ===
                   "success"
-                    ? "#1B5E20"
+                    ? "#0D47A1"
                     : alertConfig.type ===
                       "error"
                     ? "#C62828"
@@ -1760,7 +1760,7 @@ function DataSiswa() {
             <p
               style={{
                 color:
-                  "#556B4D",
+                  "#526579",
                 fontSize:
                   "13px",
                 marginBottom:
