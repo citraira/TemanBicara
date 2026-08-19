@@ -37,10 +37,10 @@ function AlertModal({
       boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
       border: `2px solid ${
         isSuccess
-          ? "#C8E6C9"
+          ? "#BBDEFB"
           : isError
           ? "#FFCDD2"
-          : "#FFF59D"
+          : "#FFFFFF"
       }`,
       animation: "popIn 0.25s ease-out",
     },
@@ -55,22 +55,22 @@ function AlertModal({
       alignItems: "center",
       fontSize: "30px",
       background: isSuccess
-        ? "#E8F5E9"
+        ? "#E3F2FD"
         : isError
         ? "#FFEBEE"
-        : "#FFFDE7",
+        : "#F5F9FF",
       border: `2px solid ${
         isSuccess
-          ? "#2E7D32"
+          ? "#1565C0"
           : isError
           ? "#D32F2F"
-          : "#FBC02D"
+          : "#90CAF9"
       }`,
       color: isSuccess
-        ? "#2E7D32"
+        ? "#1565C0"
         : isError
         ? "#D32F2F"
-        : "#F57F17",
+        : "#1565C0",
     },
 
     title: {
@@ -78,7 +78,7 @@ function AlertModal({
       fontSize: "20px",
       fontWeight: "800",
       color: isSuccess
-        ? "#1B5E20"
+        ? "#0D47A1"
         : isError
         ? "#C62828"
         : "#E65100",
@@ -87,7 +87,7 @@ function AlertModal({
     message: {
       margin: "0 0 20px 0",
       fontSize: "14px",
-      color: "#556B4D",
+      color: "#526579",
       lineHeight: "1.5",
       whiteSpace: "pre-line",
     },
@@ -105,17 +105,17 @@ function AlertModal({
         ? "#fff"
         : isError
         ? "#fff"
-        : "#1B5E20",
+        : "#0D47A1",
       background: isSuccess
-        ? "#2E7D32"
+        ? "#1565C0"
         : isError
         ? "#D32F2F"
         : "#FFEB3B",
       boxShadow: isSuccess
-        ? "0 3px 0 #1B5E20"
+        ? "0 3px 0 #0D47A1"
         : isError
         ? "0 3px 0 #9A0007"
-        : "0 3px 0 #FBC02D",
+        : "0 3px 0 #90CAF9",
     },
   };
 

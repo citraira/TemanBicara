@@ -26,7 +26,7 @@ const styles = {
     width: "100%",
     textAlign: "center",
     boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-    border: "2px solid #C8E6C9",
+    border: "2px solid #BBDEFB",
   },
 
   iconBox: {
@@ -45,14 +45,14 @@ const styles = {
   },
 
   title: {
-    color: "#1B5E20",
+    color: "#0D47A1",
     fontSize: "20px",
     fontWeight: "800",
     margin: "0 0 8px 0",
   },
 
   desc: {
-    color: "#556B4D",
+    color: "#526579",
     fontSize: "13px",
     lineHeight: "1.5",
     marginBottom: "20px",
@@ -61,14 +61,14 @@ const styles = {
   installBtn: {
     width: "100%",
     padding: "12px",
-    background: "#2E7D32",
+    background: "#1565C0",
     color: "#fff",
     border: "none",
     borderRadius: "12px",
     fontWeight: "800",
     fontSize: "14px",
     cursor: "pointer",
-    boxShadow: "0 3px 0 #1B5E20",
+    boxShadow: "0 3px 0 #0D47A1",
     textTransform: "uppercase",
     marginBottom: "10px",
   },
@@ -76,14 +76,14 @@ const styles = {
   cancelBtn: {
     width: "100%",
     padding: "12px",
-    background: "#FFEB3B",
-    color: "#1B5E20",
+    background: "#FFFFFF",
+    color: "#0D47A1",
     border: "none",
     borderRadius: "12px",
     fontWeight: "800",
     fontSize: "13px",
     cursor: "pointer",
-    boxShadow: "0 3px 0 #FBC02D",
+    boxShadow: "0 3px 0 #90CAF9",
     textTransform: "uppercase",
   },
 };
