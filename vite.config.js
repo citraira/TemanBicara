@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'TemanBicara - Pengaduan Bullying',
         short_name: 'TemanBicara',
         description: 'Sistem Pengaduan Bullying Sekolah',
-        theme_color: '#2E7D32',
-        background_color: '#F4FBEE',
+        theme_color: '#1565C0',
+        background_color: '#F5F9FF',
         display: 'standalone',
         start_url: '/',
         icons: [
